@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тот же фон, что у игры: иконка — её продолжение, а не отдельная
+         картинка. -->
+    <color name="ic_launcher_background">#15100E</color>
+</resources>

@@ -1,0 +1,31 @@
+# Сборки и кэши — восстанавливаются одной командой, а весят гигабайты.
+.dart_tool/
+build/
+app/build/
+app/.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Собранные APK. Каждый под пятьдесят мегабайт; репозиторий — для исходников,
+# готовые сборки раздаются релизами.
+*.apk
+*.aab
+
+# Локальные пути SDK: у каждой машины свои.
+app/android/local.properties
+app/android/.gradle/
+app/android/key.properties
+*.keystore
+*.jks
+
+# Среда разработки.
+.idea/
+*.iml
+.vscode/
+
+# Мусор системы и прогонов.
+.DS_Store
+Thumbs.db
+run.log
+*.log

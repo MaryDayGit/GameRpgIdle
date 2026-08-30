@@ -1,0 +1,46 @@
+name: rift_app
+description: >-
+  Расселина — Android-клиент. Flutter (UI/UX) + Flame (боевая сцена) поверх
+  чистого Dart-ядра из пакета `rift`. Ни одной игровой формулы здесь нет:
+  вся математика живёт в ядре и остаётся headless-тестируемой.
+publish_to: none
+version: 0.9.0+10
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Ядро симуляции. Чистый Dart, без Flutter — подключено по пути,
+  # чтобы правка баланса не требовала публикации пакета.
+  rift:
+    path: ..
+
+  # Боевая сцена (Фаза 5). Подключён сразу, чтобы зафиксировать
+  # совместимость версий, но пока используется в одном дев-экране.
+  flame: ^1.36.0
+
+  # Сейв: каталог документов + атомарная запись (02-TECH §4).
+  path_provider: ^2.1.5
+  flutter_local_notifications: ^22.3.0
+  timezone: ^0.11.1
+  audioplayers: ^6.7.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    # Зеркало ./../assets/content. Flutter не умеет брать ассеты выше корня
+    # пакета, поэтому контент синхронизируется скриптом:
+    #   dart run tool/sync_content.dart
+    - assets/content/
+
+    # Звуки синтезируются кодом: `dart run tool/make_sounds.dart` из корня
+    # репозитория. Источник — генератор, а не эти файлы.
+    - assets/audio/

@@ -1,0 +1,5050 @@
+{
+  "version": 1,
+  "_comment": [
+    "Сгенерировано `dart run tool/make_passive_tree.dart` — правьте генератор,",
+    "а не этот файл. Координаты нужны экрану: дерево рисуется графом.",
+    "",
+    "kind=stat     -> дорога: мелкая прибавка к собранному билду;",
+    "kind=notable  -> то, ради чего идут в ветку. Без платы; один на кластер",
+    "                 меняет правило, а не число;",
+    "kind=keystone -> размен: большой плюс и настоящая плата. Ровно один на",
+    "                 кластер, восемь на всё дерево;",
+    "kind=root     -> точка входа, ничего не даёт."
+  ],
+  "nodes": [
+    {
+      "id": "root",
+      "ru": "Наёмник",
+      "text": "Начало пути",
+      "cluster": "root",
+      "kind": "root",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "flesh_1_0",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": 0,
+      "y": -84
+    },
+    {
+      "id": "flesh_2_0",
+      "ru": "Ровное дыхание",
+      "text": "+1.5 восстановления HP в секунду",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.5,
+      "icon": "breath",
+      "x": -17,
+      "y": -167
+    },
+    {
+      "id": "flesh_2_1",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": 17,
+      "y": -167
+    },
+    {
+      "id": "flesh_3_0",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": -25,
+      "y": -251
+    },
+    {
+      "id": "flesh_3_1",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": 25,
+      "y": -251
+    },
+    {
+      "id": "flesh_4_0",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": -44,
+      "y": -333
+    },
+    {
+      "id": "flesh_4_1",
+      "ru": "Второе сердце",
+      "text": "+20 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "notable",
+      "stat": "maxHpPct",
+      "value": 0.2,
+      "icon": "heart",
+      "x": 0,
+      "y": -336
+    },
+    {
+      "id": "flesh_4_2",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": 44,
+      "y": -333
+    },
+    {
+      "id": "flesh_5_0",
+      "ru": "Ровное дыхание",
+      "text": "+1.5 восстановления HP в секунду",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.5,
+      "icon": "breath",
+      "x": -55,
+      "y": -416
+    },
+    {
+      "id": "flesh_5_1",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": 0,
+      "y": -420
+    },
+    {
+      "id": "flesh_5_2",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": 55,
+      "y": -416
+    },
+    {
+      "id": "flesh_6_0",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": -66,
+      "y": -500
+    },
+    {
+      "id": "flesh_6_1",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": 0,
+      "y": -504
+    },
+    {
+      "id": "flesh_6_2",
+      "ru": "Ровное дыхание",
+      "text": "+1.5 восстановления HP в секунду",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.5,
+      "icon": "breath",
+      "x": 66,
+      "y": -500
+    },
+    {
+      "id": "flesh_7_0",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": -77,
+      "y": -583
+    },
+    {
+      "id": "flesh_7_1",
+      "ru": "Крепкие кости",
+      "text": "+120 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "notable",
+      "stat": "maxHp",
+      "value": 120.0,
+      "icon": "bone",
+      "x": 0,
+      "y": -588
+    },
+    {
+      "id": "flesh_7_2",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": 77,
+      "y": -583
+    },
+    {
+      "id": "flesh_8_0",
+      "ru": "Ровное дыхание",
+      "text": "+1.5 восстановления HP в секунду",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.5,
+      "icon": "breath",
+      "x": -89,
+      "y": -666
+    },
+    {
+      "id": "flesh_8_1",
+      "ru": "Жила",
+      "text": "+8 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHpPct",
+      "value": 0.08,
+      "icon": "heart",
+      "x": 0,
+      "y": -672
+    },
+    {
+      "id": "flesh_8_2",
+      "ru": "Плотная кожа",
+      "text": "+40 к максимуму HP",
+      "cluster": "flesh",
+      "kind": "stat",
+      "stat": "maxHp",
+      "value": 40.0,
+      "icon": "hide",
+      "x": 89,
+      "y": -666
+    },
+    {
+      "id": "flesh_9_0",
+      "ru": "Второе дыхание",
+      "text": "Убийство восстанавливает 2 % максимума HP",
+      "cluster": "flesh",
+      "kind": "notable",
+      "icon": "drop",
+      "rule": "killHeal",
+      "ruleValue": 0.02,
+      "x": -100,
+      "y": -749
+    },
+    {
+      "id": "flesh_9_1",
+      "ru": "Живучесть",
+      "text": "+26 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "notable",
+      "stat": "maxHpPct",
+      "value": 0.26,
+      "icon": "heart",
+      "x": 0,
+      "y": -756
+    },
+    {
+      "id": "flesh_9_2",
+      "ru": "Кровь за силу",
+      "text": "+45 % к урону, но −30 % к максимуму HP",
+      "cluster": "flesh",
+      "kind": "keystone",
+      "stat": "increasedDamage",
+      "value": 0.45,
+      "penaltyStat": "maxHpPct",
+      "penalty": 0.3,
+      "icon": "drop",
+      "x": 100,
+      "y": -749
+    },
+    {
+      "id": "stone_1_0",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 39,
+      "y": -74
+    },
+    {
+      "id": "stone_2_0",
+      "ru": "Устойчивость",
+      "text": "+8 к сопротивлению пустоте",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 8.0,
+      "icon": "ward",
+      "x": 63,
+      "y": -156
+    },
+    {
+      "id": "stone_2_1",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 92,
+      "y": -140
+    },
+    {
+      "id": "stone_3_0",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 94,
+      "y": -234
+    },
+    {
+      "id": "stone_3_1",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 139,
+      "y": -210
+    },
+    {
+      "id": "stone_4_0",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 116,
+      "y": -315
+    },
+    {
+      "id": "stone_4_1",
+      "ru": "Скала",
+      "text": "+24 % к броне",
+      "cluster": "stone",
+      "kind": "notable",
+      "stat": "armorPct",
+      "value": 0.24,
+      "icon": "shield",
+      "x": 156,
+      "y": -298
+    },
+    {
+      "id": "stone_4_2",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 194,
+      "y": -274
+    },
+    {
+      "id": "stone_5_0",
+      "ru": "Устойчивость",
+      "text": "+8 к сопротивлению пустоте",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 8.0,
+      "icon": "ward",
+      "x": 144,
+      "y": -394
+    },
+    {
+      "id": "stone_5_1",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 195,
+      "y": -372
+    },
+    {
+      "id": "stone_5_2",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 242,
+      "y": -343
+    },
+    {
+      "id": "stone_6_0",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 173,
+      "y": -473
+    },
+    {
+      "id": "stone_6_1",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 234,
+      "y": -446
+    },
+    {
+      "id": "stone_6_2",
+      "ru": "Устойчивость",
+      "text": "+8 к сопротивлению пустоте",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 8.0,
+      "icon": "ward",
+      "x": 291,
+      "y": -412
+    },
+    {
+      "id": "stone_7_0",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 202,
+      "y": -552
+    },
+    {
+      "id": "stone_7_1",
+      "ru": "Бастион",
+      "text": "+12 % к максимуму HP",
+      "cluster": "stone",
+      "kind": "notable",
+      "stat": "maxHpPct",
+      "value": 0.12,
+      "icon": "plate",
+      "x": 273,
+      "y": -521
+    },
+    {
+      "id": "stone_7_2",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 339,
+      "y": -480
+    },
+    {
+      "id": "stone_8_0",
+      "ru": "Устойчивость",
+      "text": "+8 к сопротивлению пустоте",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 8.0,
+      "icon": "ward",
+      "x": 231,
+      "y": -631
+    },
+    {
+      "id": "stone_8_1",
+      "ru": "Панцирь",
+      "text": "+10 % к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armorPct",
+      "value": 0.1,
+      "icon": "shield",
+      "x": 312,
+      "y": -595
+    },
+    {
+      "id": "stone_8_2",
+      "ru": "Пластина",
+      "text": "+35 к броне",
+      "cluster": "stone",
+      "kind": "stat",
+      "stat": "armor",
+      "value": 35.0,
+      "icon": "plate",
+      "x": 388,
+      "y": -549
+    },
+    {
+      "id": "stone_9_0",
+      "ru": "Каменная вера",
+      "text": "8 % брони считается сопротивлением всем стихиям",
+      "cluster": "stone",
+      "kind": "notable",
+      "icon": "ward",
+      "rule": "armorToResist",
+      "ruleValue": 0.08,
+      "x": 260,
+      "y": -710
+    },
+    {
+      "id": "stone_9_1",
+      "ru": "Утёс",
+      "text": "+30 % к броне",
+      "cluster": "stone",
+      "kind": "notable",
+      "stat": "armorPct",
+      "value": 0.3,
+      "icon": "shield",
+      "x": 351,
+      "y": -669
+    },
+    {
+      "id": "stone_9_2",
+      "ru": "Каменная кожа",
+      "text": "+70 % к броне, но −25 % к урону",
+      "cluster": "stone",
+      "kind": "keystone",
+      "stat": "armorPct",
+      "value": 0.7,
+      "penaltyStat": "increasedDamage",
+      "penalty": 0.25,
+      "icon": "plate",
+      "x": 436,
+      "y": -617
+    },
+    {
+      "id": "fang_1_0",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 69,
+      "y": -48
+    },
+    {
+      "id": "fang_2_0",
+      "ru": "Хватка",
+      "text": "+7 % к урону Ударами",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "strike",
+      "icon": "claw",
+      "x": 128,
+      "y": -109
+    },
+    {
+      "id": "fang_2_1",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 147,
+      "y": -81
+    },
+    {
+      "id": "fang_3_0",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 192,
+      "y": -163
+    },
+    {
+      "id": "fang_3_1",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 221,
+      "y": -122
+    },
+    {
+      "id": "fang_4_0",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 249,
+      "y": -226
+    },
+    {
+      "id": "fang_4_1",
+      "ru": "Хищник",
+      "text": "+20 % к урону",
+      "cluster": "fang",
+      "kind": "notable",
+      "stat": "increasedDamage",
+      "value": 0.2,
+      "icon": "fang",
+      "x": 277,
+      "y": -191
+    },
+    {
+      "id": "fang_4_2",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 299,
+      "y": -153
+    },
+    {
+      "id": "fang_5_0",
+      "ru": "Хватка",
+      "text": "+7 % к урону Ударами",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "strike",
+      "icon": "claw",
+      "x": 311,
+      "y": -282
+    },
+    {
+      "id": "fang_5_1",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 346,
+      "y": -239
+    },
+    {
+      "id": "fang_5_2",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 374,
+      "y": -191
+    },
+    {
+      "id": "fang_6_0",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 373,
+      "y": -338
+    },
+    {
+      "id": "fang_6_1",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 415,
+      "y": -286
+    },
+    {
+      "id": "fang_6_2",
+      "ru": "Хватка",
+      "text": "+7 % к урону Ударами",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "strike",
+      "icon": "claw",
+      "x": 449,
+      "y": -229
+    },
+    {
+      "id": "fang_7_0",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 436,
+      "y": -395
+    },
+    {
+      "id": "fang_7_1",
+      "ru": "Ярость",
+      "text": "+10 % к скорости атаки",
+      "cluster": "fang",
+      "kind": "notable",
+      "stat": "increasedAttackSpeed",
+      "value": 0.1,
+      "icon": "claw",
+      "x": 484,
+      "y": -334
+    },
+    {
+      "id": "fang_7_2",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 524,
+      "y": -267
+    },
+    {
+      "id": "fang_8_0",
+      "ru": "Хватка",
+      "text": "+7 % к урону Ударами",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "strike",
+      "icon": "claw",
+      "x": 498,
+      "y": -451
+    },
+    {
+      "id": "fang_8_1",
+      "ru": "Клык",
+      "text": "+8 % к урону",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "increasedDamage",
+      "value": 0.08,
+      "icon": "fang",
+      "x": 553,
+      "y": -382
+    },
+    {
+      "id": "fang_8_2",
+      "ru": "Заточка",
+      "text": "+14 к урону оружия",
+      "cluster": "fang",
+      "kind": "stat",
+      "stat": "attackDamage",
+      "value": 14.0,
+      "icon": "blade",
+      "x": 599,
+      "y": -306
+    },
+    {
+      "id": "fang_9_0",
+      "ru": "Отчаяние",
+      "text": "Ниже половины здоровья вы бьёте на 25 % сильнее",
+      "cluster": "fang",
+      "kind": "notable",
+      "icon": "fang",
+      "rule": "lowLifeDamage",
+      "ruleValue": 0.25,
+      "x": 560,
+      "y": -508
+    },
+    {
+      "id": "fang_9_1",
+      "ru": "Свирепость",
+      "text": "+32 % к физическому урону",
+      "cluster": "fang",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.32,
+      "tag": "physical",
+      "icon": "blade",
+      "x": 622,
+      "y": -429
+    },
+    {
+      "id": "fang_9_2",
+      "ru": "Безрассудство",
+      "text": "+55 % к урону, но −35 % к броне",
+      "cluster": "fang",
+      "kind": "keystone",
+      "stat": "increasedDamage",
+      "value": 0.55,
+      "penaltyStat": "armorPct",
+      "penalty": 0.35,
+      "icon": "blade",
+      "x": 673,
+      "y": -344
+    },
+    {
+      "id": "spark_1_0",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 83,
+      "y": -10
+    },
+    {
+      "id": "spark_2_0",
+      "ru": "Взгляд",
+      "text": "+1.5 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.015,
+      "icon": "eye",
+      "x": 164,
+      "y": -37
+    },
+    {
+      "id": "spark_2_1",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 168,
+      "y": -4
+    },
+    {
+      "id": "spark_3_0",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 246,
+      "y": -55
+    },
+    {
+      "id": "spark_3_1",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 252,
+      "y": -5
+    },
+    {
+      "id": "spark_4_0",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 325,
+      "y": -84
+    },
+    {
+      "id": "spark_4_1",
+      "ru": "Точный глаз",
+      "text": "+5 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "notable",
+      "stat": "critChance",
+      "value": 0.05,
+      "icon": "eye",
+      "x": 334,
+      "y": -41
+    },
+    {
+      "id": "spark_4_2",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 336,
+      "y": 4
+    },
+    {
+      "id": "spark_5_0",
+      "ru": "Взгляд",
+      "text": "+1.5 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.015,
+      "icon": "eye",
+      "x": 407,
+      "y": -105
+    },
+    {
+      "id": "spark_5_1",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 417,
+      "y": -51
+    },
+    {
+      "id": "spark_5_2",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 420,
+      "y": 5
+    },
+    {
+      "id": "spark_6_0",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 488,
+      "y": -126
+    },
+    {
+      "id": "spark_6_1",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 500,
+      "y": -61
+    },
+    {
+      "id": "spark_6_2",
+      "ru": "Взгляд",
+      "text": "+1.5 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.015,
+      "icon": "eye",
+      "x": 504,
+      "y": 6
+    },
+    {
+      "id": "spark_7_0",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 569,
+      "y": -147
+    },
+    {
+      "id": "spark_7_1",
+      "ru": "Хладнокровие",
+      "text": "+45 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "notable",
+      "stat": "critMulti",
+      "value": 0.45,
+      "icon": "spark",
+      "x": 584,
+      "y": -71
+    },
+    {
+      "id": "spark_7_2",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 588,
+      "y": 7
+    },
+    {
+      "id": "spark_8_0",
+      "ru": "Взгляд",
+      "text": "+1.5 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.015,
+      "icon": "eye",
+      "x": 651,
+      "y": -168
+    },
+    {
+      "id": "spark_8_1",
+      "ru": "Искра",
+      "text": "+2 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critChance",
+      "value": 0.02,
+      "icon": "spark",
+      "x": 667,
+      "y": -81
+    },
+    {
+      "id": "spark_8_2",
+      "ru": "Точность",
+      "text": "+15 % к урону критических ударов",
+      "cluster": "spark",
+      "kind": "stat",
+      "stat": "critMulti",
+      "value": 0.15,
+      "icon": "eye",
+      "x": 672,
+      "y": 8
+    },
+    {
+      "id": "spark_9_0",
+      "ru": "Охотник на медленных",
+      "text": "По замедленным целям удар всегда критический",
+      "cluster": "spark",
+      "kind": "notable",
+      "icon": "spark",
+      "rule": "critVsSlowed",
+      "ruleValue": 1.0,
+      "x": 732,
+      "y": -189
+    },
+    {
+      "id": "spark_9_1",
+      "ru": "Смертельный расчёт",
+      "text": "+6 % к шансу критического удара",
+      "cluster": "spark",
+      "kind": "notable",
+      "stat": "critChance",
+      "value": 0.06,
+      "icon": "eye",
+      "x": 750,
+      "y": -91
+    },
+    {
+      "id": "spark_9_2",
+      "ru": "Жажда крови",
+      "text": "+90 % к урону критических ударов, но −30 % к скорости атаки",
+      "cluster": "spark",
+      "kind": "keystone",
+      "stat": "critMulti",
+      "value": 0.9,
+      "penaltyStat": "increasedAttackSpeed",
+      "penalty": 0.3,
+      "icon": "spark",
+      "x": 756,
+      "y": 9
+    },
+    {
+      "id": "wind_1_0",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 79,
+      "y": 30
+    },
+    {
+      "id": "wind_2_0",
+      "ru": "Ритм",
+      "text": "+7 % к урону Атаками",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "attack",
+      "icon": "wind",
+      "x": 162,
+      "y": 44
+    },
+    {
+      "id": "wind_2_1",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 150,
+      "y": 75
+    },
+    {
+      "id": "wind_3_0",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 243,
+      "y": 66
+    },
+    {
+      "id": "wind_3_1",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 226,
+      "y": 112
+    },
+    {
+      "id": "wind_4_0",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 327,
+      "y": 77
+    },
+    {
+      "id": "wind_4_1",
+      "ru": "Вихрь",
+      "text": "+13 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "notable",
+      "stat": "increasedAttackSpeed",
+      "value": 0.13,
+      "icon": "wind",
+      "x": 314,
+      "y": 119
+    },
+    {
+      "id": "wind_4_2",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 296,
+      "y": 159
+    },
+    {
+      "id": "wind_5_0",
+      "ru": "Ритм",
+      "text": "+7 % к урону Атаками",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "attack",
+      "icon": "wind",
+      "x": 409,
+      "y": 96
+    },
+    {
+      "id": "wind_5_1",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 393,
+      "y": 149
+    },
+    {
+      "id": "wind_5_2",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 370,
+      "y": 199
+    },
+    {
+      "id": "wind_6_0",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 491,
+      "y": 115
+    },
+    {
+      "id": "wind_6_1",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 471,
+      "y": 179
+    },
+    {
+      "id": "wind_6_2",
+      "ru": "Ритм",
+      "text": "+7 % к урону Атаками",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "attack",
+      "icon": "wind",
+      "x": 444,
+      "y": 239
+    },
+    {
+      "id": "wind_7_0",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 572,
+      "y": 134
+    },
+    {
+      "id": "wind_7_1",
+      "ru": "Сквозняк",
+      "text": "−15 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "notable",
+      "stat": "cooldownReduction",
+      "value": 0.15,
+      "icon": "feather",
+      "x": 550,
+      "y": 209
+    },
+    {
+      "id": "wind_7_2",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 518,
+      "y": 279
+    },
+    {
+      "id": "wind_8_0",
+      "ru": "Ритм",
+      "text": "+7 % к урону Атаками",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "attack",
+      "icon": "wind",
+      "x": 654,
+      "y": 153
+    },
+    {
+      "id": "wind_8_1",
+      "ru": "Порыв",
+      "text": "+5 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "increasedAttackSpeed",
+      "value": 0.05,
+      "icon": "wind",
+      "x": 628,
+      "y": 238
+    },
+    {
+      "id": "wind_8_2",
+      "ru": "Лёгкость",
+      "text": "−4 % ко времени перезарядки",
+      "cluster": "wind",
+      "kind": "stat",
+      "stat": "cooldownReduction",
+      "value": 0.04,
+      "icon": "feather",
+      "x": 591,
+      "y": 319
+    },
+    {
+      "id": "wind_9_0",
+      "ru": "Первый удар",
+      "text": "Первый удар по новой волне сильнее на 60 %",
+      "cluster": "wind",
+      "kind": "notable",
+      "icon": "feather",
+      "rule": "firstStrike",
+      "ruleValue": 0.6,
+      "x": 736,
+      "y": 173
+    },
+    {
+      "id": "wind_9_1",
+      "ru": "Буря",
+      "text": "+16 % к скорости атаки",
+      "cluster": "wind",
+      "kind": "notable",
+      "stat": "increasedAttackSpeed",
+      "value": 0.16,
+      "icon": "wind",
+      "x": 707,
+      "y": 268
+    },
+    {
+      "id": "wind_9_2",
+      "ru": "Рваный ритм",
+      "text": "+35 % к скорости атаки, но −30 % к множителю крита",
+      "cluster": "wind",
+      "kind": "keystone",
+      "stat": "increasedAttackSpeed",
+      "value": 0.35,
+      "penaltyStat": "critMulti",
+      "penalty": 0.3,
+      "icon": "wind",
+      "x": 665,
+      "y": 359
+    },
+    {
+      "id": "mind_1_0",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 56,
+      "y": 63
+    },
+    {
+      "id": "mind_2_0",
+      "ru": "Медитация",
+      "text": "+18 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 18.0,
+      "icon": "mana",
+      "x": 123,
+      "y": 114
+    },
+    {
+      "id": "mind_2_1",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 98,
+      "y": 136
+    },
+    {
+      "id": "mind_3_0",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 185,
+      "y": 171
+    },
+    {
+      "id": "mind_3_1",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 148,
+      "y": 204
+    },
+    {
+      "id": "mind_4_0",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 254,
+      "y": 220
+    },
+    {
+      "id": "mind_4_1",
+      "ru": "Ясный ум",
+      "text": "+1 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "notable",
+      "stat": "manaRegen",
+      "value": 1.0,
+      "icon": "spiral",
+      "x": 223,
+      "y": 251
+    },
+    {
+      "id": "mind_4_2",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 188,
+      "y": 279
+    },
+    {
+      "id": "mind_5_0",
+      "ru": "Медитация",
+      "text": "+18 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 18.0,
+      "icon": "mana",
+      "x": 317,
+      "y": 275
+    },
+    {
+      "id": "mind_5_1",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 279,
+      "y": 314
+    },
+    {
+      "id": "mind_5_2",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 235,
+      "y": 348
+    },
+    {
+      "id": "mind_6_0",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 381,
+      "y": 330
+    },
+    {
+      "id": "mind_6_1",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 334,
+      "y": 377
+    },
+    {
+      "id": "mind_6_2",
+      "ru": "Медитация",
+      "text": "+18 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 18.0,
+      "icon": "mana",
+      "x": 282,
+      "y": 418
+    },
+    {
+      "id": "mind_7_0",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 444,
+      "y": 385
+    },
+    {
+      "id": "mind_7_1",
+      "ru": "Глубокий сосуд",
+      "text": "+45 к максимуму маны",
+      "cluster": "mind",
+      "kind": "notable",
+      "stat": "maxMana",
+      "value": 45.0,
+      "icon": "mana",
+      "x": 390,
+      "y": 440
+    },
+    {
+      "id": "mind_7_2",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 329,
+      "y": 488
+    },
+    {
+      "id": "mind_8_0",
+      "ru": "Медитация",
+      "text": "+18 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 18.0,
+      "icon": "mana",
+      "x": 508,
+      "y": 440
+    },
+    {
+      "id": "mind_8_1",
+      "ru": "Сосредоточенность",
+      "text": "+12 к максимуму маны",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 12.0,
+      "icon": "mana",
+      "x": 446,
+      "y": 503
+    },
+    {
+      "id": "mind_8_2",
+      "ru": "Ясность",
+      "text": "+0.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "stat",
+      "stat": "manaRegen",
+      "value": 0.5,
+      "icon": "spiral",
+      "x": 375,
+      "y": 557
+    },
+    {
+      "id": "mind_9_0",
+      "ru": "Сила разума",
+      "text": "+1 % к урону за каждые 20 маны в запасе",
+      "cluster": "mind",
+      "kind": "notable",
+      "icon": "mana",
+      "rule": "manaToDamage",
+      "ruleValue": 0.0005,
+      "x": 571,
+      "y": 495
+    },
+    {
+      "id": "mind_9_1",
+      "ru": "Поток мысли",
+      "text": "+1.5 восстановления маны в секунду",
+      "cluster": "mind",
+      "kind": "notable",
+      "stat": "manaRegen",
+      "value": 1.5,
+      "icon": "spiral",
+      "x": 501,
+      "y": 566
+    },
+    {
+      "id": "mind_9_2",
+      "ru": "Расточительство",
+      "text": "−35 % ко времени перезарядки, но −60 к максимуму маны",
+      "cluster": "mind",
+      "kind": "keystone",
+      "stat": "cooldownReduction",
+      "value": 0.35,
+      "penaltyStat": "maxMana",
+      "penalty": 60.0,
+      "icon": "spiral",
+      "x": 422,
+      "y": 627
+    },
+    {
+      "id": "hunt_1_0",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 20,
+      "y": 82
+    },
+    {
+      "id": "hunt_2_0",
+      "ru": "Чутьё",
+      "text": "+4 % к качеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuality",
+      "value": 0.04,
+      "icon": "gem",
+      "x": 56,
+      "y": 158
+    },
+    {
+      "id": "hunt_2_1",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 24,
+      "y": 166
+    },
+    {
+      "id": "hunt_3_0",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 84,
+      "y": 238
+    },
+    {
+      "id": "hunt_3_1",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 36,
+      "y": 249
+    },
+    {
+      "id": "hunt_4_0",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 123,
+      "y": 313
+    },
+    {
+      "id": "hunt_4_1",
+      "ru": "Чутьё на золото",
+      "text": "+20 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "notable",
+      "stat": "goldFind",
+      "value": 0.2,
+      "icon": "purse",
+      "x": 80,
+      "y": 326
+    },
+    {
+      "id": "hunt_4_2",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 37,
+      "y": 334
+    },
+    {
+      "id": "hunt_5_0",
+      "ru": "Чутьё",
+      "text": "+4 % к качеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuality",
+      "value": 0.04,
+      "icon": "gem",
+      "x": 153,
+      "y": 391
+    },
+    {
+      "id": "hunt_5_1",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 101,
+      "y": 408
+    },
+    {
+      "id": "hunt_5_2",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 46,
+      "y": 417
+    },
+    {
+      "id": "hunt_6_0",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 184,
+      "y": 469
+    },
+    {
+      "id": "hunt_6_1",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 121,
+      "y": 489
+    },
+    {
+      "id": "hunt_6_2",
+      "ru": "Чутьё",
+      "text": "+4 % к качеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuality",
+      "value": 0.04,
+      "icon": "gem",
+      "x": 55,
+      "y": 501
+    },
+    {
+      "id": "hunt_7_0",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 215,
+      "y": 547
+    },
+    {
+      "id": "hunt_7_1",
+      "ru": "Знаток",
+      "text": "+15 % к качеству добычи",
+      "cluster": "hunt",
+      "kind": "notable",
+      "stat": "lootQuality",
+      "value": 0.15,
+      "icon": "gem",
+      "x": 141,
+      "y": 571
+    },
+    {
+      "id": "hunt_7_2",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 64,
+      "y": 584
+    },
+    {
+      "id": "hunt_8_0",
+      "ru": "Чутьё",
+      "text": "+4 % к качеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuality",
+      "value": 0.04,
+      "icon": "gem",
+      "x": 245,
+      "y": 626
+    },
+    {
+      "id": "hunt_8_1",
+      "ru": "Намётанный глаз",
+      "text": "+5 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "lootQuantity",
+      "value": 0.05,
+      "icon": "coin",
+      "x": 161,
+      "y": 652
+    },
+    {
+      "id": "hunt_8_2",
+      "ru": "Кошель",
+      "text": "+12 % к находимому золоту",
+      "cluster": "hunt",
+      "kind": "stat",
+      "stat": "goldFind",
+      "value": 0.12,
+      "icon": "purse",
+      "x": 73,
+      "y": 668
+    },
+    {
+      "id": "hunt_9_0",
+      "ru": "Тяжёлая поступь",
+      "text": "4 % максимума HP считается бронёй",
+      "cluster": "hunt",
+      "kind": "notable",
+      "icon": "plate",
+      "rule": "hpToArmor",
+      "ruleValue": 0.04,
+      "x": 276,
+      "y": 704
+    },
+    {
+      "id": "hunt_9_1",
+      "ru": "Добытчик",
+      "text": "+18 % к количеству добычи",
+      "cluster": "hunt",
+      "kind": "notable",
+      "stat": "lootQuantity",
+      "value": 0.18,
+      "icon": "coin",
+      "x": 181,
+      "y": 734
+    },
+    {
+      "id": "hunt_9_2",
+      "ru": "Мародёр",
+      "text": "+40 % к количеству добычи, но −25 % к максимуму HP",
+      "cluster": "hunt",
+      "kind": "keystone",
+      "stat": "lootQuantity",
+      "value": 0.4,
+      "penaltyStat": "maxHpPct",
+      "penalty": 0.25,
+      "icon": "coin",
+      "x": 83,
+      "y": 751
+    },
+    {
+      "id": "leech_1_0",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -20,
+      "y": 82
+    },
+    {
+      "id": "leech_2_0",
+      "ru": "Кровосток",
+      "text": "+1.2 восстановления HP в секунду",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.2,
+      "icon": "breath",
+      "x": -24,
+      "y": 166
+    },
+    {
+      "id": "leech_2_1",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -56,
+      "y": 158
+    },
+    {
+      "id": "leech_3_0",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -36,
+      "y": 249
+    },
+    {
+      "id": "leech_3_1",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -84,
+      "y": 238
+    },
+    {
+      "id": "leech_4_0",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -37,
+      "y": 334
+    },
+    {
+      "id": "leech_4_1",
+      "ru": "Кровосос",
+      "text": "+2 % вампиризма",
+      "cluster": "leech",
+      "kind": "notable",
+      "stat": "leech",
+      "value": 0.02,
+      "icon": "leech",
+      "x": -80,
+      "y": 326
+    },
+    {
+      "id": "leech_4_2",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -123,
+      "y": 313
+    },
+    {
+      "id": "leech_5_0",
+      "ru": "Кровосток",
+      "text": "+1.2 восстановления HP в секунду",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.2,
+      "icon": "breath",
+      "x": -46,
+      "y": 417
+    },
+    {
+      "id": "leech_5_1",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -101,
+      "y": 408
+    },
+    {
+      "id": "leech_5_2",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -153,
+      "y": 391
+    },
+    {
+      "id": "leech_6_0",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -55,
+      "y": 501
+    },
+    {
+      "id": "leech_6_1",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -121,
+      "y": 489
+    },
+    {
+      "id": "leech_6_2",
+      "ru": "Кровосток",
+      "text": "+1.2 восстановления HP в секунду",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.2,
+      "icon": "breath",
+      "x": -184,
+      "y": 469
+    },
+    {
+      "id": "leech_7_0",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -64,
+      "y": 584
+    },
+    {
+      "id": "leech_7_1",
+      "ru": "Насыщение",
+      "text": "+2.5 % вампиризма",
+      "cluster": "leech",
+      "kind": "notable",
+      "stat": "leech",
+      "value": 0.025,
+      "icon": "chalice",
+      "x": -141,
+      "y": 571
+    },
+    {
+      "id": "leech_7_2",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -215,
+      "y": 547
+    },
+    {
+      "id": "leech_8_0",
+      "ru": "Кровосток",
+      "text": "+1.2 восстановления HP в секунду",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "hpRegen",
+      "value": 1.2,
+      "icon": "breath",
+      "x": -73,
+      "y": 668
+    },
+    {
+      "id": "leech_8_1",
+      "ru": "Пиявка",
+      "text": "+0.8 % вампиризма",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "leech",
+      "value": 0.008,
+      "icon": "leech",
+      "x": -161,
+      "y": 652
+    },
+    {
+      "id": "leech_8_2",
+      "ru": "Жажда",
+      "text": "+7 % к урону Кровью",
+      "cluster": "leech",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.07,
+      "tag": "blood",
+      "icon": "chalice",
+      "x": -245,
+      "y": 626
+    },
+    {
+      "id": "leech_9_0",
+      "ru": "Кровь на клинке",
+      "text": "Критический удар восстанавливает 1 % максимума HP",
+      "cluster": "leech",
+      "kind": "notable",
+      "icon": "chalice",
+      "rule": "critHeal",
+      "ruleValue": 0.01,
+      "x": -83,
+      "y": 751
+    },
+    {
+      "id": "leech_9_1",
+      "ru": "Ненасытная кровь",
+      "text": "+3 % вампиризма",
+      "cluster": "leech",
+      "kind": "notable",
+      "stat": "leech",
+      "value": 0.03,
+      "icon": "leech",
+      "x": -181,
+      "y": 734
+    },
+    {
+      "id": "leech_9_2",
+      "ru": "Ненасытность",
+      "text": "+6 % вампиризма, но −30 % к максимуму HP",
+      "cluster": "leech",
+      "kind": "keystone",
+      "stat": "leech",
+      "value": 0.06,
+      "penaltyStat": "maxHpPct",
+      "penalty": 0.3,
+      "icon": "leech",
+      "x": -276,
+      "y": 704
+    },
+    {
+      "id": "ember_1_0",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -56,
+      "y": 63
+    },
+    {
+      "id": "ember_2_0",
+      "ru": "Тлеющий след",
+      "text": "+13 % к длительному урону",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "duration",
+      "icon": "ember",
+      "x": -98,
+      "y": 136
+    },
+    {
+      "id": "ember_2_1",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -123,
+      "y": 114
+    },
+    {
+      "id": "ember_3_0",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -148,
+      "y": 204
+    },
+    {
+      "id": "ember_3_1",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -185,
+      "y": 171
+    },
+    {
+      "id": "ember_4_0",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -188,
+      "y": 279
+    },
+    {
+      "id": "ember_4_1",
+      "ru": "Костёр",
+      "text": "+34 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.34,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -223,
+      "y": 251
+    },
+    {
+      "id": "ember_4_2",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -254,
+      "y": 220
+    },
+    {
+      "id": "ember_5_0",
+      "ru": "Тлеющий след",
+      "text": "+13 % к длительному урону",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "duration",
+      "icon": "ember",
+      "x": -235,
+      "y": 348
+    },
+    {
+      "id": "ember_5_1",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -279,
+      "y": 314
+    },
+    {
+      "id": "ember_5_2",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -317,
+      "y": 275
+    },
+    {
+      "id": "ember_6_0",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -282,
+      "y": 418
+    },
+    {
+      "id": "ember_6_1",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -334,
+      "y": 377
+    },
+    {
+      "id": "ember_6_2",
+      "ru": "Тлеющий след",
+      "text": "+13 % к длительному урону",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "duration",
+      "icon": "ember",
+      "x": -381,
+      "y": 330
+    },
+    {
+      "id": "ember_7_0",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -329,
+      "y": 488
+    },
+    {
+      "id": "ember_7_1",
+      "ru": "Горнило",
+      "text": "+26 % к урону Чарами",
+      "cluster": "ember",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.26,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -390,
+      "y": 440
+    },
+    {
+      "id": "ember_7_2",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -444,
+      "y": 385
+    },
+    {
+      "id": "ember_8_0",
+      "ru": "Тлеющий след",
+      "text": "+13 % к длительному урону",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "duration",
+      "icon": "ember",
+      "x": -375,
+      "y": 557
+    },
+    {
+      "id": "ember_8_1",
+      "ru": "Уголёк",
+      "text": "+15 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -446,
+      "y": 503
+    },
+    {
+      "id": "ember_8_2",
+      "ru": "Жар",
+      "text": "+7 к сопротивлению огню",
+      "cluster": "ember",
+      "kind": "stat",
+      "stat": "resistFire",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -508,
+      "y": 440
+    },
+    {
+      "id": "ember_9_0",
+      "ru": "Тлеющий уголь",
+      "text": "Длительный урон на 35 % сильнее",
+      "cluster": "ember",
+      "kind": "notable",
+      "icon": "ember",
+      "rule": "dotMoreDamage",
+      "ruleValue": 0.35,
+      "x": -422,
+      "y": 627
+    },
+    {
+      "id": "ember_9_1",
+      "ru": "Пожарище",
+      "text": "+45 % к урону Огнём",
+      "cluster": "ember",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.45,
+      "tag": "fire",
+      "icon": "flame",
+      "x": -501,
+      "y": 566
+    },
+    {
+      "id": "ember_9_2",
+      "ru": "Выжженная земля",
+      "text": "+130 % к урону Огнём, но −35 % к максимуму HP",
+      "cluster": "ember",
+      "kind": "keystone",
+      "stat": "tagDamage",
+      "value": 1.3,
+      "tag": "fire",
+      "penaltyStat": "maxHpPct",
+      "penalty": 0.35,
+      "icon": "flame",
+      "x": -571,
+      "y": 495
+    },
+    {
+      "id": "frost_1_0",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -79,
+      "y": 30
+    },
+    {
+      "id": "frost_2_0",
+      "ru": "Ледяная крошка",
+      "text": "+13 % к урону Снарядами",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "projectile",
+      "icon": "icicle",
+      "x": -150,
+      "y": 75
+    },
+    {
+      "id": "frost_2_1",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -162,
+      "y": 44
+    },
+    {
+      "id": "frost_3_0",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -226,
+      "y": 112
+    },
+    {
+      "id": "frost_3_1",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -243,
+      "y": 66
+    },
+    {
+      "id": "frost_4_0",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -296,
+      "y": 159
+    },
+    {
+      "id": "frost_4_1",
+      "ru": "Наст",
+      "text": "+34 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.34,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -314,
+      "y": 119
+    },
+    {
+      "id": "frost_4_2",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -327,
+      "y": 77
+    },
+    {
+      "id": "frost_5_0",
+      "ru": "Ледяная крошка",
+      "text": "+13 % к урону Снарядами",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "projectile",
+      "icon": "icicle",
+      "x": -370,
+      "y": 199
+    },
+    {
+      "id": "frost_5_1",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -393,
+      "y": 149
+    },
+    {
+      "id": "frost_5_2",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -409,
+      "y": 96
+    },
+    {
+      "id": "frost_6_0",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -444,
+      "y": 239
+    },
+    {
+      "id": "frost_6_1",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -471,
+      "y": 179
+    },
+    {
+      "id": "frost_6_2",
+      "ru": "Ледяная крошка",
+      "text": "+13 % к урону Снарядами",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "projectile",
+      "icon": "icicle",
+      "x": -491,
+      "y": 115
+    },
+    {
+      "id": "frost_7_0",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -518,
+      "y": 279
+    },
+    {
+      "id": "frost_7_1",
+      "ru": "Панцирь льда",
+      "text": "+14 % к броне",
+      "cluster": "frost",
+      "kind": "notable",
+      "stat": "armorPct",
+      "value": 0.14,
+      "icon": "icicle",
+      "x": -550,
+      "y": 209
+    },
+    {
+      "id": "frost_7_2",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -572,
+      "y": 134
+    },
+    {
+      "id": "frost_8_0",
+      "ru": "Ледяная крошка",
+      "text": "+13 % к урону Снарядами",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "projectile",
+      "icon": "icicle",
+      "x": -591,
+      "y": 319
+    },
+    {
+      "id": "frost_8_1",
+      "ru": "Иней",
+      "text": "+15 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -628,
+      "y": 238
+    },
+    {
+      "id": "frost_8_2",
+      "ru": "Стужа",
+      "text": "+7 к сопротивлению холоду",
+      "cluster": "frost",
+      "kind": "stat",
+      "stat": "resistCold",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -654,
+      "y": 153
+    },
+    {
+      "id": "frost_9_0",
+      "ru": "Стылая хватка",
+      "text": "Ваши удары замедляют цель на 20 %",
+      "cluster": "frost",
+      "kind": "notable",
+      "icon": "icicle",
+      "rule": "chillOnHit",
+      "ruleValue": 0.2,
+      "x": -665,
+      "y": 359
+    },
+    {
+      "id": "frost_9_1",
+      "ru": "Вечная мерзлота",
+      "text": "+45 % к урону Холодом",
+      "cluster": "frost",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.45,
+      "tag": "cold",
+      "icon": "snowflake",
+      "x": -707,
+      "y": 268
+    },
+    {
+      "id": "frost_9_2",
+      "ru": "Ледяное сердце",
+      "text": "+130 % к урону Холодом, но −30 % к скорости атаки",
+      "cluster": "frost",
+      "kind": "keystone",
+      "stat": "tagDamage",
+      "value": 1.3,
+      "tag": "cold",
+      "penaltyStat": "increasedAttackSpeed",
+      "penalty": 0.3,
+      "icon": "snowflake",
+      "x": -736,
+      "y": 173
+    },
+    {
+      "id": "storm_1_0",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -83,
+      "y": -10
+    },
+    {
+      "id": "storm_2_0",
+      "ru": "Гул",
+      "text": "+13 % к урону по области",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "area",
+      "icon": "cloud",
+      "x": -168,
+      "y": -4
+    },
+    {
+      "id": "storm_2_1",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -164,
+      "y": -37
+    },
+    {
+      "id": "storm_3_0",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -252,
+      "y": -5
+    },
+    {
+      "id": "storm_3_1",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -246,
+      "y": -55
+    },
+    {
+      "id": "storm_4_0",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -336,
+      "y": 4
+    },
+    {
+      "id": "storm_4_1",
+      "ru": "Раскат",
+      "text": "+34 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.34,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -334,
+      "y": -41
+    },
+    {
+      "id": "storm_4_2",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -325,
+      "y": -84
+    },
+    {
+      "id": "storm_5_0",
+      "ru": "Гул",
+      "text": "+13 % к урону по области",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "area",
+      "icon": "cloud",
+      "x": -420,
+      "y": 5
+    },
+    {
+      "id": "storm_5_1",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -417,
+      "y": -51
+    },
+    {
+      "id": "storm_5_2",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -407,
+      "y": -105
+    },
+    {
+      "id": "storm_6_0",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -504,
+      "y": 6
+    },
+    {
+      "id": "storm_6_1",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -500,
+      "y": -61
+    },
+    {
+      "id": "storm_6_2",
+      "ru": "Гул",
+      "text": "+13 % к урону по области",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "area",
+      "icon": "cloud",
+      "x": -488,
+      "y": -126
+    },
+    {
+      "id": "storm_7_0",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -588,
+      "y": 7
+    },
+    {
+      "id": "storm_7_1",
+      "ru": "Ветер перед бурей",
+      "text": "−12 % ко времени перезарядки",
+      "cluster": "storm",
+      "kind": "notable",
+      "stat": "cooldownReduction",
+      "value": 0.12,
+      "icon": "cloud",
+      "x": -584,
+      "y": -71
+    },
+    {
+      "id": "storm_7_2",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -569,
+      "y": -147
+    },
+    {
+      "id": "storm_8_0",
+      "ru": "Гул",
+      "text": "+13 % к урону по области",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "area",
+      "icon": "cloud",
+      "x": -672,
+      "y": 8
+    },
+    {
+      "id": "storm_8_1",
+      "ru": "Статика",
+      "text": "+15 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -667,
+      "y": -81
+    },
+    {
+      "id": "storm_8_2",
+      "ru": "Заземление",
+      "text": "+7 к сопротивлению молнии",
+      "cluster": "storm",
+      "kind": "stat",
+      "stat": "resistLightning",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -651,
+      "y": -168
+    },
+    {
+      "id": "storm_9_0",
+      "ru": "Перескок",
+      "text": "Урон Молнией задевает вторую цель — на 35 % от нанесённого",
+      "cluster": "storm",
+      "kind": "notable",
+      "icon": "bolt",
+      "rule": "shockSplash",
+      "ruleValue": 0.35,
+      "x": -756,
+      "y": 9
+    },
+    {
+      "id": "storm_9_1",
+      "ru": "Громовержец",
+      "text": "+45 % к урону Молнией",
+      "cluster": "storm",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.45,
+      "tag": "lightning",
+      "icon": "bolt",
+      "x": -750,
+      "y": -91
+    },
+    {
+      "id": "storm_9_2",
+      "ru": "Буревестник",
+      "text": "+130 % к урону Молнией, но −40 % к броне",
+      "cluster": "storm",
+      "kind": "keystone",
+      "stat": "tagDamage",
+      "value": 1.3,
+      "tag": "lightning",
+      "penaltyStat": "armorPct",
+      "penalty": 0.4,
+      "icon": "cloud",
+      "x": -732,
+      "y": -189
+    },
+    {
+      "id": "abyss_1_0",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -69,
+      "y": -48
+    },
+    {
+      "id": "abyss_2_0",
+      "ru": "Дурной глаз",
+      "text": "+13 % к урону Проклятиями",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "curse",
+      "icon": "skull",
+      "x": -147,
+      "y": -81
+    },
+    {
+      "id": "abyss_2_1",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -128,
+      "y": -109
+    },
+    {
+      "id": "abyss_3_0",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -221,
+      "y": -122
+    },
+    {
+      "id": "abyss_3_1",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -192,
+      "y": -163
+    },
+    {
+      "id": "abyss_4_0",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -299,
+      "y": -153
+    },
+    {
+      "id": "abyss_4_1",
+      "ru": "Провал",
+      "text": "+34 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.34,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -277,
+      "y": -191
+    },
+    {
+      "id": "abyss_4_2",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -249,
+      "y": -226
+    },
+    {
+      "id": "abyss_5_0",
+      "ru": "Дурной глаз",
+      "text": "+13 % к урону Проклятиями",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "curse",
+      "icon": "skull",
+      "x": -374,
+      "y": -191
+    },
+    {
+      "id": "abyss_5_1",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -346,
+      "y": -239
+    },
+    {
+      "id": "abyss_5_2",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -311,
+      "y": -282
+    },
+    {
+      "id": "abyss_6_0",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -449,
+      "y": -229
+    },
+    {
+      "id": "abyss_6_1",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -415,
+      "y": -286
+    },
+    {
+      "id": "abyss_6_2",
+      "ru": "Дурной глаз",
+      "text": "+13 % к урону Проклятиями",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "curse",
+      "icon": "skull",
+      "x": -373,
+      "y": -338
+    },
+    {
+      "id": "abyss_7_0",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -524,
+      "y": -267
+    },
+    {
+      "id": "abyss_7_1",
+      "ru": "Немой зов",
+      "text": "+26 % к урону Тотемами",
+      "cluster": "abyss",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.26,
+      "tag": "totem",
+      "icon": "skull",
+      "x": -484,
+      "y": -334
+    },
+    {
+      "id": "abyss_7_2",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -436,
+      "y": -395
+    },
+    {
+      "id": "abyss_8_0",
+      "ru": "Дурной глаз",
+      "text": "+13 % к урону Проклятиями",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.13,
+      "tag": "curse",
+      "icon": "skull",
+      "x": -599,
+      "y": -306
+    },
+    {
+      "id": "abyss_8_1",
+      "ru": "Шёпот",
+      "text": "+15 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -553,
+      "y": -382
+    },
+    {
+      "id": "abyss_8_2",
+      "ru": "Отрешённость",
+      "text": "+7 к сопротивлению пустоте",
+      "cluster": "abyss",
+      "kind": "stat",
+      "stat": "resistVoid",
+      "value": 7.0,
+      "icon": "ward",
+      "x": -498,
+      "y": -451
+    },
+    {
+      "id": "abyss_9_0",
+      "ru": "Печать увядания",
+      "text": "По проклятым целям вы бьёте на 30 % сильнее",
+      "cluster": "abyss",
+      "kind": "notable",
+      "icon": "skull",
+      "rule": "curseMoreDamage",
+      "ruleValue": 0.3,
+      "x": -673,
+      "y": -344
+    },
+    {
+      "id": "abyss_9_1",
+      "ru": "Голодная тьма",
+      "text": "+45 % к урону Пустотой",
+      "cluster": "abyss",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.45,
+      "tag": "voidTag",
+      "icon": "rift",
+      "x": -622,
+      "y": -429
+    },
+    {
+      "id": "abyss_9_2",
+      "ru": "Пустой сосуд",
+      "text": "+130 % к урону Пустотой, но −45 к максимуму маны",
+      "cluster": "abyss",
+      "kind": "keystone",
+      "stat": "tagDamage",
+      "value": 1.3,
+      "tag": "voidTag",
+      "penaltyStat": "maxMana",
+      "penalty": 45.0,
+      "icon": "rift",
+      "x": -560,
+      "y": -508
+    },
+    {
+      "id": "arcane_1_0",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -39,
+      "y": -74
+    },
+    {
+      "id": "arcane_2_0",
+      "ru": "Шёпот строк",
+      "text": "+10 к максимуму маны",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 10.0,
+      "icon": "mana",
+      "x": -92,
+      "y": -140
+    },
+    {
+      "id": "arcane_2_1",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -63,
+      "y": -156
+    },
+    {
+      "id": "arcane_3_0",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -139,
+      "y": -210
+    },
+    {
+      "id": "arcane_3_1",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -94,
+      "y": -234
+    },
+    {
+      "id": "arcane_4_0",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -194,
+      "y": -274
+    },
+    {
+      "id": "arcane_4_1",
+      "ru": "Формула",
+      "text": "+7 к силе чар",
+      "cluster": "arcane",
+      "kind": "notable",
+      "stat": "spellPower",
+      "value": 7.0,
+      "icon": "orb",
+      "x": -156,
+      "y": -298
+    },
+    {
+      "id": "arcane_4_2",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -116,
+      "y": -315
+    },
+    {
+      "id": "arcane_5_0",
+      "ru": "Шёпот строк",
+      "text": "+10 к максимуму маны",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 10.0,
+      "icon": "mana",
+      "x": -242,
+      "y": -343
+    },
+    {
+      "id": "arcane_5_1",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -195,
+      "y": -372
+    },
+    {
+      "id": "arcane_5_2",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -144,
+      "y": -394
+    },
+    {
+      "id": "arcane_6_0",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -291,
+      "y": -412
+    },
+    {
+      "id": "arcane_6_1",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -234,
+      "y": -446
+    },
+    {
+      "id": "arcane_6_2",
+      "ru": "Шёпот строк",
+      "text": "+10 к максимуму маны",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 10.0,
+      "icon": "mana",
+      "x": -173,
+      "y": -473
+    },
+    {
+      "id": "arcane_7_0",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -339,
+      "y": -480
+    },
+    {
+      "id": "arcane_7_1",
+      "ru": "Свод заклятий",
+      "text": "+30 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "notable",
+      "stat": "tagDamage",
+      "value": 0.3,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -273,
+      "y": -521
+    },
+    {
+      "id": "arcane_7_2",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -202,
+      "y": -552
+    },
+    {
+      "id": "arcane_8_0",
+      "ru": "Шёпот строк",
+      "text": "+10 к максимуму маны",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "maxMana",
+      "value": 10.0,
+      "icon": "mana",
+      "x": -388,
+      "y": -549
+    },
+    {
+      "id": "arcane_8_1",
+      "ru": "Наговор",
+      "text": "+15 % к урону Чарами",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "tagDamage",
+      "value": 0.15,
+      "tag": "spell",
+      "icon": "rune",
+      "x": -312,
+      "y": -595
+    },
+    {
+      "id": "arcane_8_2",
+      "ru": "Знание",
+      "text": "+3 к силе чар",
+      "cluster": "arcane",
+      "kind": "stat",
+      "stat": "spellPower",
+      "value": 3.0,
+      "icon": "orb",
+      "x": -231,
+      "y": -631
+    },
+    {
+      "id": "arcane_9_0",
+      "ru": "Ум как сосуд",
+      "text": "+1 к силе чар за каждые 8 маны в запасе",
+      "cluster": "arcane",
+      "kind": "notable",
+      "icon": "mana",
+      "rule": "manaToSpellPower",
+      "ruleValue": 0.125,
+      "x": -436,
+      "y": -617
+    },
+    {
+      "id": "arcane_9_1",
+      "ru": "Высокое искусство",
+      "text": "+11 к силе чар",
+      "cluster": "arcane",
+      "kind": "notable",
+      "stat": "spellPower",
+      "value": 11.0,
+      "icon": "orb",
+      "x": -351,
+      "y": -669
+    },
+    {
+      "id": "arcane_9_2",
+      "ru": "Отречение от стали",
+      "text": "+145 % к урону Чарами, но −50 % к скорости атаки",
+      "cluster": "arcane",
+      "kind": "keystone",
+      "stat": "tagDamage",
+      "value": 1.45,
+      "tag": "spell",
+      "penaltyStat": "increasedAttackSpeed",
+      "penalty": 0.5,
+      "icon": "rune",
+      "x": -260,
+      "y": -710
+    }
+  ],
+  "links": [
+    {
+      "from": "root",
+      "to": "flesh_1_0"
+    },
+    {
+      "from": "flesh_1_0",
+      "to": "flesh_2_0"
+    },
+    {
+      "from": "flesh_1_0",
+      "to": "flesh_2_1"
+    },
+    {
+      "from": "flesh_2_0",
+      "to": "flesh_3_0"
+    },
+    {
+      "from": "flesh_2_1",
+      "to": "flesh_3_1"
+    },
+    {
+      "from": "flesh_3_0",
+      "to": "flesh_4_0"
+    },
+    {
+      "from": "flesh_3_1",
+      "to": "flesh_4_1"
+    },
+    {
+      "from": "flesh_3_1",
+      "to": "flesh_4_2"
+    },
+    {
+      "from": "flesh_4_0",
+      "to": "flesh_5_0"
+    },
+    {
+      "from": "flesh_4_1",
+      "to": "flesh_5_1"
+    },
+    {
+      "from": "flesh_4_2",
+      "to": "flesh_5_2"
+    },
+    {
+      "from": "flesh_5_0",
+      "to": "flesh_6_0"
+    },
+    {
+      "from": "flesh_5_1",
+      "to": "flesh_6_1"
+    },
+    {
+      "from": "flesh_5_2",
+      "to": "flesh_6_2"
+    },
+    {
+      "from": "flesh_6_0",
+      "to": "flesh_7_0"
+    },
+    {
+      "from": "flesh_6_1",
+      "to": "flesh_7_1"
+    },
+    {
+      "from": "flesh_6_2",
+      "to": "flesh_7_2"
+    },
+    {
+      "from": "flesh_7_0",
+      "to": "flesh_8_0"
+    },
+    {
+      "from": "flesh_7_1",
+      "to": "flesh_8_1"
+    },
+    {
+      "from": "flesh_7_2",
+      "to": "flesh_8_2"
+    },
+    {
+      "from": "flesh_8_0",
+      "to": "flesh_9_0"
+    },
+    {
+      "from": "flesh_8_1",
+      "to": "flesh_9_1"
+    },
+    {
+      "from": "flesh_8_2",
+      "to": "flesh_9_2"
+    },
+    {
+      "from": "root",
+      "to": "stone_1_0"
+    },
+    {
+      "from": "stone_1_0",
+      "to": "stone_2_0"
+    },
+    {
+      "from": "stone_1_0",
+      "to": "stone_2_1"
+    },
+    {
+      "from": "stone_2_0",
+      "to": "stone_3_0"
+    },
+    {
+      "from": "stone_2_1",
+      "to": "stone_3_1"
+    },
+    {
+      "from": "stone_3_0",
+      "to": "stone_4_0"
+    },
+    {
+      "from": "stone_3_1",
+      "to": "stone_4_1"
+    },
+    {
+      "from": "stone_3_1",
+      "to": "stone_4_2"
+    },
+    {
+      "from": "stone_4_0",
+      "to": "stone_5_0"
+    },
+    {
+      "from": "stone_4_1",
+      "to": "stone_5_1"
+    },
+    {
+      "from": "stone_4_2",
+      "to": "stone_5_2"
+    },
+    {
+      "from": "stone_5_0",
+      "to": "stone_6_0"
+    },
+    {
+      "from": "stone_5_1",
+      "to": "stone_6_1"
+    },
+    {
+      "from": "stone_5_2",
+      "to": "stone_6_2"
+    },
+    {
+      "from": "stone_6_0",
+      "to": "stone_7_0"
+    },
+    {
+      "from": "stone_6_1",
+      "to": "stone_7_1"
+    },
+    {
+      "from": "stone_6_2",
+      "to": "stone_7_2"
+    },
+    {
+      "from": "stone_7_0",
+      "to": "stone_8_0"
+    },
+    {
+      "from": "stone_7_1",
+      "to": "stone_8_1"
+    },
+    {
+      "from": "stone_7_2",
+      "to": "stone_8_2"
+    },
+    {
+      "from": "stone_8_0",
+      "to": "stone_9_0"
+    },
+    {
+      "from": "stone_8_1",
+      "to": "stone_9_1"
+    },
+    {
+      "from": "stone_8_2",
+      "to": "stone_9_2"
+    },
+    {
+      "from": "root",
+      "to": "fang_1_0"
+    },
+    {
+      "from": "fang_1_0",
+      "to": "fang_2_0"
+    },
+    {
+      "from": "fang_1_0",
+      "to": "fang_2_1"
+    },
+    {
+      "from": "fang_2_0",
+      "to": "fang_3_0"
+    },
+    {
+      "from": "fang_2_1",
+      "to": "fang_3_1"
+    },
+    {
+      "from": "fang_3_0",
+      "to": "fang_4_0"
+    },
+    {
+      "from": "fang_3_1",
+      "to": "fang_4_1"
+    },
+    {
+      "from": "fang_3_1",
+      "to": "fang_4_2"
+    },
+    {
+      "from": "fang_4_0",
+      "to": "fang_5_0"
+    },
+    {
+      "from": "fang_4_1",
+      "to": "fang_5_1"
+    },
+    {
+      "from": "fang_4_2",
+      "to": "fang_5_2"
+    },
+    {
+      "from": "fang_5_0",
+      "to": "fang_6_0"
+    },
+    {
+      "from": "fang_5_1",
+      "to": "fang_6_1"
+    },
+    {
+      "from": "fang_5_2",
+      "to": "fang_6_2"
+    },
+    {
+      "from": "fang_6_0",
+      "to": "fang_7_0"
+    },
+    {
+      "from": "fang_6_1",
+      "to": "fang_7_1"
+    },
+    {
+      "from": "fang_6_2",
+      "to": "fang_7_2"
+    },
+    {
+      "from": "fang_7_0",
+      "to": "fang_8_0"
+    },
+    {
+      "from": "fang_7_1",
+      "to": "fang_8_1"
+    },
+    {
+      "from": "fang_7_2",
+      "to": "fang_8_2"
+    },
+    {
+      "from": "fang_8_0",
+      "to": "fang_9_0"
+    },
+    {
+      "from": "fang_8_1",
+      "to": "fang_9_1"
+    },
+    {
+      "from": "fang_8_2",
+      "to": "fang_9_2"
+    },
+    {
+      "from": "root",
+      "to": "spark_1_0"
+    },
+    {
+      "from": "spark_1_0",
+      "to": "spark_2_0"
+    },
+    {
+      "from": "spark_1_0",
+      "to": "spark_2_1"
+    },
+    {
+      "from": "spark_2_0",
+      "to": "spark_3_0"
+    },
+    {
+      "from": "spark_2_1",
+      "to": "spark_3_1"
+    },
+    {
+      "from": "spark_3_0",
+      "to": "spark_4_0"
+    },
+    {
+      "from": "spark_3_1",
+      "to": "spark_4_1"
+    },
+    {
+      "from": "spark_3_1",
+      "to": "spark_4_2"
+    },
+    {
+      "from": "spark_4_0",
+      "to": "spark_5_0"
+    },
+    {
+      "from": "spark_4_1",
+      "to": "spark_5_1"
+    },
+    {
+      "from": "spark_4_2",
+      "to": "spark_5_2"
+    },
+    {
+      "from": "spark_5_0",
+      "to": "spark_6_0"
+    },
+    {
+      "from": "spark_5_1",
+      "to": "spark_6_1"
+    },
+    {
+      "from": "spark_5_2",
+      "to": "spark_6_2"
+    },
+    {
+      "from": "spark_6_0",
+      "to": "spark_7_0"
+    },
+    {
+      "from": "spark_6_1",
+      "to": "spark_7_1"
+    },
+    {
+      "from": "spark_6_2",
+      "to": "spark_7_2"
+    },
+    {
+      "from": "spark_7_0",
+      "to": "spark_8_0"
+    },
+    {
+      "from": "spark_7_1",
+      "to": "spark_8_1"
+    },
+    {
+      "from": "spark_7_2",
+      "to": "spark_8_2"
+    },
+    {
+      "from": "spark_8_0",
+      "to": "spark_9_0"
+    },
+    {
+      "from": "spark_8_1",
+      "to": "spark_9_1"
+    },
+    {
+      "from": "spark_8_2",
+      "to": "spark_9_2"
+    },
+    {
+      "from": "root",
+      "to": "wind_1_0"
+    },
+    {
+      "from": "wind_1_0",
+      "to": "wind_2_0"
+    },
+    {
+      "from": "wind_1_0",
+      "to": "wind_2_1"
+    },
+    {
+      "from": "wind_2_0",
+      "to": "wind_3_0"
+    },
+    {
+      "from": "wind_2_1",
+      "to": "wind_3_1"
+    },
+    {
+      "from": "wind_3_0",
+      "to": "wind_4_0"
+    },
+    {
+      "from": "wind_3_1",
+      "to": "wind_4_1"
+    },
+    {
+      "from": "wind_3_1",
+      "to": "wind_4_2"
+    },
+    {
+      "from": "wind_4_0",
+      "to": "wind_5_0"
+    },
+    {
+      "from": "wind_4_1",
+      "to": "wind_5_1"
+    },
+    {
+      "from": "wind_4_2",
+      "to": "wind_5_2"
+    },
+    {
+      "from": "wind_5_0",
+      "to": "wind_6_0"
+    },
+    {
+      "from": "wind_5_1",
+      "to": "wind_6_1"
+    },
+    {
+      "from": "wind_5_2",
+      "to": "wind_6_2"
+    },
+    {
+      "from": "wind_6_0",
+      "to": "wind_7_0"
+    },
+    {
+      "from": "wind_6_1",
+      "to": "wind_7_1"
+    },
+    {
+      "from": "wind_6_2",
+      "to": "wind_7_2"
+    },
+    {
+      "from": "wind_7_0",
+      "to": "wind_8_0"
+    },
+    {
+      "from": "wind_7_1",
+      "to": "wind_8_1"
+    },
+    {
+      "from": "wind_7_2",
+      "to": "wind_8_2"
+    },
+    {
+      "from": "wind_8_0",
+      "to": "wind_9_0"
+    },
+    {
+      "from": "wind_8_1",
+      "to": "wind_9_1"
+    },
+    {
+      "from": "wind_8_2",
+      "to": "wind_9_2"
+    },
+    {
+      "from": "root",
+      "to": "mind_1_0"
+    },
+    {
+      "from": "mind_1_0",
+      "to": "mind_2_0"
+    },
+    {
+      "from": "mind_1_0",
+      "to": "mind_2_1"
+    },
+    {
+      "from": "mind_2_0",
+      "to": "mind_3_0"
+    },
+    {
+      "from": "mind_2_1",
+      "to": "mind_3_1"
+    },
+    {
+      "from": "mind_3_0",
+      "to": "mind_4_0"
+    },
+    {
+      "from": "mind_3_1",
+      "to": "mind_4_1"
+    },
+    {
+      "from": "mind_3_1",
+      "to": "mind_4_2"
+    },
+    {
+      "from": "mind_4_0",
+      "to": "mind_5_0"
+    },
+    {
+      "from": "mind_4_1",
+      "to": "mind_5_1"
+    },
+    {
+      "from": "mind_4_2",
+      "to": "mind_5_2"
+    },
+    {
+      "from": "mind_5_0",
+      "to": "mind_6_0"
+    },
+    {
+      "from": "mind_5_1",
+      "to": "mind_6_1"
+    },
+    {
+      "from": "mind_5_2",
+      "to": "mind_6_2"
+    },
+    {
+      "from": "mind_6_0",
+      "to": "mind_7_0"
+    },
+    {
+      "from": "mind_6_1",
+      "to": "mind_7_1"
+    },
+    {
+      "from": "mind_6_2",
+      "to": "mind_7_2"
+    },
+    {
+      "from": "mind_7_0",
+      "to": "mind_8_0"
+    },
+    {
+      "from": "mind_7_1",
+      "to": "mind_8_1"
+    },
+    {
+      "from": "mind_7_2",
+      "to": "mind_8_2"
+    },
+    {
+      "from": "mind_8_0",
+      "to": "mind_9_0"
+    },
+    {
+      "from": "mind_8_1",
+      "to": "mind_9_1"
+    },
+    {
+      "from": "mind_8_2",
+      "to": "mind_9_2"
+    },
+    {
+      "from": "root",
+      "to": "hunt_1_0"
+    },
+    {
+      "from": "hunt_1_0",
+      "to": "hunt_2_0"
+    },
+    {
+      "from": "hunt_1_0",
+      "to": "hunt_2_1"
+    },
+    {
+      "from": "hunt_2_0",
+      "to": "hunt_3_0"
+    },
+    {
+      "from": "hunt_2_1",
+      "to": "hunt_3_1"
+    },
+    {
+      "from": "hunt_3_0",
+      "to": "hunt_4_0"
+    },
+    {
+      "from": "hunt_3_1",
+      "to": "hunt_4_1"
+    },
+    {
+      "from": "hunt_3_1",
+      "to": "hunt_4_2"
+    },
+    {
+      "from": "hunt_4_0",
+      "to": "hunt_5_0"
+    },
+    {
+      "from": "hunt_4_1",
+      "to": "hunt_5_1"
+    },
+    {
+      "from": "hunt_4_2",
+      "to": "hunt_5_2"
+    },
+    {
+      "from": "hunt_5_0",
+      "to": "hunt_6_0"
+    },
+    {
+      "from": "hunt_5_1",
+      "to": "hunt_6_1"
+    },
+    {
+      "from": "hunt_5_2",
+      "to": "hunt_6_2"
+    },
+    {
+      "from": "hunt_6_0",
+      "to": "hunt_7_0"
+    },
+    {
+      "from": "hunt_6_1",
+      "to": "hunt_7_1"
+    },
+    {
+      "from": "hunt_6_2",
+      "to": "hunt_7_2"
+    },
+    {
+      "from": "hunt_7_0",
+      "to": "hunt_8_0"
+    },
+    {
+      "from": "hunt_7_1",
+      "to": "hunt_8_1"
+    },
+    {
+      "from": "hunt_7_2",
+      "to": "hunt_8_2"
+    },
+    {
+      "from": "hunt_8_0",
+      "to": "hunt_9_0"
+    },
+    {
+      "from": "hunt_8_1",
+      "to": "hunt_9_1"
+    },
+    {
+      "from": "hunt_8_2",
+      "to": "hunt_9_2"
+    },
+    {
+      "from": "root",
+      "to": "leech_1_0"
+    },
+    {
+      "from": "leech_1_0",
+      "to": "leech_2_0"
+    },
+    {
+      "from": "leech_1_0",
+      "to": "leech_2_1"
+    },
+    {
+      "from": "leech_2_0",
+      "to": "leech_3_0"
+    },
+    {
+      "from": "leech_2_1",
+      "to": "leech_3_1"
+    },
+    {
+      "from": "leech_3_0",
+      "to": "leech_4_0"
+    },
+    {
+      "from": "leech_3_1",
+      "to": "leech_4_1"
+    },
+    {
+      "from": "leech_3_1",
+      "to": "leech_4_2"
+    },
+    {
+      "from": "leech_4_0",
+      "to": "leech_5_0"
+    },
+    {
+      "from": "leech_4_1",
+      "to": "leech_5_1"
+    },
+    {
+      "from": "leech_4_2",
+      "to": "leech_5_2"
+    },
+    {
+      "from": "leech_5_0",
+      "to": "leech_6_0"
+    },
+    {
+      "from": "leech_5_1",
+      "to": "leech_6_1"
+    },
+    {
+      "from": "leech_5_2",
+      "to": "leech_6_2"
+    },
+    {
+      "from": "leech_6_0",
+      "to": "leech_7_0"
+    },
+    {
+      "from": "leech_6_1",
+      "to": "leech_7_1"
+    },
+    {
+      "from": "leech_6_2",
+      "to": "leech_7_2"
+    },
+    {
+      "from": "leech_7_0",
+      "to": "leech_8_0"
+    },
+    {
+      "from": "leech_7_1",
+      "to": "leech_8_1"
+    },
+    {
+      "from": "leech_7_2",
+      "to": "leech_8_2"
+    },
+    {
+      "from": "leech_8_0",
+      "to": "leech_9_0"
+    },
+    {
+      "from": "leech_8_1",
+      "to": "leech_9_1"
+    },
+    {
+      "from": "leech_8_2",
+      "to": "leech_9_2"
+    },
+    {
+      "from": "root",
+      "to": "ember_1_0"
+    },
+    {
+      "from": "ember_1_0",
+      "to": "ember_2_0"
+    },
+    {
+      "from": "ember_1_0",
+      "to": "ember_2_1"
+    },
+    {
+      "from": "ember_2_0",
+      "to": "ember_3_0"
+    },
+    {
+      "from": "ember_2_1",
+      "to": "ember_3_1"
+    },
+    {
+      "from": "ember_3_0",
+      "to": "ember_4_0"
+    },
+    {
+      "from": "ember_3_1",
+      "to": "ember_4_1"
+    },
+    {
+      "from": "ember_3_1",
+      "to": "ember_4_2"
+    },
+    {
+      "from": "ember_4_0",
+      "to": "ember_5_0"
+    },
+    {
+      "from": "ember_4_1",
+      "to": "ember_5_1"
+    },
+    {
+      "from": "ember_4_2",
+      "to": "ember_5_2"
+    },
+    {
+      "from": "ember_5_0",
+      "to": "ember_6_0"
+    },
+    {
+      "from": "ember_5_1",
+      "to": "ember_6_1"
+    },
+    {
+      "from": "ember_5_2",
+      "to": "ember_6_2"
+    },
+    {
+      "from": "ember_6_0",
+      "to": "ember_7_0"
+    },
+    {
+      "from": "ember_6_1",
+      "to": "ember_7_1"
+    },
+    {
+      "from": "ember_6_2",
+      "to": "ember_7_2"
+    },
+    {
+      "from": "ember_7_0",
+      "to": "ember_8_0"
+    },
+    {
+      "from": "ember_7_1",
+      "to": "ember_8_1"
+    },
+    {
+      "from": "ember_7_2",
+      "to": "ember_8_2"
+    },
+    {
+      "from": "ember_8_0",
+      "to": "ember_9_0"
+    },
+    {
+      "from": "ember_8_1",
+      "to": "ember_9_1"
+    },
+    {
+      "from": "ember_8_2",
+      "to": "ember_9_2"
+    },
+    {
+      "from": "root",
+      "to": "frost_1_0"
+    },
+    {
+      "from": "frost_1_0",
+      "to": "frost_2_0"
+    },
+    {
+      "from": "frost_1_0",
+      "to": "frost_2_1"
+    },
+    {
+      "from": "frost_2_0",
+      "to": "frost_3_0"
+    },
+    {
+      "from": "frost_2_1",
+      "to": "frost_3_1"
+    },
+    {
+      "from": "frost_3_0",
+      "to": "frost_4_0"
+    },
+    {
+      "from": "frost_3_1",
+      "to": "frost_4_1"
+    },
+    {
+      "from": "frost_3_1",
+      "to": "frost_4_2"
+    },
+    {
+      "from": "frost_4_0",
+      "to": "frost_5_0"
+    },
+    {
+      "from": "frost_4_1",
+      "to": "frost_5_1"
+    },
+    {
+      "from": "frost_4_2",
+      "to": "frost_5_2"
+    },
+    {
+      "from": "frost_5_0",
+      "to": "frost_6_0"
+    },
+    {
+      "from": "frost_5_1",
+      "to": "frost_6_1"
+    },
+    {
+      "from": "frost_5_2",
+      "to": "frost_6_2"
+    },
+    {
+      "from": "frost_6_0",
+      "to": "frost_7_0"
+    },
+    {
+      "from": "frost_6_1",
+      "to": "frost_7_1"
+    },
+    {
+      "from": "frost_6_2",
+      "to": "frost_7_2"
+    },
+    {
+      "from": "frost_7_0",
+      "to": "frost_8_0"
+    },
+    {
+      "from": "frost_7_1",
+      "to": "frost_8_1"
+    },
+    {
+      "from": "frost_7_2",
+      "to": "frost_8_2"
+    },
+    {
+      "from": "frost_8_0",
+      "to": "frost_9_0"
+    },
+    {
+      "from": "frost_8_1",
+      "to": "frost_9_1"
+    },
+    {
+      "from": "frost_8_2",
+      "to": "frost_9_2"
+    },
+    {
+      "from": "root",
+      "to": "storm_1_0"
+    },
+    {
+      "from": "storm_1_0",
+      "to": "storm_2_0"
+    },
+    {
+      "from": "storm_1_0",
+      "to": "storm_2_1"
+    },
+    {
+      "from": "storm_2_0",
+      "to": "storm_3_0"
+    },
+    {
+      "from": "storm_2_1",
+      "to": "storm_3_1"
+    },
+    {
+      "from": "storm_3_0",
+      "to": "storm_4_0"
+    },
+    {
+      "from": "storm_3_1",
+      "to": "storm_4_1"
+    },
+    {
+      "from": "storm_3_1",
+      "to": "storm_4_2"
+    },
+    {
+      "from": "storm_4_0",
+      "to": "storm_5_0"
+    },
+    {
+      "from": "storm_4_1",
+      "to": "storm_5_1"
+    },
+    {
+      "from": "storm_4_2",
+      "to": "storm_5_2"
+    },
+    {
+      "from": "storm_5_0",
+      "to": "storm_6_0"
+    },
+    {
+      "from": "storm_5_1",
+      "to": "storm_6_1"
+    },
+    {
+      "from": "storm_5_2",
+      "to": "storm_6_2"
+    },
+    {
+      "from": "storm_6_0",
+      "to": "storm_7_0"
+    },
+    {
+      "from": "storm_6_1",
+      "to": "storm_7_1"
+    },
+    {
+      "from": "storm_6_2",
+      "to": "storm_7_2"
+    },
+    {
+      "from": "storm_7_0",
+      "to": "storm_8_0"
+    },
+    {
+      "from": "storm_7_1",
+      "to": "storm_8_1"
+    },
+    {
+      "from": "storm_7_2",
+      "to": "storm_8_2"
+    },
+    {
+      "from": "storm_8_0",
+      "to": "storm_9_0"
+    },
+    {
+      "from": "storm_8_1",
+      "to": "storm_9_1"
+    },
+    {
+      "from": "storm_8_2",
+      "to": "storm_9_2"
+    },
+    {
+      "from": "root",
+      "to": "abyss_1_0"
+    },
+    {
+      "from": "abyss_1_0",
+      "to": "abyss_2_0"
+    },
+    {
+      "from": "abyss_1_0",
+      "to": "abyss_2_1"
+    },
+    {
+      "from": "abyss_2_0",
+      "to": "abyss_3_0"
+    },
+    {
+      "from": "abyss_2_1",
+      "to": "abyss_3_1"
+    },
+    {
+      "from": "abyss_3_0",
+      "to": "abyss_4_0"
+    },
+    {
+      "from": "abyss_3_1",
+      "to": "abyss_4_1"
+    },
+    {
+      "from": "abyss_3_1",
+      "to": "abyss_4_2"
+    },
+    {
+      "from": "abyss_4_0",
+      "to": "abyss_5_0"
+    },
+    {
+      "from": "abyss_4_1",
+      "to": "abyss_5_1"
+    },
+    {
+      "from": "abyss_4_2",
+      "to": "abyss_5_2"
+    },
+    {
+      "from": "abyss_5_0",
+      "to": "abyss_6_0"
+    },
+    {
+      "from": "abyss_5_1",
+      "to": "abyss_6_1"
+    },
+    {
+      "from": "abyss_5_2",
+      "to": "abyss_6_2"
+    },
+    {
+      "from": "abyss_6_0",
+      "to": "abyss_7_0"
+    },
+    {
+      "from": "abyss_6_1",
+      "to": "abyss_7_1"
+    },
+    {
+      "from": "abyss_6_2",
+      "to": "abyss_7_2"
+    },
+    {
+      "from": "abyss_7_0",
+      "to": "abyss_8_0"
+    },
+    {
+      "from": "abyss_7_1",
+      "to": "abyss_8_1"
+    },
+    {
+      "from": "abyss_7_2",
+      "to": "abyss_8_2"
+    },
+    {
+      "from": "abyss_8_0",
+      "to": "abyss_9_0"
+    },
+    {
+      "from": "abyss_8_1",
+      "to": "abyss_9_1"
+    },
+    {
+      "from": "abyss_8_2",
+      "to": "abyss_9_2"
+    },
+    {
+      "from": "root",
+      "to": "arcane_1_0"
+    },
+    {
+      "from": "arcane_1_0",
+      "to": "arcane_2_0"
+    },
+    {
+      "from": "arcane_1_0",
+      "to": "arcane_2_1"
+    },
+    {
+      "from": "arcane_2_0",
+      "to": "arcane_3_0"
+    },
+    {
+      "from": "arcane_2_1",
+      "to": "arcane_3_1"
+    },
+    {
+      "from": "arcane_3_0",
+      "to": "arcane_4_0"
+    },
+    {
+      "from": "arcane_3_1",
+      "to": "arcane_4_1"
+    },
+    {
+      "from": "arcane_3_1",
+      "to": "arcane_4_2"
+    },
+    {
+      "from": "arcane_4_0",
+      "to": "arcane_5_0"
+    },
+    {
+      "from": "arcane_4_1",
+      "to": "arcane_5_1"
+    },
+    {
+      "from": "arcane_4_2",
+      "to": "arcane_5_2"
+    },
+    {
+      "from": "arcane_5_0",
+      "to": "arcane_6_0"
+    },
+    {
+      "from": "arcane_5_1",
+      "to": "arcane_6_1"
+    },
+    {
+      "from": "arcane_5_2",
+      "to": "arcane_6_2"
+    },
+    {
+      "from": "arcane_6_0",
+      "to": "arcane_7_0"
+    },
+    {
+      "from": "arcane_6_1",
+      "to": "arcane_7_1"
+    },
+    {
+      "from": "arcane_6_2",
+      "to": "arcane_7_2"
+    },
+    {
+      "from": "arcane_7_0",
+      "to": "arcane_8_0"
+    },
+    {
+      "from": "arcane_7_1",
+      "to": "arcane_8_1"
+    },
+    {
+      "from": "arcane_7_2",
+      "to": "arcane_8_2"
+    },
+    {
+      "from": "arcane_8_0",
+      "to": "arcane_9_0"
+    },
+    {
+      "from": "arcane_8_1",
+      "to": "arcane_9_1"
+    },
+    {
+      "from": "arcane_8_2",
+      "to": "arcane_9_2"
+    },
+    {
+      "from": "flesh_3_1",
+      "to": "stone_3_0",
+      "bridge": true
+    },
+    {
+      "from": "flesh_6_2",
+      "to": "stone_6_0",
+      "bridge": true
+    },
+    {
+      "from": "stone_3_1",
+      "to": "fang_3_0",
+      "bridge": true
+    },
+    {
+      "from": "stone_6_2",
+      "to": "fang_6_0",
+      "bridge": true
+    },
+    {
+      "from": "fang_3_1",
+      "to": "spark_3_0",
+      "bridge": true
+    },
+    {
+      "from": "fang_6_2",
+      "to": "spark_6_0",
+      "bridge": true
+    },
+    {
+      "from": "spark_3_1",
+      "to": "wind_3_0",
+      "bridge": true
+    },
+    {
+      "from": "spark_6_2",
+      "to": "wind_6_0",
+      "bridge": true
+    },
+    {
+      "from": "wind_3_1",
+      "to": "mind_3_0",
+      "bridge": true
+    },
+    {
+      "from": "wind_6_2",
+      "to": "mind_6_0",
+      "bridge": true
+    },
+    {
+      "from": "mind_3_1",
+      "to": "hunt_3_0",
+      "bridge": true
+    },
+    {
+      "from": "mind_6_2",
+      "to": "hunt_6_0",
+      "bridge": true
+    },
+    {
+      "from": "hunt_3_1",
+      "to": "leech_3_0",
+      "bridge": true
+    },
+    {
+      "from": "hunt_6_2",
+      "to": "leech_6_0",
+      "bridge": true
+    },
+    {
+      "from": "leech_3_1",
+      "to": "ember_3_0",
+      "bridge": true
+    },
+    {
+      "from": "leech_6_2",
+      "to": "ember_6_0",
+      "bridge": true
+    },
+    {
+      "from": "ember_3_1",
+      "to": "frost_3_0",
+      "bridge": true
+    },
+    {
+      "from": "ember_6_2",
+      "to": "frost_6_0",
+      "bridge": true
+    },
+    {
+      "from": "frost_3_1",
+      "to": "storm_3_0",
+      "bridge": true
+    },
+    {
+      "from": "frost_6_2",
+      "to": "storm_6_0",
+      "bridge": true
+    },
+    {
+      "from": "storm_3_1",
+      "to": "abyss_3_0",
+      "bridge": true
+    },
+    {
+      "from": "storm_6_2",
+      "to": "abyss_6_0",
+      "bridge": true
+    },
+    {
+      "from": "abyss_3_1",
+      "to": "arcane_3_0",
+      "bridge": true
+    },
+    {
+      "from": "abyss_6_2",
+      "to": "arcane_6_0",
+      "bridge": true
+    },
+    {
+      "from": "arcane_3_1",
+      "to": "flesh_3_0",
+      "bridge": true
+    },
+    {
+      "from": "arcane_6_2",
+      "to": "flesh_6_0",
+      "bridge": true
+    }
+  ]
+}

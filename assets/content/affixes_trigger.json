@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "_comment": [
+    "12 триггерных аффиксов. Максимум 1 на предмет и только на 6 слотах",
+    "(руки, перчатки, кольца, амулет) — потолок 6 активных триггеров.",
+    "Без потолка 9 слотов дали бы 18 триггеров и комбинаторный хаос.",
+    "event — точка подписки на шине; kind — реализация в sim/triggers.dart."
+  ],
+  "affixes": [
+    {
+      "id": "metronome",
+      "ru": "Метроном",
+      "text": "Каждый {n}-й удар наносит {multiplier:x} урона",
+      "event": "onHit",
+      "kind": "everyNthHit",
+      "params": {
+        "n": 5,
+        "multiplier": 2.0
+      },
+      "kinds": [
+        "weapon",
+        "gloves"
+      ],
+      "weight": 10
+    },
+    {
+      "id": "discharge",
+      "ru": "Разряд",
+      "text": "При крите, шанс {chance:%}: сбросить перезарядку случайной способности",
+      "event": "onCrit",
+      "kind": "resetRandomCooldown",
+      "params": {
+        "chance": 0.2
+      },
+      "kinds": [
+        "weapon",
+        "gloves",
+        "ring"
+      ],
+      "weight": 8
+    },
+    {
+      "id": "chase",
+      "ru": "Гон",
+      "text": "При убийстве: +{value:%} скорости атаки на {duration:s}, складывается до {maxStacks} раз",
+      "event": "onKill",
+      "kind": "stackingBuff",
+      "params": {
+        "stat": "increasedAttackSpeed",
+        "value": 0.25,
+        "duration": 3.0,
+        "maxStacks": 5
+      },
+      "kinds": [
+        "gloves",
+        "ring",
+        "amulet"
+      ],
+      "weight": 10
+    },
+    {
+      "id": "smoulder",
+      "ru": "Тлен",
+      "text": "Способности с тегом Огонь накладывают горение на {duration:s}",
+      "event": "onAbilityCast",
+      "kind": "applyDotOnTaggedAbility",
+      "params": {
+        "tag": "fire",
+        "duration": 4.0,
+        "dpsFraction": 0.35
+      },
+      "kinds": [
+        "weapon",
+        "ring",
+        "amulet"
+      ],
+      "weight": 7
+    },
+    {
+      "id": "desperation",
+      "ru": "Отчаяние",
+      "text": "Ниже {threshold:%} HP: +{moreDamage:%} урона, −{lessArmor:%} брони",
+      "event": "onTick",
+      "kind": "lowHpTradeoff",
+      "params": {
+        "threshold": 0.35,
+        "moreDamage": 0.6,
+        "lessArmor": 0.4
+      },
+      "kinds": [
+        "weapon",
+        "ring",
+        "amulet"
+      ],
+      "weight": 6
+    },
+    {
+      "id": "double_strike",
+      "ru": "Двойной удар",
+      "text": "Каждые {period:s} следующая способность бьёт дважды",
+      "event": "onTick",
+      "kind": "periodicDoubleCast",
+      "params": {
+        "period": 8.0
+      },
+      "kinds": [
+        "gloves",
+        "amulet"
+      ],
+      "weight": 7
+    },
+    {
+      "id": "pestilence",
+      "ru": "Мор",
+      "text": "Проклятия распространяются на всю волну",
+      "event": "onAbilityCast",
+      "kind": "curseSpread",
+      "params": {},
+      "kinds": [
+        "ring",
+        "amulet"
+      ],
+      "weight": 5
+    },
+    {
+      "id": "reflection",
+      "ru": "Отражение",
+      "text": "При получении удара, шанс {chance:%}: урон Пустотой в {armorFraction:%} брони",
+      "event": "onDamageTaken",
+      "kind": "reflect",
+      "params": {
+        "chance": 0.15,
+        "armorFraction": 2.0
+      },
+      "kinds": [
+        "offhand",
+        "gloves"
+      ],
+      "weight": 7
+    },
+    {
+      "id": "vanguard",
+      "ru": "Авангард",
+      "text": "Первый удар по новой волне: +{moreDamage:%} урона",
+      "event": "onWaveStart",
+      "kind": "firstHitBonus",
+      "params": {
+        "moreDamage": 1.5
+      },
+      "kinds": [
+        "weapon",
+        "gloves"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "blood_tithe",
+      "ru": "Кровавая дань",
+      "text": "Убийство проклятого врага: +{fraction:%} максимума HP",
+      "event": "onKill",
+      "kind": "healOnCursedKill",
+      "params": {
+        "fraction": 0.04
+      },
+      "kinds": [
+        "ring",
+        "amulet"
+      ],
+      "weight": 6
+    },
+    {
+      "id": "totem_resonance",
+      "ru": "Резонанс тотемов",
+      "text": "Тотемы живут на {duration:%} дольше и бьют на {rate:%} сильнее",
+      "event": "onAbilityCast",
+      "kind": "totemBoost",
+      "params": {
+        "duration": 0.5,
+        "rate": 0.25
+      },
+      "kinds": [
+        "offhand",
+        "amulet"
+      ],
+      "weight": 5
+    },
+    {
+      "id": "frost_chain",
+      "ru": "Ледяная цепь",
+      "text": "Замедленный враг при смерти замедляет соседей на {duration:s}",
+      "event": "onKill",
+      "kind": "frostChain",
+      "params": {
+        "duration": 3.0,
+        "slow": 0.25
+      },
+      "kinds": [
+        "weapon",
+        "offhand",
+        "ring"
+      ],
+      "weight": 6
+    }
+  ]
+}

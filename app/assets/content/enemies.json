@@ -1,0 +1,466 @@
+{
+ "version": 1,
+ "_comment": [
+  "Бюджет босса задан относительно обычной волны, а не абсолютным числом.",
+  "Волна — 4 Падальщика: 2.4 hp-юнита и 1.0 dps-юнита. Босс должен стоить 2-3 волны",
+  "по суммарному урону, иначе он в одиночку определяет всю кривую сложности.",
+  "gender — род названия. По нему согласуется всё, что говорит о мобе: «Кровавая пиявка повержена», а не «повержен»."
+ ],
+ "enemies": [
+  {
+   "id": "scavenger",
+   "ru": "Падальщик",
+   "role": "Мясо",
+   "hpMult": 0.6,
+   "dpsMult": 0.25,
+   "attackSpeed": 1.4,
+   "armorMult": 0.0,
+   "packMin": 3,
+   "packMax": 5,
+   "damageType": "physical",
+   "resists": {},
+   "weight": 30,
+   "gender": "masculine"
+  },
+  {
+   "id": "bonebreaker",
+   "ru": "Костолом",
+   "role": "Танк-урон",
+   "hpMult": 1.8,
+   "dpsMult": 0.75,
+   "attackSpeed": 0.5,
+   "armorMult": 0.15,
+   "packMin": 1,
+   "packMax": 2,
+   "damageType": "physical",
+   "resists": {},
+   "weight": 18,
+   "gender": "masculine"
+  },
+  {
+   "id": "ash_eater",
+   "ru": "Пеплоед",
+   "role": "Огонь",
+   "hpMult": 0.9,
+   "dpsMult": 0.45,
+   "attackSpeed": 1.0,
+   "armorMult": 0.05,
+   "packMin": 2,
+   "packMax": 4,
+   "damageType": "fire",
+   "resists": {
+    "fire": 40.0,
+    "cold": -25.0
+   },
+   "weight": 18,
+   "gender": "masculine"
+  },
+  {
+   "id": "frost_warden",
+   "ru": "Ледяной страж",
+   "role": "Броня",
+   "hpMult": 1.3,
+   "dpsMult": 0.35,
+   "attackSpeed": 0.8,
+   "armorMult": 0.3,
+   "packMin": 1,
+   "packMax": 3,
+   "damageType": "cold",
+   "resists": {
+    "cold": 40.0
+   },
+   "weight": 12,
+   "traits": [
+    "slowsHero"
+   ],
+   "gender": "masculine"
+  },
+  {
+   "id": "void_whisperer",
+   "ru": "Пустотный шептун",
+   "role": "Дебаффер",
+   "hpMult": 0.8,
+   "dpsMult": 0.4,
+   "attackSpeed": 1.1,
+   "armorMult": 0.0,
+   "packMin": 2,
+   "packMax": 3,
+   "damageType": "voidType",
+   "resists": {
+    "voidType": 35.0
+   },
+   "weight": 10,
+   "traits": [
+    "shredResists"
+   ],
+   "gender": "masculine"
+  },
+  {
+   "id": "blood_leech",
+   "ru": "Кровавая пиявка",
+   "role": "Скейлер",
+   "hpMult": 1.1,
+   "dpsMult": 0.4,
+   "attackSpeed": 1.2,
+   "armorMult": 0.0,
+   "packMin": 2,
+   "packMax": 3,
+   "damageType": "physical",
+   "resists": {},
+   "weight": 10,
+   "traits": [
+    "lifesteal",
+    "rampUp"
+   ],
+   "gender": "feminine"
+  },
+  {
+   "id": "stone_fist",
+   "ru": "Каменный кулак",
+   "role": "Броня",
+   "hpMult": 1.87,
+   "dpsMult": 0.504,
+   "attackSpeed": 0.6,
+   "armorMult": 1.4,
+   "packMin": 1,
+   "packMax": 2,
+   "damageType": "physical",
+   "resists": {
+    "fire": 17.5,
+    "lightning": -35.0
+   },
+   "weight": 9,
+   "gender": "masculine",
+   "traits": [
+    "hardens"
+   ]
+  },
+  {
+   "id": "rot_howler",
+   "ru": "Гнилой ревун",
+   "role": "Лекарь",
+   "hpMult": 1.02,
+   "dpsMult": 0.216,
+   "attackSpeed": 1.0,
+   "armorMult": 0.2,
+   "packMin": 1,
+   "packMax": 2,
+   "damageType": "physical",
+   "resists": {
+    "voidType": 17.5,
+    "fire": -30.0
+   },
+   "weight": 7,
+   "gender": "masculine",
+   "traits": [
+    "healsAllies"
+   ]
+  },
+  {
+   "id": "grave_swarm",
+   "ru": "Могильный рой",
+   "role": "Мясо",
+   "hpMult": 0.34,
+   "dpsMult": 0.144,
+   "attackSpeed": 1.8,
+   "armorMult": 0.0,
+   "packMin": 5,
+   "packMax": 8,
+   "damageType": "physical",
+   "resists": {},
+   "weight": 24,
+   "gender": "masculine"
+  },
+  {
+   "id": "cinderling",
+   "ru": "Головня",
+   "role": "Смертник",
+   "hpMult": 0.595,
+   "dpsMult": 0.36,
+   "attackSpeed": 1.2,
+   "armorMult": 0.0,
+   "packMin": 3,
+   "packMax": 5,
+   "damageType": "fire",
+   "resists": {
+    "fire": 24.5,
+    "cold": -40.0
+   },
+   "weight": 12,
+   "gender": "feminine",
+   "traits": [
+    "explodesOnDeath"
+   ]
+  },
+  {
+   "id": "forge_smith",
+   "ru": "Пепельный кузнец",
+   "role": "Броня",
+   "hpMult": 1.36,
+   "dpsMult": 0.396,
+   "attackSpeed": 0.8,
+   "armorMult": 1.0,
+   "packMin": 1,
+   "packMax": 2,
+   "damageType": "fire",
+   "resists": {
+    "fire": 31.5,
+    "cold": -30.0
+   },
+   "weight": 8,
+   "gender": "masculine",
+   "traits": [
+    "hardens"
+   ]
+  },
+  {
+   "id": "rime_horror",
+   "ru": "Инеевая тварь",
+   "role": "Дебаффер",
+   "hpMult": 0.85,
+   "dpsMult": 0.288,
+   "attackSpeed": 0.9,
+   "armorMult": 0.3,
+   "packMin": 2,
+   "packMax": 4,
+   "damageType": "cold",
+   "resists": {
+    "cold": 28.0,
+    "fire": -35.0
+   },
+   "weight": 12,
+   "gender": "feminine",
+   "traits": [
+    "slowsHero"
+   ]
+  },
+  {
+   "id": "frost_maw",
+   "ru": "Морозная пасть",
+   "role": "Скейлер",
+   "hpMult": 1.19,
+   "dpsMult": 0.324,
+   "attackSpeed": 0.8,
+   "armorMult": 0.4,
+   "packMin": 1,
+   "packMax": 3,
+   "damageType": "cold",
+   "resists": {
+    "cold": 24.5,
+    "lightning": -25.0
+   },
+   "weight": 10,
+   "gender": "feminine",
+   "traits": [
+    "rampUp"
+   ]
+  },
+  {
+   "id": "sparkling",
+   "ru": "Искровик",
+   "role": "Мясо",
+   "hpMult": 0.425,
+   "dpsMult": 0.252,
+   "attackSpeed": 1.9,
+   "armorMult": 0.0,
+   "packMin": 3,
+   "packMax": 6,
+   "damageType": "lightning",
+   "resists": {
+    "lightning": 28.0,
+    "voidType": -30.0
+   },
+   "weight": 22,
+   "gender": "masculine"
+  },
+  {
+   "id": "storm_warden",
+   "ru": "Громовой страж",
+   "role": "Отражатель",
+   "hpMult": 1.275,
+   "dpsMult": 0.36,
+   "attackSpeed": 0.9,
+   "armorMult": 0.6,
+   "packMin": 1,
+   "packMax": 2,
+   "damageType": "lightning",
+   "resists": {
+    "lightning": 31.5,
+    "cold": -25.0
+   },
+   "weight": 8,
+   "gender": "masculine",
+   "traits": [
+    "reflects"
+   ]
+  },
+  {
+   "id": "arc_leech",
+   "ru": "Разрядник",
+   "role": "Глушитель",
+   "hpMult": 0.85,
+   "dpsMult": 0.288,
+   "attackSpeed": 1.1,
+   "armorMult": 0.2,
+   "packMin": 2,
+   "packMax": 3,
+   "damageType": "lightning",
+   "resists": {
+    "lightning": 24.5,
+    "physical": -20.0
+   },
+   "weight": 10,
+   "gender": "masculine",
+   "traits": [
+    "drainsMana"
+   ]
+  },
+  {
+   "id": "void_reaper",
+   "ru": "Пустотный жнец",
+   "role": "Дебаффер",
+   "hpMult": 1.105,
+   "dpsMult": 0.396,
+   "attackSpeed": 0.9,
+   "armorMult": 0.3,
+   "packMin": 1,
+   "packMax": 3,
+   "damageType": "voidType",
+   "resists": {
+    "voidType": 28.0,
+    "lightning": -30.0
+   },
+   "weight": 9,
+   "gender": "masculine",
+   "traits": [
+    "shredResists"
+   ]
+  },
+  {
+   "id": "mana_eater",
+   "ru": "Иссушитель",
+   "role": "Глушитель",
+   "hpMult": 0.935,
+   "dpsMult": 0.252,
+   "attackSpeed": 1.0,
+   "armorMult": 0.2,
+   "packMin": 2,
+   "packMax": 3,
+   "damageType": "voidType",
+   "resists": {
+    "voidType": 24.5,
+    "fire": -25.0
+   },
+   "weight": 8,
+   "gender": "masculine",
+   "traits": [
+    "drainsMana",
+    "lifesteal"
+   ]
+  },
+  {
+   "id": "rift_shade",
+   "ru": "Расколотая тень",
+   "role": "Отражатель",
+   "hpMult": 0.765,
+   "dpsMult": 0.324,
+   "attackSpeed": 1.2,
+   "armorMult": 0.1,
+   "packMin": 2,
+   "packMax": 4,
+   "damageType": "voidType",
+   "resists": {
+    "voidType": 21.0,
+    "physical": -25.0
+   },
+   "weight": 9,
+   "gender": "feminine",
+   "traits": [
+    "reflects"
+   ]
+  }
+ ],
+ "bosses": [
+  {
+   "id": "ash_lord",
+   "ru": "Владыка Пепла",
+   "everyFloors": 5,
+   "hpMult": 4.0,
+   "dpsMult": 0.8,
+   "attackSpeed": 0.7,
+   "armorMult": 0.2,
+   "damageType": "fire",
+   "resists": {
+    "fire": 40.0
+   },
+   "phases": [
+    "Призыв Пеплоедов",
+    "Аура горения"
+   ],
+   "gender": "masculine"
+  },
+  {
+   "id": "void_devourer",
+   "ru": "Пустотный Пожиратель",
+   "everyFloors": 10,
+   "hpMult": 6.5,
+   "dpsMult": 1.0,
+   "attackSpeed": 0.6,
+   "armorMult": 0.3,
+   "damageType": "voidType",
+   "resists": {
+    "voidType": 40.0
+   },
+   "phases": [
+    "Поглощение бафов героя"
+   ],
+   "gender": "masculine"
+  },
+  {
+   "id": "storm_sovereign",
+   "ru": "Громовой Владыка",
+   "hpMult": 5.0,
+   "dpsMult": 0.9,
+   "attackSpeed": 0.9,
+   "armorMult": 1.2,
+   "damageType": "lightning",
+   "resists": {
+    "lightning": 45.0,
+    "cold": -25.0
+   },
+   "traits": [
+    "drainsMana",
+    "hardens"
+   ],
+   "everyFloors": 15,
+   "phases": [
+    "Разряд по всей волне",
+    "Глушение маны"
+   ],
+   "gender": "masculine"
+  },
+  {
+   "id": "frost_patriarch",
+   "ru": "Ледяной Патриарх",
+   "hpMult": 5.5,
+   "dpsMult": 0.85,
+   "attackSpeed": 0.7,
+   "armorMult": 1.5,
+   "damageType": "cold",
+   "resists": {
+    "cold": 50.0,
+    "fire": -30.0
+   },
+   "traits": [
+    "slowsHero",
+    "healsAllies"
+   ],
+   "everyFloors": 25,
+   "phases": [
+    "Оковы стужи",
+    "Зов ледяной стражи"
+   ],
+   "gender": "masculine"
+  }
+ ]
+}

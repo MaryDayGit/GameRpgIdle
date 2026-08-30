@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "_comment": "8 модификаторов. Каждый = один минус + один плюс. Видны на 3 этажа вперёд (Картограф расширяет до 6).",
+  "modifiers": [
+    {
+      "id": "heat",
+      "ru": "Жар",
+      "minus": "−30 сопротивления огню",
+      "plus": "+15 % исходящего урона Огнём",
+      "effects": {
+        "resistFire": -30.0,
+        "tagDamageFire": 0.15
+      }
+    },
+    {
+      "id": "hunger",
+      "ru": "Голод",
+      "minus": "Восстановление HP не работает",
+      "plus": "+40 % добычи",
+      "effects": {
+        "regenDisabled": 1.0,
+        "lootQuantity": 0.4
+      }
+    },
+    {
+      "id": "vice",
+      "ru": "Тиски",
+      "minus": "Перезарядки +25 %",
+      "plus": "Боссы дают удвоенное Эхо",
+      "effects": {
+        "cooldownReduction": -0.25,
+        "bossEchoMultiplier": 2.0
+      }
+    },
+    {
+      "id": "abundance",
+      "ru": "Изобилие",
+      "minus": "Враги бьют на 20 % сильнее",
+      "plus": "+50 % количества добычи",
+      "effects": {
+        "mobDps": 0.2,
+        "lootQuantity": 0.5
+      }
+    },
+    {
+      "id": "chill",
+      "ru": "Стужа",
+      "minus": "−30 сопротивления холоду",
+      "plus": "Перезарядки −15 %",
+      "effects": {
+        "resistCold": -30.0,
+        "cooldownReduction": 0.15
+      }
+    },
+    {
+      "id": "void_rot",
+      "ru": "Пустотная гниль",
+      "minus": "−30 сопротивления пустоте",
+      "plus": "+1 ранг редкости сундука",
+      "effects": {
+        "resistVoid": -30.0,
+        "chestRarityBonus": 1.0
+      }
+    },
+    {
+      "id": "silence",
+      "ru": "Тишина",
+      "minus": "Тотемы и ауры, действующие на врагов, не работают",
+      "plus": "+50 % урона автоатак",
+      "effects": {
+        "aurasDisabled": 1.0,
+        "autoAttackDamage": 0.5
+      }
+    },
+    {
+      "id": "swarm",
+      "ru": "Рой",
+      "minus": "Волн вдвое больше, врагов вдвое больше",
+      "plus": "Враги −40 % HP, +30 % количества добычи",
+      "effects": {
+        "waveMultiplier": 2.0,
+        "packMultiplier": 2.0,
+        "mobHp": -0.4,
+        "lootQuantity": 0.3
+      }
+    }
+  ]
+}

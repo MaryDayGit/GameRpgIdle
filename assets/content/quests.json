@@ -1,0 +1,679 @@
+{
+  "version": 1,
+  "_comment": [
+    "44 заданий — по одному на каждую нестартовую способность.",
+    "",
+    "ЗАЧЕМ. Раньше умения открывало древо Эха по одиннадцать штук одним узлом,",
+    "и живой прогон дал приговор: «умений мало, и они все сразу открыты».",
+    "Открытие, случающееся одиннадцать раз одновременно, перестаёт быть",
+    "событием — а ради этого события новое умение и нужно.",
+    "",
+    "ПРАВИЛА СОСТАВА, каждое проверяется валидатором:",
+    "  * у каждой нестартовой способности ровно одно задание;",
+    "  * задание без награды не существует;",
+    "  * ссылка в `after` ведёт в существующее задание.",
+    "",
+    "ПРАВИЛА СМЫСЛА, которые валидатор проверить не может:",
+    "  * первое звено стихийной цепи выполняется СТАРТОВЫМ умением этой",
+    "    стихии — иначе цепь требует того, что сама же и выдаёт. У Пустоты",
+    "    стартового умения нет, поэтому вход в неё — через босса;",
+    "  * `after` — это ВИДИМОСТЬ, а не запрет. Игрок должен видеть следующий",
+    "    шаг, а не все сорок четыре сразу. Выполниться задание может и раньше",
+    "    срока: тогда оно закроется в тот же миг, когда откроется;",
+    "  * ауры идут последними: они резервируют ману, и до них сборке нечего",
+    "    резервировать.",
+    "",
+    "condition=damageShare — единственный вид цели, который спрашивает про",
+    "БИЛД, а не про глубину: выполнить его можно только собрав сборку вокруг",
+    "стихии. Доля считается за ОДИН спуск."
+  ],
+  "quests": [
+    {
+      "id": "first_return",
+      "ru": "Первое возвращение",
+      "text": "Закройте один контракт: дождитесь гибели наёмника и заберите добычу",
+      "chain": "prologue",
+      "condition": "runsCompleted",
+      "value": 1,
+      "ability": "whirlwind",
+      "echo": 5
+    },
+    {
+      "id": "deeper",
+      "ru": "Глубже",
+      "text": "Доведите рекорд глубины до 15-го этажа",
+      "chain": "prologue",
+      "condition": "reachDepth",
+      "value": 15,
+      "after": [
+        "first_return"
+      ],
+      "ability": "flame_lash",
+      "echo": 5
+    },
+    {
+      "id": "ash_lord",
+      "ru": "Владыка Пепла",
+      "text": "Уложите Владыку Пепла — он ждёт на каждом пятом этаже",
+      "chain": "prologue",
+      "condition": "defeatBoss",
+      "value": 1,
+      "params": {
+        "boss": "ash_lord"
+      },
+      "after": [
+        "deeper"
+      ],
+      "ability": "void_lance",
+      "echo": 10
+    },
+    {
+      "id": "void_devourer",
+      "ru": "Пустотный Пожиратель",
+      "text": "Уложите Пустотного Пожирателя — он ждёт на каждом десятом этаже",
+      "chain": "prologue",
+      "condition": "defeatBoss",
+      "value": 1,
+      "params": {
+        "boss": "void_devourer"
+      },
+      "after": [
+        "ash_lord"
+      ],
+      "ability": "glacier_shard",
+      "echo": 10
+    },
+    {
+      "id": "veteran",
+      "ru": "Ветеран Заставы",
+      "text": "Закройте пять контрактов",
+      "chain": "prologue",
+      "condition": "runsCompleted",
+      "value": 5,
+      "after": [
+        "first_return"
+      ],
+      "ability": "arc_lash",
+      "echo": 10
+    },
+    {
+      "id": "fire_share",
+      "ru": "Поджигатель",
+      "text": "Нанесите за один спуск 40 % урона Огнём — «Всполох» есть у вас с самого начала",
+      "chain": "ember",
+      "condition": "damageShare",
+      "value": 0.4,
+      "params": {
+        "damageType": "fire"
+      },
+      "after": [
+        "deeper"
+      ],
+      "ability": "ember_infusion",
+      "echo": 10
+    },
+    {
+      "id": "fire_blade",
+      "ru": "Клинок в огне",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Огонь»",
+      "chain": "ember",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "fire"
+      },
+      "after": [
+        "fire_share"
+      ],
+      "ability": "pyre",
+      "echo": 10
+    },
+    {
+      "id": "fire_deep",
+      "ru": "Пепельные залы",
+      "text": "Доведите рекорд глубины до 35-го этажа",
+      "chain": "ember",
+      "condition": "reachDepth",
+      "value": 35,
+      "after": [
+        "fire_blade"
+      ],
+      "ability": "fire_brand",
+      "echo": 15
+    },
+    {
+      "id": "fire_mastery",
+      "ru": "Пожарище",
+      "text": "Нанесите за один спуск 70 % урона Огнём",
+      "chain": "ember",
+      "condition": "damageShare",
+      "value": 0.7,
+      "params": {
+        "damageType": "fire"
+      },
+      "after": [
+        "fire_deep"
+      ],
+      "ability": "cinder_totem",
+      "echo": 20
+    },
+    {
+      "id": "fire_crit",
+      "ru": "Искра в сухой траве",
+      "text": "Доведите шанс крита до дела: возьмите 12 очков дерева пассивок",
+      "chain": "ember",
+      "condition": "passivePoints",
+      "value": 12,
+      "after": [
+        "fire_share"
+      ],
+      "ability": "ashfield",
+      "echo": 10
+    },
+    {
+      "id": "cold_share",
+      "ru": "Холодный расчёт",
+      "text": "Нанесите за один спуск 40 % урона Холодом — «Морозный шип» есть у вас с самого начала",
+      "chain": "frost",
+      "condition": "damageShare",
+      "value": 0.4,
+      "params": {
+        "damageType": "cold"
+      },
+      "after": [
+        "deeper"
+      ],
+      "ability": "rime_infusion",
+      "echo": 10
+    },
+    {
+      "id": "cold_blade",
+      "ru": "Клинок во льду",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Холод»",
+      "chain": "frost",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "cold"
+      },
+      "after": [
+        "cold_share"
+      ],
+      "ability": "hoarfrost",
+      "echo": 10
+    },
+    {
+      "id": "cold_chain",
+      "ru": "Дуга",
+      "text": "Доведите рекорд глубины до 30-го этажа",
+      "chain": "frost",
+      "condition": "reachDepth",
+      "value": 30,
+      "after": [
+        "cold_blade"
+      ],
+      "ability": "frost_chain_bolt",
+      "echo": 15
+    },
+    {
+      "id": "cold_mastery",
+      "ru": "Вечная мерзлота",
+      "text": "Нанесите за один спуск 70 % урона Холодом",
+      "chain": "frost",
+      "condition": "damageShare",
+      "value": 0.7,
+      "params": {
+        "damageType": "cold"
+      },
+      "after": [
+        "cold_chain"
+      ],
+      "ability": "winter_totem",
+      "echo": 20
+    },
+    {
+      "id": "cold_crit",
+      "ru": "Обморожение",
+      "text": "Соберите на Верстаке 6 осколков одновременно",
+      "chain": "frost",
+      "condition": "shardsHeld",
+      "value": 6,
+      "after": [
+        "cold_share"
+      ],
+      "ability": "frost_bite",
+      "echo": 10
+    },
+    {
+      "id": "storm_share",
+      "ru": "Проводник",
+      "text": "Нанесите за один спуск 40 % урона Молнией — «Разряд» есть у вас с самого начала",
+      "chain": "storm",
+      "condition": "damageShare",
+      "value": 0.4,
+      "params": {
+        "damageType": "lightning"
+      },
+      "after": [
+        "deeper"
+      ],
+      "ability": "storm_infusion",
+      "echo": 10
+    },
+    {
+      "id": "storm_blade",
+      "ru": "Клинок в грозе",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Молния»",
+      "chain": "storm",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "lightning"
+      },
+      "after": [
+        "storm_share"
+      ],
+      "ability": "static_field",
+      "echo": 10
+    },
+    {
+      "id": "storm_curse",
+      "ru": "Проводимость",
+      "text": "Купите 6 узлов древа Эха",
+      "chain": "storm",
+      "condition": "echoNodes",
+      "value": 6,
+      "after": [
+        "storm_share"
+      ],
+      "ability": "conduction",
+      "echo": 15
+    },
+    {
+      "id": "storm_totem",
+      "ru": "Громовержец",
+      "text": "Нанесите за один спуск 70 % урона Молнией",
+      "chain": "storm",
+      "condition": "damageShare",
+      "value": 0.7,
+      "params": {
+        "damageType": "lightning"
+      },
+      "after": [
+        "storm_blade"
+      ],
+      "ability": "thunder_totem",
+      "echo": 20
+    },
+    {
+      "id": "storm_call_q",
+      "ru": "Зов бури",
+      "text": "Доведите рекорд глубины до 45-го этажа",
+      "chain": "storm",
+      "condition": "reachDepth",
+      "value": 45,
+      "after": [
+        "storm_totem"
+      ],
+      "ability": "storm_call",
+      "echo": 20
+    },
+    {
+      "id": "storm_echo",
+      "ru": "Перегрузка",
+      "text": "Пройдите спуск со сборкой, где три умения с тегом «Чары»",
+      "chain": "storm",
+      "condition": "loadoutTag",
+      "value": 3,
+      "params": {
+        "tag": "spell"
+      },
+      "after": [
+        "storm_totem"
+      ],
+      "ability": "overcharge",
+      "echo": 20
+    },
+    {
+      "id": "void_share",
+      "ru": "Голос бездны",
+      "text": "Нанесите за один спуск 40 % урона Пустотой — «Копьё пустоты» даёт задание «Владыка Пепла»",
+      "chain": "abyss",
+      "condition": "damageShare",
+      "value": 0.4,
+      "params": {
+        "damageType": "voidType"
+      },
+      "after": [
+        "ash_lord"
+      ],
+      "ability": "void_infusion",
+      "echo": 10
+    },
+    {
+      "id": "void_venom",
+      "ru": "Яд",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Пустота»",
+      "chain": "abyss",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "voidTag"
+      },
+      "after": [
+        "void_share"
+      ],
+      "ability": "venom",
+      "echo": 10
+    },
+    {
+      "id": "void_hex",
+      "ru": "Порча",
+      "text": "Доведите рекорд глубины до 40-го этажа",
+      "chain": "abyss",
+      "condition": "reachDepth",
+      "value": 40,
+      "after": [
+        "void_share"
+      ],
+      "ability": "hex_of_frailty",
+      "echo": 15
+    },
+    {
+      "id": "void_rift",
+      "ru": "Разлом",
+      "text": "Нанесите за один спуск 70 % урона Пустотой",
+      "chain": "abyss",
+      "condition": "damageShare",
+      "value": 0.7,
+      "params": {
+        "damageType": "voidType"
+      },
+      "after": [
+        "void_venom"
+      ],
+      "ability": "rift",
+      "echo": 20
+    },
+    {
+      "id": "void_totem",
+      "ru": "Тотем безмолвия",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Проклятие»",
+      "chain": "abyss",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "curse"
+      },
+      "after": [
+        "void_hex"
+      ],
+      "ability": "null_totem",
+      "echo": 20
+    },
+    {
+      "id": "void_entropy",
+      "ru": "Энтропия",
+      "text": "Возьмите 25 очков дерева пассивок",
+      "chain": "abyss",
+      "condition": "passivePoints",
+      "value": 25,
+      "after": [
+        "void_rift"
+      ],
+      "ability": "entropy",
+      "echo": 20
+    },
+    {
+      "id": "void_seal",
+      "ru": "Печать бездны",
+      "text": "Уложите Пустотного Пожирателя на Клейме 2 или выше",
+      "chain": "abyss",
+      "condition": "brandDepth",
+      "value": 10,
+      "params": {
+        "rank": 2
+      },
+      "after": [
+        "void_rift"
+      ],
+      "ability": "abyss_seal",
+      "echo": 25
+    },
+    {
+      "id": "war_impale",
+      "ru": "Пронзание",
+      "text": "Пройдите спуск со сборкой, где три умения с тегом «Атака»",
+      "chain": "war",
+      "condition": "loadoutTag",
+      "value": 3,
+      "params": {
+        "tag": "attack"
+      },
+      "after": [
+        "first_return"
+      ],
+      "ability": "impale",
+      "echo": 10
+    },
+    {
+      "id": "war_execute",
+      "ru": "Милосердие",
+      "text": "Нанесите за один спуск 70 % физического урона",
+      "chain": "war",
+      "condition": "damageShare",
+      "value": 0.7,
+      "params": {
+        "damageType": "physical"
+      },
+      "after": [
+        "war_impale"
+      ],
+      "ability": "coup_de_grace",
+      "echo": 15
+    },
+    {
+      "id": "war_butcher",
+      "ru": "Мясник",
+      "text": "Доведите Оружейную до 2-го уровня",
+      "chain": "war",
+      "condition": "outpostLevel",
+      "value": 2,
+      "params": {
+        "building": "armory"
+      },
+      "after": [
+        "war_impale"
+      ],
+      "ability": "butcher",
+      "echo": 10
+    },
+    {
+      "id": "war_second_blade",
+      "ru": "Второй клинок",
+      "text": "Закройте десять контрактов",
+      "chain": "war",
+      "condition": "runsCompleted",
+      "value": 10,
+      "after": [
+        "veteran"
+      ],
+      "ability": "second_wind_blade",
+      "echo": 15
+    },
+    {
+      "id": "war_rush",
+      "ru": "Натиск",
+      "text": "Доведите рекорд глубины до 50-го этажа",
+      "chain": "war",
+      "condition": "reachDepth",
+      "value": 50,
+      "after": [
+        "war_execute"
+      ],
+      "ability": "berserk_rush",
+      "echo": 20
+    },
+    {
+      "id": "war_focus",
+      "ru": "Сосредоточение",
+      "text": "Доведите Костёр до 2-го уровня",
+      "chain": "war",
+      "condition": "outpostLevel",
+      "value": 2,
+      "params": {
+        "building": "campfire"
+      },
+      "after": [
+        "first_return"
+      ],
+      "ability": "battle_focus",
+      "echo": 10
+    },
+    {
+      "id": "guard_last_stand",
+      "ru": "Последний рубеж",
+      "text": "Доведите Кузницу до 2-го уровня",
+      "chain": "guard",
+      "condition": "outpostLevel",
+      "value": 2,
+      "params": {
+        "building": "forge"
+      },
+      "after": [
+        "first_return"
+      ],
+      "ability": "last_stand",
+      "echo": 10
+    },
+    {
+      "id": "guard_stone",
+      "ru": "Каменная стойка",
+      "text": "Найдите свой первый реликт",
+      "chain": "guard",
+      "condition": "relicsFound",
+      "value": 1,
+      "after": [
+        "deeper"
+      ],
+      "ability": "stone_stance",
+      "echo": 15
+    },
+    {
+      "id": "guard_warden",
+      "ru": "Дозор",
+      "text": "Найдите три реликта",
+      "chain": "guard",
+      "condition": "relicsFound",
+      "value": 3,
+      "after": [
+        "guard_stone"
+      ],
+      "ability": "wardens_vigil",
+      "echo": 20
+    },
+    {
+      "id": "guard_totem",
+      "ru": "Тотем ярости",
+      "text": "Доведите Таверну до 3-го уровня",
+      "chain": "guard",
+      "condition": "outpostLevel",
+      "value": 3,
+      "params": {
+        "building": "tavern"
+      },
+      "after": [
+        "veteran"
+      ],
+      "ability": "totem_of_fury",
+      "echo": 15
+    },
+    {
+      "id": "aura_shroud",
+      "ru": "Ледяной покров",
+      "text": "Возьмите 8 очков дерева пассивок",
+      "chain": "auras",
+      "condition": "passivePoints",
+      "value": 8,
+      "after": [
+        "deeper"
+      ],
+      "ability": "frost_shroud",
+      "echo": 10
+    },
+    {
+      "id": "aura_war_cry",
+      "ru": "Клич ярости",
+      "text": "Доведите рекорд глубины до 25-го этажа",
+      "chain": "auras",
+      "condition": "reachDepth",
+      "value": 25,
+      "after": [
+        "aura_shroud"
+      ],
+      "ability": "war_cry",
+      "echo": 15
+    },
+    {
+      "id": "aura_blood",
+      "ru": "Кровавый обет",
+      "text": "Пройдите спуск со сборкой, где два умения с тегом «Кровь»",
+      "chain": "auras",
+      "condition": "loadoutTag",
+      "value": 2,
+      "params": {
+        "tag": "blood"
+      },
+      "after": [
+        "aura_shroud"
+      ],
+      "ability": "blood_oath",
+      "echo": 15
+    },
+    {
+      "id": "aura_hunter",
+      "ru": "Метка охотника",
+      "text": "Купите 10 узлов древа Эха",
+      "chain": "auras",
+      "condition": "echoNodes",
+      "value": 10,
+      "after": [
+        "aura_war_cry"
+      ],
+      "ability": "hunters_mark",
+      "echo": 15
+    },
+    {
+      "id": "aura_mind",
+      "ru": "Ускоренный разум",
+      "text": "Пройдите спуск со сборкой, где есть аура",
+      "chain": "auras",
+      "condition": "loadoutTag",
+      "value": 1,
+      "params": {
+        "tag": "aura"
+      },
+      "after": [
+        "aura_war_cry"
+      ],
+      "ability": "quickened_mind",
+      "echo": 15
+    },
+    {
+      "id": "aura_font",
+      "ru": "Родник маны",
+      "text": "Доведите Верстак осколков до 2-го уровня",
+      "chain": "auras",
+      "condition": "outpostLevel",
+      "value": 2,
+      "params": {
+        "building": "shardBench"
+      },
+      "after": [
+        "aura_shroud"
+      ],
+      "ability": "mana_font",
+      "echo": 15
+    }
+  ]
+}
