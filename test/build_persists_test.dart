@@ -241,6 +241,105 @@ void main() {
     });
   });
 
+  group('полный сундук пропускает лучшее', () {
+    // Полный сундук раньше значил «продать всё», и это рвало петлю добычи:
+    // сундук насыщается за два-три контракта, после чего находка с ilvl
+    // рекорда продавалась, потому что место занято хламом. Приток нового
+    // снаряжения оставался только через +6 слотов за уровень Хранилища,
+    // уровень открывался глубиной, а глубина без снаряжения не росла —
+    // кампания вставала на 85–99 (`--campaign`, семь сидов).
+
+    /// Сундук, забитый под завязку одинаковым хламом.
+    PlayerProfile packed(Rng rng, {int ilvl = 20, GearKind? kind}) {
+      final profile = player(stashSlots: 0);
+      while (profile.stash.length < profile.outpost.stashSlots) {
+        profile.stash.add(roll(rng, kind ?? GearKind.boots, ilvl: ilvl));
+      }
+      expect(profile.stashRoom, 0, reason: 'сундук должен быть полон');
+      return profile;
+    }
+
+    test('находка лучше худшего вытесняет его, а не продаётся', () {
+      final rng = Rng(101);
+      final profile = packed(rng);
+      final goldBefore = profile.gold;
+
+      final prize = roll(rng, GearKind.boots, ilvl: 90);
+      profile.pendingLoot.add(prize);
+      profile.autoSortLoot();
+
+      expect(profile.stash, contains(prize),
+          reason: 'предмет с ilvl 90 обязан попасть в сундук');
+      expect(profile.stash.length, profile.outpost.stashSlots,
+          reason: 'вытеснение не раздувает сундук');
+      expect(profile.pendingLoot, isEmpty);
+      expect(profile.gold, greaterThan(goldBefore),
+          reason: 'вытесненное ушло в золото');
+    });
+
+    test('находка хуже всего в сундуке продаётся', () {
+      final rng = Rng(102);
+      final profile = packed(rng, ilvl: 60);
+      final before = [...profile.stash];
+
+      profile.pendingLoot.add(roll(rng, GearKind.boots, ilvl: 5));
+      profile.autoSortLoot();
+
+      expect(profile.stash, orderedEquals(before),
+          reason: 'сундук не трогаем ради вещи, которая хуже любой в нём');
+      expect(profile.pendingLoot, isEmpty);
+    });
+
+    test('реликт из сундука не вытесняется никогда', () {
+      final rng = Rng(103);
+      final profile = packed(rng, ilvl: 20);
+      // Реликт низкого уровня среди хлама — ровно тот случай, когда отбор
+      // по ilvl продал бы чейз-предмет.
+      final relic = roll(rng, GearKind.boots, ilvl: 10, relic: true);
+      profile.stash
+        ..removeLast()
+        ..add(relic);
+
+      for (var i = 0; i < 20; i++) {
+        profile.pendingLoot.add(roll(rng, GearKind.boots, ilvl: 90 + i));
+      }
+      profile.autoSortLoot();
+
+      expect(profile.stash, contains(relic),
+          reason: 'уникальный эффект не стареет — реликт остаётся');
+    });
+
+    test('входящий реликт проходит, даже будучи ниже по уровню', () {
+      final rng = Rng(104);
+      final profile = packed(rng, ilvl: 80);
+
+      final relic = roll(rng, GearKind.amulet, ilvl: 12, relic: true);
+      profile.pendingLoot.add(relic);
+      profile.autoSortLoot();
+
+      expect(profile.stash, contains(relic),
+          reason: 'реликт с глубины 12 — находка, а не мусор: его базовые '
+              'статы догонит Кузница, а эффект не догонит ничто');
+    });
+
+    test('вытесняется вид находки, а не что попало', () {
+      final rng = Rng(105);
+      // Сундук из ботинок и ровно одного амулета: жадный отбор по ilvl
+      // выбил бы амулет и оставил наёмника без слота.
+      final profile = packed(rng, ilvl: 30, kind: GearKind.boots);
+      final amulet = roll(rng, GearKind.amulet, ilvl: 15);
+      profile.stash
+        ..removeLast()
+        ..add(amulet);
+
+      profile.pendingLoot.add(roll(rng, GearKind.boots, ilvl: 70));
+      profile.autoSortLoot();
+
+      expect(profile.stash, contains(amulet),
+          reason: 'находка ботинок вытесняет ботинки, а не единственный амулет');
+    });
+  });
+
   test('наёмник не переодевается в спуске', () {
     // Правило, которое заменило прежнее «профессионал надевает лучшее»:
     // сборка — единственное место, где игрок принимает решения о бое, и
