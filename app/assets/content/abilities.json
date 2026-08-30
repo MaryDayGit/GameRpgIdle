@@ -1,1117 +1,1117 @@
 {
- "version": 1,
- "_comment": [
-  "55 способностей трёх видов на 4 слота — активные, пассивные и ауры",
-  "конкурируют за один пул, и это и есть выбор.",
-  "",
-  "ТЕГИ — не украшение карточки. За них цепляются аффиксы вещей, узлы",
-  "дерева пассивок и черты наёмника. У каждой способности есть тег с",
-  "каждой оси, которая к ней применима:",
-  "  стихия   — fire / cold / lightning / voidTag / physical. Совпадает с",
-  "             damageType: сопротивление режет по типу, тег обязан его",
-  "             называть;",
-  "  форма    — attack (растёт от урона оружия) или spell (от силы чар).",
-  "             Ось, ради которой снаряжение подбирается ПОД способности;",
-  "  доставка — projectile / area;",
-  "  механика — duration / curse / aura / totem / strike / blood.",
-  "",
-  "Множители Чар выше множителей Атак ровно в 1.5 раза: база силы чар 8",
-  "против 12 урона оружия. Это перенос на другую ось, а не правка силы.",
-  "",
-  "ПОРЯДОК СПИСКА — это порядок открытия. Древо Эха открывает первые N",
-  "нестартовых, поэтому первыми стоят по одному умению в каждую стихию:",
-  "иначе восемь открытых узлов давали бы восемь огненных умений.",
-  "",
-  "starter — то, с чем начинает новый аккаунт. Обе оси и три стихии есть",
-  "с первого рана: выбор должен быть до первой добычи, а не после неё.",
-  "",
-  "ЦЕНА В МАНЕ — таблица по перезарядке, а не число на глаз. Правило «дороже",
-  "та, что реже» держалось случайно, и первая же новая активка с той же",
-  "перезарядкой его нарушила. Теперь: 3 с -> 10, 4 -> 12, 5 -> 15, 6 -> 20,",
-  "7 -> 22, 8 -> 26, 9 -> 28, 10 -> 30, 12 -> 34, 13 -> 38, 14 -> 40,",
-  "16 -> 50, 18 -> 52.",
-  "",
-  "ОПИСАНИЕ НАЗЫВАЕТ ОСЬ. «×3.2 урона оружия» у способности с тегом «Чары» —",
-  "это ложь игроку: она растёт от силы чар и урон оружия ей не помогает вовсе.",
-  "Каждый текст с множителем обязан называть ту ось, что стоит в тегах."
- ],
- "abilities": [
-  {
-   "id": "cleave",
-   "ru": "Рассекающий удар",
-   "tags": [
-    "attack",
-    "strike",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 3.0,
-   "damageType": "physical",
-   "starter": true,
-   "params": {
-    "weaponMultiplier": 2.64,
-    "targets": 1
-   },
-   "text": "Удар по {targets} цели на {weaponMultiplier:x} урона оружия",
-   "mana": 10
-  },
-  {
-   "id": "bloodletting",
-   "ru": "Кровопуск",
-   "tags": [
-    "attack",
-    "strike",
-    "blood",
-    "duration",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 5.0,
-   "damageType": "physical",
-   "params": {
-    "weaponMultiplier": 1.2,
-    "duration": 5.0,
-    "dpsFraction": 0.66
-   },
-   "text": "Кровотечение на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
-   "mana": 15,
-   "starter": true
-  },
-  {
-   "id": "thirst",
-   "ru": "Жажда",
-   "tags": [
-    "blood"
-   ],
-   "type": "passive",
-   "kind": "conditionalLeech",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "params": {
-    "threshold": 0.5,
-    "leechMultiplier": 2.0
-   },
-   "text": "Ниже {threshold:%} HP вампиризм сильнее в {leechMultiplier:x}",
-   "starter": true
-  },
-  {
-   "id": "fortitude",
-   "ru": "Стойкость",
-   "tags": [
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "statTradeoff",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "params": {
-    "armorPct": 0.4,
-    "attackSpeedPct": -0.15
-   },
-   "text": "+{armorPct:%} брони, {attackSpeedPct:%} скорости атаки",
-   "starter": true
-  },
-  {
-   "id": "blade_echo",
-   "ru": "Эхо клинка",
-   "tags": [
-    "attack",
-    "strike",
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "repeatAttack",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "starter": true,
-   "params": {
-    "chance": 0.2
-   },
-   "text": "Шанс {chance:%} ударить оружием ещё раз"
-  },
-  {
-   "id": "frost_spike",
-   "ru": "Морозный шип",
-   "tags": [
-    "spell",
-    "cold",
-    "projectile"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 4.0,
-   "damageType": "cold",
-   "params": {
-    "weaponMultiplier": 3.24,
-    "targets": 1,
-    "bonusVsSlowed": 0.5
-   },
-   "text": "Удар на {weaponMultiplier:x} силы чар, +{bonusVsSlowed:%} по замедленным",
-   "mana": 12,
-   "starter": true
-  },
-  {
-   "id": "sunder",
-   "ru": "Раскол",
-   "text": "Удар по {targets} целям на {weaponMultiplier:x} урона оружия",
-   "tags": [
-    "attack",
-    "strike",
-    "area",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 5.0,
-   "mana": 15,
-   "damageType": "physical",
-   "starter": true,
-   "params": {
-    "weaponMultiplier": 1.9,
-    "targets": 3
-   }
-  },
-  {
-   "id": "ember_burst",
-   "ru": "Всполох",
-   "text": "Удар по {targets} целям на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "fire",
-    "area"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 5.0,
-   "mana": 15,
-   "damageType": "fire",
-   "starter": true,
-   "params": {
-    "weaponMultiplier": 2.55,
-    "targets": 3
-   }
-  },
-  {
-   "id": "field_dressing",
-   "ru": "Перевязка",
-   "text": "Восстанавливает {fractionOfMaxHp:%} максимума HP",
-   "tags": [
-    "blood"
-   ],
-   "type": "active",
-   "kind": "heal",
-   "cooldown": 14.0,
-   "mana": 40,
-   "damageType": "physical",
-   "starter": true,
-   "params": {
-    "fractionOfMaxHp": 0.12
-   }
-  },
-  {
-   "id": "spiked_guard",
-   "ru": "Шипы",
-   "text": "{fractionReturned:%} полученного урона возвращается тому, кто ударил",
-   "tags": [
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "thorns",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "starter": true,
-   "params": {
-    "fractionReturned": 0.25
-   }
-  },
-  {
-   "id": "spark_bolt",
-   "ru": "Разряд",
-   "text": "Удар по одной цели на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "lightning",
-    "projectile"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 3.0,
-   "mana": 10,
-   "damageType": "lightning",
-   "starter": true,
-   "params": {
-    "weaponMultiplier": 2.9,
-    "targets": 1
-   }
-  },
-  {
-   "id": "flame_lash",
-   "ru": "Огненный хлыст",
-   "text": "Удар по одной цели на {weaponMultiplier:x} урона оружия",
-   "tags": [
-    "attack",
-    "fire",
-    "strike"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 4.0,
-   "mana": 12,
-   "damageType": "fire",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.3,
-    "targets": 1
-   }
-  },
-  {
-   "id": "void_lance",
-   "ru": "Копьё пустоты",
-   "text": "Удар по {targets} цели на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "voidTag",
-    "projectile"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 4.0,
-   "mana": 12,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 3.45,
-    "targets": 1
-   }
-  },
-  {
-   "id": "glacier_shard",
-   "ru": "Осколок глетчера",
-   "text": "Удар по {targets} целям на {weaponMultiplier:x} силы чар, +{bonusVsSlowed:%} по замедленным",
-   "tags": [
-    "spell",
-    "cold",
-    "area"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 7.0,
-   "mana": 22,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.4,
-    "targets": 4,
-    "bonusVsSlowed": 0.6
-   }
-  },
-  {
-   "id": "arc_lash",
-   "ru": "Дуга молний",
-   "text": "Цепь по {targets} целям: {weaponMultiplier:x} силы чар, каждая следующая на {falloff:%} слабее",
-   "tags": [
-    "spell",
-    "lightning",
-    "projectile"
-   ],
-   "type": "active",
-   "kind": "chainDamage",
-   "cooldown": 6.0,
-   "mana": 20,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.4,
-    "targets": 5,
-    "falloff": 0.2
-   }
-  },
-  {
-   "id": "ember_infusion",
-   "ru": "Пламя на клинке",
-   "text": "Автоатака бьёт Огнём, +{moreDamage:%} к её урону",
-   "tags": [
-    "attack",
-    "fire",
-    "strike"
-   ],
-   "type": "passive",
-   "kind": "infusion",
-   "cooldown": 0.0,
-   "damageType": "fire",
-   "starter": false,
-   "params": {
-    "moreDamage": 0.1
-   }
-  },
-  {
-   "id": "rime_infusion",
-   "ru": "Иней на клинке",
-   "text": "Автоатака бьёт Холодом, +{moreDamage:%} к её урону",
-   "tags": [
-    "attack",
-    "cold",
-    "strike"
-   ],
-   "type": "passive",
-   "kind": "infusion",
-   "cooldown": 0.0,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "moreDamage": 0.06
-   }
-  },
-  {
-   "id": "storm_infusion",
-   "ru": "Гроза на клинке",
-   "text": "Автоатака бьёт Молнией, +{moreDamage:%} к её урону",
-   "tags": [
-    "attack",
-    "lightning",
-    "strike"
-   ],
-   "type": "passive",
-   "kind": "infusion",
-   "cooldown": 0.0,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "moreDamage": 0.08
-   }
-  },
-  {
-   "id": "void_infusion",
-   "ru": "Пустота на клинке",
-   "text": "Автоатака бьёт Пустотой, +{moreDamage:%} к её урону",
-   "tags": [
-    "attack",
-    "voidTag",
-    "strike"
-   ],
-   "type": "passive",
-   "kind": "infusion",
-   "cooldown": 0.0,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "moreDamage": 0.12
-   }
-  },
-  {
-   "id": "fire_brand",
-   "ru": "Огненное клеймо",
-   "tags": [
-    "spell",
-    "fire",
-    "curse"
-   ],
-   "type": "active",
-   "kind": "curse",
-   "cooldown": 6.0,
-   "damageType": "fire",
-   "params": {
-    "weaponMultiplier": 1.44,
-    "duration": 6.0,
-    "damageTakenIncrease": 0.2
-   },
-   "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
-   "mana": 20,
-   "starter": false
-  },
-  {
-   "id": "hex_of_frailty",
-   "ru": "Порча хрупкости",
-   "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
-   "tags": [
-    "spell",
-    "voidTag",
-    "curse"
-   ],
-   "type": "active",
-   "kind": "curse",
-   "cooldown": 8.0,
-   "mana": 26,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 0.9,
-    "duration": 8.0,
-    "damageTakenIncrease": 0.3
-   }
-  },
-  {
-   "id": "conduction",
-   "ru": "Проводимость",
-   "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
-   "tags": [
-    "spell",
-    "lightning",
-    "curse"
-   ],
-   "type": "active",
-   "kind": "curse",
-   "cooldown": 8.0,
-   "mana": 26,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.2,
-    "duration": 7.0,
-    "damageTakenIncrease": 0.28
-   }
-  },
-  {
-   "id": "venom",
-   "ru": "Яд",
-   "text": "Отравление на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
-   "tags": [
-    "spell",
-    "voidTag",
-    "duration"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 6.0,
-   "mana": 20,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.2,
-    "duration": 7.0,
-    "dpsFraction": 0.5
-   }
-  },
-  {
-   "id": "pyre",
-   "ru": "Погребальный костёр",
-   "text": "Пламя на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
-   "tags": [
-    "spell",
-    "fire",
-    "area",
-    "duration"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 8.0,
-   "mana": 26,
-   "damageType": "fire",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.2,
-    "duration": 6.0,
-    "dpsFraction": 0.85
-   }
-  },
-  {
-   "id": "hoarfrost",
-   "ru": "Изморозь",
-   "text": "Обморожение на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
-   "tags": [
-    "spell",
-    "cold",
-    "area",
-    "duration"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 7.0,
-   "mana": 22,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.0,
-    "duration": 6.0,
-    "dpsFraction": 0.6
-   }
-  },
-  {
-   "id": "static_field",
-   "ru": "Статическое поле",
-   "text": "Разряды на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
-   "tags": [
-    "spell",
-    "lightning",
-    "area",
-    "duration"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 7.0,
-   "mana": 22,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 0.9,
-    "duration": 6.0,
-    "dpsFraction": 0.7
-   }
-  },
-  {
-   "id": "impale",
-   "ru": "Пронзание",
-   "text": "Рана на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
-   "tags": [
-    "attack",
-    "strike",
-    "duration",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "dot",
-   "cooldown": 7.0,
-   "mana": 22,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.5,
-    "duration": 8.0,
-    "dpsFraction": 0.5
-   }
-  },
-  {
-   "id": "frost_chain_bolt",
-   "ru": "Ледяная дуга",
-   "text": "Цепь по {targets} целям: {weaponMultiplier:x} силы чар, каждая следующая на {falloff:%} слабее",
-   "tags": [
-    "spell",
-    "cold",
-    "projectile"
-   ],
-   "type": "active",
-   "kind": "chainDamage",
-   "cooldown": 6.0,
-   "mana": 20,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.7,
-    "targets": 4,
-    "falloff": 0.25
-   }
-  },
-  {
-   "id": "rift",
-   "ru": "Разлом",
-   "tags": [
-    "spell",
-    "voidTag",
-    "area"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 9.0,
-   "damageType": "voidType",
-   "params": {
-    "weaponMultiplier": 2.88,
-    "targets": 99
-   },
-   "text": "Удар по всей волне на {weaponMultiplier:x} силы чар",
-   "mana": 28,
-   "starter": false
-  },
-  {
-   "id": "whirlwind",
-   "ru": "Вихрь клинков",
-   "text": "Удар по {targets} целям на {weaponMultiplier:x} урона оружия",
-   "tags": [
-    "attack",
-    "strike",
-    "area",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 8.0,
-   "mana": 26,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.45,
-    "targets": 6
-   }
-  },
-  {
-   "id": "coup_de_grace",
-   "ru": "Милосердие",
-   "text": "Добивание на {weaponMultiplier:x} урона оружия, +{bonusBelow:%} по цели ниже {threshold:%} HP",
-   "tags": [
-    "attack",
-    "strike",
-    "blood",
-    "physical"
-   ],
-   "type": "active",
-   "kind": "execute",
-   "cooldown": 7.0,
-   "mana": 22,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.2,
-    "threshold": 0.35,
-    "bonusBelow": 1.5
-   }
-  },
-  {
-   "id": "cinder_totem",
-   "ru": "Тотем углей",
-   "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "fire",
-    "totem"
-   ],
-   "type": "active",
-   "kind": "summonTotem",
-   "cooldown": 12.0,
-   "mana": 34,
-   "damageType": "fire",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.1,
-    "duration": 10.0,
-    "interval": 1.2,
-    "targets": 2
-   }
-  },
-  {
-   "id": "winter_totem",
-   "ru": "Тотем стужи",
-   "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "cold",
-    "totem"
-   ],
-   "type": "active",
-   "kind": "summonTotem",
-   "cooldown": 12.0,
-   "mana": 34,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.2,
-    "duration": 10.0,
-    "interval": 1.5,
-    "targets": 1
-   }
-  },
-  {
-   "id": "thunder_totem",
-   "ru": "Громовой тотем",
-   "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "lightning",
-    "totem"
-   ],
-   "type": "active",
-   "kind": "summonTotem",
-   "cooldown": 13.0,
-   "mana": 38,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.4,
-    "duration": 9.0,
-    "interval": 1.4,
-    "targets": 2
-   }
-  },
-  {
-   "id": "null_totem",
-   "ru": "Тотем безмолвия",
-   "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "voidTag",
-    "totem"
-   ],
-   "type": "active",
-   "kind": "summonTotem",
-   "cooldown": 12.0,
-   "mana": 34,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 1.3,
-    "duration": 10.0,
-    "interval": 1.6,
-    "targets": 1
-   }
-  },
-  {
-   "id": "overcharge",
-   "ru": "Перегрузка",
-   "text": "Шанс {chance:%}, что умение с тегом «Чары» сработает дважды",
-   "tags": [
-    "spell",
-    "lightning"
-   ],
-   "type": "passive",
-   "kind": "repeatSpell",
-   "cooldown": 0.0,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "chance": 0.18
-   }
-  },
-  {
-   "id": "entropy",
-   "ru": "Энтропия",
-   "text": "Шанс {chance:%}, что умение с тегом «Чары» сработает дважды",
-   "tags": [
-    "spell",
-    "voidTag"
-   ],
-   "type": "passive",
-   "kind": "repeatSpell",
-   "cooldown": 0.0,
-   "damageType": "voidType",
-   "starter": false,
-   "params": {
-    "chance": 0.12
-   }
-  },
-  {
-   "id": "storm_call",
-   "ru": "Зов бури",
-   "text": "Удар по всей волне на {weaponMultiplier:x} силы чар",
-   "tags": [
-    "spell",
-    "lightning",
-    "area"
-   ],
-   "type": "active",
-   "kind": "directDamage",
-   "cooldown": 10.0,
-   "mana": 30,
-   "damageType": "lightning",
-   "starter": false,
-   "params": {
-    "weaponMultiplier": 2.2,
-    "targets": 99
-   }
-  },
-  {
-   "id": "ashfield",
-   "ru": "Пепелище",
-   "tags": [
-    "attack",
-    "fire",
-    "duration"
-   ],
-   "type": "passive",
-   "kind": "critApplyDot",
-   "cooldown": 0.0,
-   "damageType": "fire",
-   "params": {
-    "duration": 3.0,
-    "dpsFraction": 0.36
-   },
-   "text": "Критический удар поджигает на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
-   "starter": false
-  },
-  {
-   "id": "frost_bite",
-   "ru": "Обморожение",
-   "text": "Критический удар морозит на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
-   "tags": [
-    "attack",
-    "cold",
-    "duration"
-   ],
-   "type": "passive",
-   "kind": "critApplyDot",
-   "cooldown": 0.0,
-   "damageType": "cold",
-   "starter": false,
-   "params": {
-    "duration": 4.0,
-    "dpsFraction": 0.3
-   }
-  },
-  {
-   "id": "abyss_seal",
-   "ru": "Печать бездны",
-   "tags": [
-    "voidTag",
-    "curse",
-    "area"
-   ],
-   "type": "passive",
-   "kind": "corpseExplosion",
-   "cooldown": 0.0,
-   "damageType": "voidType",
-   "params": {
-    "fractionOfMaxHp": 0.25
-   },
-   "text": "Проклятый враг, умирая, взрывается на {fractionOfMaxHp:%} своего запаса HP",
-   "starter": false
-  },
-  {
-   "id": "totem_of_fury",
-   "ru": "Тотем ярости",
-   "tags": [
-    "totem"
-   ],
-   "type": "active",
-   "kind": "buff",
-   "cooldown": 14.0,
-   "damageType": "physical",
-   "params": {
-    "stat": "increasedAttackSpeed",
-    "value": 0.3,
-    "duration": 8.0
-   },
-   "text": "Тотем на {duration:s}: +{value:%} к скорости атаки",
-   "mana": 40,
-   "starter": false
-  },
-  {
-   "id": "battle_focus",
-   "ru": "Сосредоточение",
-   "text": "На {duration:s}: +{value:%} к урону",
-   "tags": [
-    "attack"
-   ],
-   "type": "active",
-   "kind": "buff",
-   "cooldown": 16.0,
-   "mana": 50,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "increasedDamage",
-    "value": 0.45,
-    "duration": 8.0
-   }
-  },
-  {
-   "id": "berserk_rush",
-   "ru": "Натиск",
-   "text": "На {duration:s}: +{value:%} к скорости атаки",
-   "tags": [
-    "attack",
-    "strike"
-   ],
-   "type": "active",
-   "kind": "buff",
-   "cooldown": 18.0,
-   "mana": 52,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "increasedAttackSpeed",
-    "value": 0.5,
-    "duration": 6.0
-   }
-  },
-  {
-   "id": "butcher",
-   "ru": "Мясник",
-   "text": "+{armorPct:%} брони, {attackSpeedPct:%} скорости атаки",
-   "tags": [
-    "attack",
-    "strike",
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "statTradeoff",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "armorPct": -0.2,
-    "attackSpeedPct": 0.25
-   }
-  },
-  {
-   "id": "second_wind_blade",
-   "ru": "Второй клинок",
-   "text": "Шанс {chance:%} ударить оружием ещё раз",
-   "tags": [
-    "attack",
-    "strike",
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "repeatAttack",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "chance": 0.12
-   }
-  },
-  {
-   "id": "last_stand",
-   "ru": "Последний рубеж",
-   "text": "Ниже {threshold:%} HP получаемый урон меньше на {lessDamageTaken:%}",
-   "tags": [
-    "physical"
-   ],
-   "type": "passive",
-   "kind": "lowLifeGuard",
-   "cooldown": 0.0,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "threshold": 0.4,
-    "lessDamageTaken": 0.2
-   }
-  },
-  {
-   "id": "frost_shroud",
-   "ru": "Ледяной покров",
-   "tags": [
-    "aura",
-    "cold"
-   ],
-   "type": "aura",
-   "kind": "auraSlow",
-   "cooldown": 0.0,
-   "damageType": "cold",
-   "params": {
-    "slow": 0.25
-   },
-   "text": "Аура: те, кто вас бьёт, замедлены на {slow:%}",
-   "starter": false,
-   "reserve": 0.25
-  },
-  {
-   "id": "war_cry",
-   "ru": "Клич ярости",
-   "text": "Аура: +{value:%} к урону",
-   "tags": [
-    "aura",
-    "strike"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.35,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "increasedDamage",
-    "value": 0.3
-   }
-  },
-  {
-   "id": "stone_stance",
-   "ru": "Каменная стойка",
-   "text": "Аура: +{value:%} к броне",
-   "tags": [
-    "aura"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.3,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "armorPct",
-    "value": 0.45
-   }
-  },
-  {
-   "id": "blood_oath",
-   "ru": "Кровавый обет",
-   "text": "Аура: +{value:%} вампиризма",
-   "tags": [
-    "aura",
-    "blood"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.4,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "leech",
-    "value": 0.025
-   }
-  },
-  {
-   "id": "hunters_mark",
-   "ru": "Метка охотника",
-   "text": "Аура: +{value:%} к шансу критического удара",
-   "tags": [
-    "aura"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.25,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "critChance",
-    "value": 0.08
-   }
-  },
-  {
-   "id": "wardens_vigil",
-   "ru": "Дозор",
-   "text": "Аура: +{value} ко всем сопротивлениям",
-   "tags": [
-    "aura"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.2,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "resistFire",
-    "value": 25.0
-   }
-  },
-  {
-   "id": "quickened_mind",
-   "ru": "Ускоренный разум",
-   "text": "Аура: −{value:%} ко времени перезарядки",
-   "tags": [
-    "aura",
-    "spell"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.35,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "cooldownReduction",
-    "value": 0.18
-   }
-  },
-  {
-   "id": "mana_font",
-   "ru": "Родник маны",
-   "text": "Аура: +{value} восстановления маны в секунду",
-   "tags": [
-    "aura"
-   ],
-   "type": "aura",
-   "kind": "auraStat",
-   "cooldown": 0.0,
-   "reserve": 0.15,
-   "damageType": "physical",
-   "starter": false,
-   "params": {
-    "stat": "manaRegen",
-    "value": 4.0
-   }
-  }
- ]
+  "version": 1,
+  "_comment": [
+    "55 способностей трёх видов на 4 слота — активные, пассивные и ауры",
+    "конкурируют за один пул, и это и есть выбор.",
+    "",
+    "ТЕГИ — не украшение карточки. За них цепляются аффиксы вещей, узлы",
+    "дерева пассивок и черты наёмника. У каждой способности есть тег с",
+    "каждой оси, которая к ней применима:",
+    "  стихия   — fire / cold / lightning / voidTag / physical. Совпадает с",
+    "             damageType: сопротивление режет по типу, тег обязан его",
+    "             называть;",
+    "  форма    — attack (растёт от урона оружия) или spell (от силы чар).",
+    "             Ось, ради которой снаряжение подбирается ПОД способности;",
+    "  доставка — projectile / area;",
+    "  механика — duration / curse / aura / totem / strike / blood.",
+    "",
+    "Множители Чар выше множителей Атак ровно в 1.5 раза: база силы чар 8",
+    "против 12 урона оружия. Это перенос на другую ось, а не правка силы.",
+    "",
+    "ПОРЯДОК СПИСКА — это порядок открытия. Древо Эха открывает первые N",
+    "нестартовых, поэтому первыми стоят по одному умению в каждую стихию:",
+    "иначе восемь открытых узлов давали бы восемь огненных умений.",
+    "",
+    "starter — то, с чем начинает новый аккаунт. Обе оси и три стихии есть",
+    "с первого рана: выбор должен быть до первой добычи, а не после неё.",
+    "",
+    "ЦЕНА В МАНЕ — таблица по перезарядке, а не число на глаз. Правило «дороже",
+    "та, что реже» держалось случайно, и первая же новая активка с той же",
+    "перезарядкой его нарушила. Теперь: 3 с -> 10, 4 -> 12, 5 -> 15, 6 -> 20,",
+    "7 -> 22, 8 -> 26, 9 -> 28, 10 -> 30, 12 -> 34, 13 -> 38, 14 -> 40,",
+    "16 -> 50, 18 -> 52.",
+    "",
+    "ОПИСАНИЕ НАЗЫВАЕТ ОСЬ. «×3.2 урона оружия» у способности с тегом «Чары» —",
+    "это ложь игроку: она растёт от силы чар и урон оружия ей не помогает вовсе.",
+    "Каждый текст с множителем обязан называть ту ось, что стоит в тегах."
+  ],
+  "abilities": [
+    {
+      "id": "cleave",
+      "ru": "Рассекающий удар",
+      "tags": [
+        "attack",
+        "strike",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 3.0,
+      "damageType": "physical",
+      "starter": true,
+      "params": {
+        "weaponMultiplier": 2.64,
+        "targets": 1
+      },
+      "text": "Удар по {targets} цели на {weaponMultiplier:x} урона оружия",
+      "mana": 10
+    },
+    {
+      "id": "bloodletting",
+      "ru": "Кровопуск",
+      "tags": [
+        "attack",
+        "strike",
+        "blood",
+        "duration",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 5.0,
+      "damageType": "physical",
+      "params": {
+        "weaponMultiplier": 1.2,
+        "duration": 5.0,
+        "dpsFraction": 0.66
+      },
+      "text": "Кровотечение на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
+      "mana": 15,
+      "starter": true
+    },
+    {
+      "id": "thirst",
+      "ru": "Жажда",
+      "tags": [
+        "blood"
+      ],
+      "type": "passive",
+      "kind": "conditionalLeech",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "params": {
+        "threshold": 0.5,
+        "leechMultiplier": 2.0
+      },
+      "text": "Ниже {threshold:%} HP вампиризм сильнее в {leechMultiplier:x}",
+      "starter": true
+    },
+    {
+      "id": "fortitude",
+      "ru": "Стойкость",
+      "tags": [
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "statTradeoff",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "params": {
+        "armorPct": 0.4,
+        "attackSpeedPct": -0.15
+      },
+      "text": "+{armorPct:%} брони, {attackSpeedPct:%} скорости атаки",
+      "starter": true
+    },
+    {
+      "id": "blade_echo",
+      "ru": "Эхо клинка",
+      "tags": [
+        "attack",
+        "strike",
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "repeatAttack",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "starter": true,
+      "params": {
+        "chance": 0.2
+      },
+      "text": "Шанс {chance:%} ударить оружием ещё раз"
+    },
+    {
+      "id": "frost_spike",
+      "ru": "Морозный шип",
+      "tags": [
+        "spell",
+        "cold",
+        "projectile"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 4.0,
+      "damageType": "cold",
+      "params": {
+        "weaponMultiplier": 3.24,
+        "targets": 1,
+        "bonusVsSlowed": 0.5
+      },
+      "text": "Удар на {weaponMultiplier:x} силы чар, +{bonusVsSlowed:%} по замедленным",
+      "mana": 12,
+      "starter": true
+    },
+    {
+      "id": "sunder",
+      "ru": "Раскол",
+      "text": "Удар по {targets} целям на {weaponMultiplier:x} урона оружия",
+      "tags": [
+        "attack",
+        "strike",
+        "area",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 5.0,
+      "mana": 15,
+      "damageType": "physical",
+      "starter": true,
+      "params": {
+        "weaponMultiplier": 1.9,
+        "targets": 3
+      }
+    },
+    {
+      "id": "ember_burst",
+      "ru": "Всполох",
+      "text": "Удар по {targets} целям на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "fire",
+        "area"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 5.0,
+      "mana": 15,
+      "damageType": "fire",
+      "starter": true,
+      "params": {
+        "weaponMultiplier": 2.55,
+        "targets": 3
+      }
+    },
+    {
+      "id": "field_dressing",
+      "ru": "Перевязка",
+      "text": "Восстанавливает {fractionOfMaxHp:%} максимума HP",
+      "tags": [
+        "blood"
+      ],
+      "type": "active",
+      "kind": "heal",
+      "cooldown": 14.0,
+      "mana": 40,
+      "damageType": "physical",
+      "starter": true,
+      "params": {
+        "fractionOfMaxHp": 0.12
+      }
+    },
+    {
+      "id": "spiked_guard",
+      "ru": "Шипы",
+      "text": "{fractionReturned:%} полученного урона возвращается тому, кто ударил",
+      "tags": [
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "thorns",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "starter": true,
+      "params": {
+        "fractionReturned": 0.25
+      }
+    },
+    {
+      "id": "spark_bolt",
+      "ru": "Разряд",
+      "text": "Удар по одной цели на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "lightning",
+        "projectile"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 3.0,
+      "mana": 10,
+      "damageType": "lightning",
+      "starter": true,
+      "params": {
+        "weaponMultiplier": 2.9,
+        "targets": 1
+      }
+    },
+    {
+      "id": "flame_lash",
+      "ru": "Огненный хлыст",
+      "text": "Удар по одной цели на {weaponMultiplier:x} урона оружия",
+      "tags": [
+        "attack",
+        "fire",
+        "strike"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 4.0,
+      "mana": 12,
+      "damageType": "fire",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.3,
+        "targets": 1
+      }
+    },
+    {
+      "id": "void_lance",
+      "ru": "Копьё пустоты",
+      "text": "Удар по {targets} цели на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "voidTag",
+        "projectile"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 4.0,
+      "mana": 12,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 3.45,
+        "targets": 1
+      }
+    },
+    {
+      "id": "glacier_shard",
+      "ru": "Осколок глетчера",
+      "text": "Удар по {targets} целям на {weaponMultiplier:x} силы чар, +{bonusVsSlowed:%} по замедленным",
+      "tags": [
+        "spell",
+        "cold",
+        "area"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 7.0,
+      "mana": 22,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.4,
+        "targets": 4,
+        "bonusVsSlowed": 0.6
+      }
+    },
+    {
+      "id": "arc_lash",
+      "ru": "Дуга молний",
+      "text": "Цепь по {targets} целям: {weaponMultiplier:x} силы чар, каждая следующая на {falloff:%} слабее",
+      "tags": [
+        "spell",
+        "lightning",
+        "projectile"
+      ],
+      "type": "active",
+      "kind": "chainDamage",
+      "cooldown": 6.0,
+      "mana": 20,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.4,
+        "targets": 5,
+        "falloff": 0.2
+      }
+    },
+    {
+      "id": "ember_infusion",
+      "ru": "Пламя на клинке",
+      "text": "Автоатака бьёт Огнём, +{moreDamage:%} к её урону",
+      "tags": [
+        "attack",
+        "fire",
+        "strike"
+      ],
+      "type": "passive",
+      "kind": "infusion",
+      "cooldown": 0.0,
+      "damageType": "fire",
+      "starter": false,
+      "params": {
+        "moreDamage": 0.1
+      }
+    },
+    {
+      "id": "rime_infusion",
+      "ru": "Иней на клинке",
+      "text": "Автоатака бьёт Холодом, +{moreDamage:%} к её урону",
+      "tags": [
+        "attack",
+        "cold",
+        "strike"
+      ],
+      "type": "passive",
+      "kind": "infusion",
+      "cooldown": 0.0,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "moreDamage": 0.06
+      }
+    },
+    {
+      "id": "storm_infusion",
+      "ru": "Гроза на клинке",
+      "text": "Автоатака бьёт Молнией, +{moreDamage:%} к её урону",
+      "tags": [
+        "attack",
+        "lightning",
+        "strike"
+      ],
+      "type": "passive",
+      "kind": "infusion",
+      "cooldown": 0.0,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "moreDamage": 0.08
+      }
+    },
+    {
+      "id": "void_infusion",
+      "ru": "Пустота на клинке",
+      "text": "Автоатака бьёт Пустотой, +{moreDamage:%} к её урону",
+      "tags": [
+        "attack",
+        "voidTag",
+        "strike"
+      ],
+      "type": "passive",
+      "kind": "infusion",
+      "cooldown": 0.0,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "moreDamage": 0.12
+      }
+    },
+    {
+      "id": "fire_brand",
+      "ru": "Огненное клеймо",
+      "tags": [
+        "spell",
+        "fire",
+        "curse"
+      ],
+      "type": "active",
+      "kind": "curse",
+      "cooldown": 6.0,
+      "damageType": "fire",
+      "params": {
+        "weaponMultiplier": 1.44,
+        "duration": 6.0,
+        "damageTakenIncrease": 0.2
+      },
+      "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
+      "mana": 20,
+      "starter": false
+    },
+    {
+      "id": "hex_of_frailty",
+      "ru": "Порча хрупкости",
+      "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
+      "tags": [
+        "spell",
+        "voidTag",
+        "curse"
+      ],
+      "type": "active",
+      "kind": "curse",
+      "cooldown": 8.0,
+      "mana": 26,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 0.9,
+        "duration": 8.0,
+        "damageTakenIncrease": 0.3
+      }
+    },
+    {
+      "id": "conduction",
+      "ru": "Проводимость",
+      "text": "Клеймо на {duration:s}: цель получает +{damageTakenIncrease:%} урона",
+      "tags": [
+        "spell",
+        "lightning",
+        "curse"
+      ],
+      "type": "active",
+      "kind": "curse",
+      "cooldown": 8.0,
+      "mana": 26,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.2,
+        "duration": 7.0,
+        "damageTakenIncrease": 0.28
+      }
+    },
+    {
+      "id": "venom",
+      "ru": "Яд",
+      "text": "Отравление на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
+      "tags": [
+        "spell",
+        "voidTag",
+        "duration"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 6.0,
+      "mana": 20,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.2,
+        "duration": 7.0,
+        "dpsFraction": 0.5
+      }
+    },
+    {
+      "id": "pyre",
+      "ru": "Погребальный костёр",
+      "text": "Пламя на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
+      "tags": [
+        "spell",
+        "fire",
+        "area",
+        "duration"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 8.0,
+      "mana": 26,
+      "damageType": "fire",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.2,
+        "duration": 6.0,
+        "dpsFraction": 0.85
+      }
+    },
+    {
+      "id": "hoarfrost",
+      "ru": "Изморозь",
+      "text": "Обморожение на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
+      "tags": [
+        "spell",
+        "cold",
+        "area",
+        "duration"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 7.0,
+      "mana": 22,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.0,
+        "duration": 6.0,
+        "dpsFraction": 0.6
+      }
+    },
+    {
+      "id": "static_field",
+      "ru": "Статическое поле",
+      "text": "Разряды на {duration:s}: {dpsFraction:%} вашей силы чар в секунду",
+      "tags": [
+        "spell",
+        "lightning",
+        "area",
+        "duration"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 7.0,
+      "mana": 22,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 0.9,
+        "duration": 6.0,
+        "dpsFraction": 0.7
+      }
+    },
+    {
+      "id": "impale",
+      "ru": "Пронзание",
+      "text": "Рана на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
+      "tags": [
+        "attack",
+        "strike",
+        "duration",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "dot",
+      "cooldown": 7.0,
+      "mana": 22,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.5,
+        "duration": 8.0,
+        "dpsFraction": 0.5
+      }
+    },
+    {
+      "id": "frost_chain_bolt",
+      "ru": "Ледяная дуга",
+      "text": "Цепь по {targets} целям: {weaponMultiplier:x} силы чар, каждая следующая на {falloff:%} слабее",
+      "tags": [
+        "spell",
+        "cold",
+        "projectile"
+      ],
+      "type": "active",
+      "kind": "chainDamage",
+      "cooldown": 6.0,
+      "mana": 20,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.7,
+        "targets": 4,
+        "falloff": 0.25
+      }
+    },
+    {
+      "id": "rift",
+      "ru": "Разлом",
+      "tags": [
+        "spell",
+        "voidTag",
+        "area"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 9.0,
+      "damageType": "voidType",
+      "params": {
+        "weaponMultiplier": 2.88,
+        "targets": 99
+      },
+      "text": "Удар по всей волне на {weaponMultiplier:x} силы чар",
+      "mana": 28,
+      "starter": false
+    },
+    {
+      "id": "whirlwind",
+      "ru": "Вихрь клинков",
+      "text": "Удар по {targets} целям на {weaponMultiplier:x} урона оружия",
+      "tags": [
+        "attack",
+        "strike",
+        "area",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 8.0,
+      "mana": 26,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.45,
+        "targets": 6
+      }
+    },
+    {
+      "id": "coup_de_grace",
+      "ru": "Милосердие",
+      "text": "Добивание на {weaponMultiplier:x} урона оружия, +{bonusBelow:%} по цели ниже {threshold:%} HP",
+      "tags": [
+        "attack",
+        "strike",
+        "blood",
+        "physical"
+      ],
+      "type": "active",
+      "kind": "execute",
+      "cooldown": 7.0,
+      "mana": 22,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.2,
+        "threshold": 0.35,
+        "bonusBelow": 1.5
+      }
+    },
+    {
+      "id": "cinder_totem",
+      "ru": "Тотем углей",
+      "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "fire",
+        "totem"
+      ],
+      "type": "active",
+      "kind": "summonTotem",
+      "cooldown": 12.0,
+      "mana": 34,
+      "damageType": "fire",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.1,
+        "duration": 10.0,
+        "interval": 1.2,
+        "targets": 2
+      }
+    },
+    {
+      "id": "winter_totem",
+      "ru": "Тотем стужи",
+      "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "cold",
+        "totem"
+      ],
+      "type": "active",
+      "kind": "summonTotem",
+      "cooldown": 12.0,
+      "mana": 34,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.2,
+        "duration": 10.0,
+        "interval": 1.5,
+        "targets": 1
+      }
+    },
+    {
+      "id": "thunder_totem",
+      "ru": "Громовой тотем",
+      "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "lightning",
+        "totem"
+      ],
+      "type": "active",
+      "kind": "summonTotem",
+      "cooldown": 13.0,
+      "mana": 38,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.4,
+        "duration": 9.0,
+        "interval": 1.4,
+        "targets": 2
+      }
+    },
+    {
+      "id": "null_totem",
+      "ru": "Тотем безмолвия",
+      "text": "Тотем на {duration:s}: бьёт по {targets} целям раз в {interval:s} на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "voidTag",
+        "totem"
+      ],
+      "type": "active",
+      "kind": "summonTotem",
+      "cooldown": 12.0,
+      "mana": 34,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 1.3,
+        "duration": 10.0,
+        "interval": 1.6,
+        "targets": 1
+      }
+    },
+    {
+      "id": "overcharge",
+      "ru": "Перегрузка",
+      "text": "Шанс {chance:%}, что умение с тегом «Чары» сработает дважды",
+      "tags": [
+        "spell",
+        "lightning"
+      ],
+      "type": "passive",
+      "kind": "repeatSpell",
+      "cooldown": 0.0,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "chance": 0.18
+      }
+    },
+    {
+      "id": "entropy",
+      "ru": "Энтропия",
+      "text": "Шанс {chance:%}, что умение с тегом «Чары» сработает дважды",
+      "tags": [
+        "spell",
+        "voidTag"
+      ],
+      "type": "passive",
+      "kind": "repeatSpell",
+      "cooldown": 0.0,
+      "damageType": "voidType",
+      "starter": false,
+      "params": {
+        "chance": 0.12
+      }
+    },
+    {
+      "id": "storm_call",
+      "ru": "Зов бури",
+      "text": "Удар по всей волне на {weaponMultiplier:x} силы чар",
+      "tags": [
+        "spell",
+        "lightning",
+        "area"
+      ],
+      "type": "active",
+      "kind": "directDamage",
+      "cooldown": 10.0,
+      "mana": 30,
+      "damageType": "lightning",
+      "starter": false,
+      "params": {
+        "weaponMultiplier": 2.2,
+        "targets": 99
+      }
+    },
+    {
+      "id": "ashfield",
+      "ru": "Пепелище",
+      "tags": [
+        "attack",
+        "fire",
+        "duration"
+      ],
+      "type": "passive",
+      "kind": "critApplyDot",
+      "cooldown": 0.0,
+      "damageType": "fire",
+      "params": {
+        "duration": 3.0,
+        "dpsFraction": 0.36
+      },
+      "text": "Критический удар поджигает на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
+      "starter": false
+    },
+    {
+      "id": "frost_bite",
+      "ru": "Обморожение",
+      "text": "Критический удар морозит на {duration:s}: {dpsFraction:%} вашего урона оружия в секунду",
+      "tags": [
+        "attack",
+        "cold",
+        "duration"
+      ],
+      "type": "passive",
+      "kind": "critApplyDot",
+      "cooldown": 0.0,
+      "damageType": "cold",
+      "starter": false,
+      "params": {
+        "duration": 4.0,
+        "dpsFraction": 0.3
+      }
+    },
+    {
+      "id": "abyss_seal",
+      "ru": "Печать бездны",
+      "tags": [
+        "voidTag",
+        "curse",
+        "area"
+      ],
+      "type": "passive",
+      "kind": "corpseExplosion",
+      "cooldown": 0.0,
+      "damageType": "voidType",
+      "params": {
+        "fractionOfMaxHp": 0.25
+      },
+      "text": "Проклятый враг, умирая, взрывается на {fractionOfMaxHp:%} своего запаса HP",
+      "starter": false
+    },
+    {
+      "id": "totem_of_fury",
+      "ru": "Тотем ярости",
+      "tags": [
+        "totem"
+      ],
+      "type": "active",
+      "kind": "buff",
+      "cooldown": 14.0,
+      "damageType": "physical",
+      "params": {
+        "stat": "increasedAttackSpeed",
+        "value": 0.3,
+        "duration": 8.0
+      },
+      "text": "Тотем на {duration:s}: +{value:%} к скорости атаки",
+      "mana": 40,
+      "starter": false
+    },
+    {
+      "id": "battle_focus",
+      "ru": "Сосредоточение",
+      "text": "На {duration:s}: +{value:%} к урону",
+      "tags": [
+        "attack"
+      ],
+      "type": "active",
+      "kind": "buff",
+      "cooldown": 16.0,
+      "mana": 50,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "increasedDamage",
+        "value": 0.45,
+        "duration": 8.0
+      }
+    },
+    {
+      "id": "berserk_rush",
+      "ru": "Натиск",
+      "text": "На {duration:s}: +{value:%} к скорости атаки",
+      "tags": [
+        "attack",
+        "strike"
+      ],
+      "type": "active",
+      "kind": "buff",
+      "cooldown": 18.0,
+      "mana": 52,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "increasedAttackSpeed",
+        "value": 0.5,
+        "duration": 6.0
+      }
+    },
+    {
+      "id": "butcher",
+      "ru": "Мясник",
+      "text": "+{armorPct:%} брони, {attackSpeedPct:%} скорости атаки",
+      "tags": [
+        "attack",
+        "strike",
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "statTradeoff",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "armorPct": -0.2,
+        "attackSpeedPct": 0.25
+      }
+    },
+    {
+      "id": "second_wind_blade",
+      "ru": "Второй клинок",
+      "text": "Шанс {chance:%} ударить оружием ещё раз",
+      "tags": [
+        "attack",
+        "strike",
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "repeatAttack",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "chance": 0.12
+      }
+    },
+    {
+      "id": "last_stand",
+      "ru": "Последний рубеж",
+      "text": "Ниже {threshold:%} HP получаемый урон меньше на {lessDamageTaken:%}",
+      "tags": [
+        "physical"
+      ],
+      "type": "passive",
+      "kind": "lowLifeGuard",
+      "cooldown": 0.0,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "threshold": 0.4,
+        "lessDamageTaken": 0.2
+      }
+    },
+    {
+      "id": "frost_shroud",
+      "ru": "Ледяной покров",
+      "tags": [
+        "aura",
+        "cold"
+      ],
+      "type": "aura",
+      "kind": "auraSlow",
+      "cooldown": 0.0,
+      "damageType": "cold",
+      "params": {
+        "slow": 0.25
+      },
+      "text": "Аура: те, кто вас бьёт, замедлены на {slow:%}",
+      "starter": false,
+      "reserve": 0.25
+    },
+    {
+      "id": "war_cry",
+      "ru": "Клич ярости",
+      "text": "Аура: +{value:%} к урону",
+      "tags": [
+        "aura",
+        "strike"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.35,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "increasedDamage",
+        "value": 0.3
+      }
+    },
+    {
+      "id": "stone_stance",
+      "ru": "Каменная стойка",
+      "text": "Аура: +{value:%} к броне",
+      "tags": [
+        "aura"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.3,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "armorPct",
+        "value": 0.45
+      }
+    },
+    {
+      "id": "blood_oath",
+      "ru": "Кровавый обет",
+      "text": "Аура: +{value:%} вампиризма",
+      "tags": [
+        "aura",
+        "blood"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.4,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "leech",
+        "value": 0.025
+      }
+    },
+    {
+      "id": "hunters_mark",
+      "ru": "Метка охотника",
+      "text": "Аура: +{value:%} к шансу критического удара",
+      "tags": [
+        "aura"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.25,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "critChance",
+        "value": 0.08
+      }
+    },
+    {
+      "id": "wardens_vigil",
+      "ru": "Дозор",
+      "text": "Аура: +{value} ко всем сопротивлениям",
+      "tags": [
+        "aura"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.2,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "resistFire",
+        "value": 25.0
+      }
+    },
+    {
+      "id": "quickened_mind",
+      "ru": "Ускоренный разум",
+      "text": "Аура: −{value:%} ко времени перезарядки",
+      "tags": [
+        "aura",
+        "spell"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.35,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "cooldownReduction",
+        "value": 0.18
+      }
+    },
+    {
+      "id": "mana_font",
+      "ru": "Родник маны",
+      "text": "Аура: +{value} восстановления маны в секунду",
+      "tags": [
+        "aura"
+      ],
+      "type": "aura",
+      "kind": "auraStat",
+      "cooldown": 0.0,
+      "reserve": 0.15,
+      "damageType": "physical",
+      "starter": false,
+      "params": {
+        "stat": "manaRegen",
+        "value": 4.0
+      }
+    }
+  ]
 }

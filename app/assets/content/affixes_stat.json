@@ -1,425 +1,425 @@
 {
- "version": 1,
- "_comment": [
-  "Аффиксы вещей. Семейство `tagDamage` разложено по ОСЯМ, а не свалено в одну",
-  "кучу: раньше был один аффикс с восемью тегами внутри, и шанс найти нужный",
-  "конкретный тег был около процента — собрать под него билд было нельзя.",
-  "",
-  "damage_element  -> стихия: Огонь, Холод, Молния, Пустота, Физический;",
-  "damage_form     -> ось силы: Атака (урон оружия) или Чары (сила чар);",
-  "damage_delivery -> доставка: Снаряд, Область;",
-  "damage_mechanic -> механика: Длительность, Проклятие, Тотем, Удар, Кровь.",
-  "",
-  "Тега «Аура» среди семейств нет намеренно: ауры не наносят урона, и такой",
-  "ролл был бы строкой, которая ничего не делает.",
-  "",
-  "spellPower — вторая ось силы. Имплицит левой руки даёт её так же, как",
-  "имплицит оружия даёт урон атаки: у каждой оси свой слот, с которого",
-  "начинается сборка.",
-  "",
-  "scales=true  -> значение растёт как itemScale(ilvl). Плоские числа.",
-  "scales=false -> значение постоянное, ролл решает перцентиль. Проценты,",
-  "                сопротивления, мана.",
-  "Это различие обязательное: если бы проценты тоже росли, сила билда шла бы",
-  "как itemScale^2 и формула стены (GDD §2.3) перестала бы сходиться."
- ],
- "affixes": [
-  {
-   "id": "max_hp_flat",
-   "ru": "+{value} к максимуму HP",
-   "stat": "maxHp",
-   "base": 30.0,
-   "scales": true,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 12
-  },
-  {
-   "id": "max_hp_pct",
-   "ru": "+{value:%} к максимуму HP",
-   "stat": "maxHpPct",
-   "base": 0.06,
-   "scales": false,
-   "kinds": [
-    "armor",
-    "amulet"
-   ],
-   "weight": 6
-  },
-  {
-   "id": "hp_regen",
-   "ru": "+{value} восстановления HP в секунду",
-   "stat": "hpRegen",
-   "base": 0.15,
-   "scales": true,
-   "kinds": [
-    "boots",
-    "ring",
-    "amulet"
-   ],
-   "weight": 7
-  },
-  {
-   "id": "armor_flat",
-   "ru": "+{value} к броне",
-   "stat": "armor",
-   "base": 6.0,
-   "scales": true,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "offhand",
-    "gloves"
-   ],
-   "weight": 12
-  },
-  {
-   "id": "armor_pct",
-   "ru": "+{value:%} к броне",
-   "stat": "armorPct",
-   "base": 0.08,
-   "scales": false,
-   "kinds": [
-    "armor",
-    "offhand"
-   ],
-   "weight": 6
-  },
-  {
-   "id": "resist_fire",
-   "ru": "+{value} к сопротивлению огню",
-   "stat": "resistFire",
-   "base": 8.0,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 9
-  },
-  {
-   "id": "resist_cold",
-   "ru": "+{value} к сопротивлению холоду",
-   "stat": "resistCold",
-   "base": 8.0,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 9
-  },
-  {
-   "id": "resist_lightning",
-   "ru": "+{value} к сопротивлению молнии",
-   "stat": "resistLightning",
-   "base": 8.0,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 9
-  },
-  {
-   "id": "resist_void",
-   "ru": "+{value} к сопротивлению пустоте",
-   "stat": "resistVoid",
-   "base": 8.0,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "armor",
-    "boots",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 9
-  },
-  {
-   "id": "attack_damage_flat",
-   "ru": "+{value} к урону оружия",
-   "stat": "attackDamage",
-   "base": 2.0,
-   "scales": true,
-   "kinds": [
-    "weapon",
-    "gloves",
-    "ring",
-    "amulet"
-   ],
-   "weight": 12
-  },
-  {
-   "id": "spell_power_flat",
-   "ru": "+{value} к силе чар",
-   "stat": "spellPower",
-   "base": 1.6,
-   "scales": true,
-   "kinds": [
-    "weapon",
-    "offhand",
-    "ring",
-    "amulet",
-    "helmet"
-   ],
-   "weight": 12
-  },
-  {
-   "id": "increased_damage",
-   "ru": "+{value:%} к урону",
-   "stat": "increasedDamage",
-   "base": 0.08,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "gloves",
-    "ring",
-    "amulet"
-   ],
-   "weight": 10
-  },
-  {
-   "id": "attack_speed",
-   "ru": "+{value:%} к скорости атаки",
-   "stat": "increasedAttackSpeed",
-   "base": 0.06,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "gloves",
-    "boots",
-    "ring"
-   ],
-   "weight": 9
-  },
-  {
-   "id": "crit_chance",
-   "ru": "+{value:%} к шансу критического удара",
-   "stat": "critChance",
-   "base": 0.03,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "gloves",
-    "ring",
-    "amulet"
-   ],
-   "weight": 8
-  },
-  {
-   "id": "crit_multi",
-   "ru": "+{value:%} к урону критических ударов",
-   "stat": "critMulti",
-   "base": 0.15,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "gloves",
-    "amulet"
-   ],
-   "weight": 8
-  },
-  {
-   "id": "cooldown_reduction",
-   "ru": "−{value:%} ко времени перезарядки",
-   "stat": "cooldownReduction",
-   "base": 0.05,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "gloves",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 7
-  },
-  {
-   "id": "leech",
-   "ru": "+{value:%} вампиризма",
-   "stat": "leech",
-   "base": 0.015,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "ring",
-    "amulet"
-   ],
-   "weight": 5
-  },
-  {
-   "id": "damage_element",
-   "ru": "+{value:%} {tag}",
-   "stat": "tagDamage",
-   "base": 0.12,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "offhand",
-    "ring",
-    "amulet",
-    "gloves"
-   ],
-   "weight": 18,
-   "family": [
-    "fire",
-    "cold",
-    "lightning",
-    "voidTag",
-    "physical"
-   ]
-  },
-  {
-   "id": "damage_form",
-   "ru": "+{value:%} {tag}",
-   "stat": "tagDamage",
-   "base": 0.15,
-   "scales": false,
-   "kinds": [
-    "weapon",
-    "offhand",
-    "amulet"
-   ],
-   "weight": 9,
-   "family": [
-    "attack",
-    "spell"
-   ]
-  },
-  {
-   "id": "damage_delivery",
-   "ru": "+{value:%} {tag}",
-   "stat": "tagDamage",
-   "base": 0.14,
-   "scales": false,
-   "kinds": [
-    "gloves",
-    "helmet",
-    "ring",
-    "offhand"
-   ],
-   "weight": 7,
-   "family": [
-    "projectile",
-    "area"
-   ]
-  },
-  {
-   "_comment": [
-    "Единственный тег, который усиливает НЕ урон: ауры его не наносят.",
-    "Множит величину ауры — броню «Каменной стойки», замедление «Морозного",
-    "покрова». Отдельным аффиксом, а не в семействе механик, потому что и",
-    "текст другой: «к силе Аур», а не «к урону»."
-   ],
-   "id": "aura_power",
-   "ru": "+{value:%} {tag}",
-   "stat": "tagDamage",
-   "base": 0.16,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 7,
-   "family": [
-    "aura"
-   ]
-  },
-  {
-   "id": "damage_mechanic",
-   "ru": "+{value:%} {tag}",
-   "stat": "tagDamage",
-   "base": 0.13,
-   "scales": false,
-   "kinds": [
-    "ring",
-    "amulet",
-    "gloves",
-    "boots"
-   ],
-   "weight": 9,
-   "family": [
-    "duration",
-    "curse",
-    "totem",
-    "strike",
-    "blood"
-   ]
-  },
-  {
-   "id": "loot_quality",
-   "ru": "+{value:%} к качеству добычи",
-   "stat": "lootQuality",
-   "base": 0.08,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "ring",
-    "amulet"
-   ],
-   "weight": 5
-  },
-  {
-   "id": "loot_quantity",
-   "ru": "+{value:%} к количеству добычи",
-   "stat": "lootQuantity",
-   "base": 0.06,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "boots",
-    "ring"
-   ],
-   "weight": 5
-  },
-  {
-   "id": "max_mana_flat",
-   "ru": "+{value} к максимуму маны",
-   "stat": "maxMana",
-   "base": 25.0,
-   "scales": false,
-   "kinds": [
-    "helmet",
-    "ring",
-    "amulet",
-    "offhand"
-   ],
-   "weight": 8
-  },
-  {
-   "id": "mana_regen",
-   "ru": "+{value} восстановления маны в секунду",
-   "stat": "manaRegen",
-   "base": 1.2,
-   "scales": false,
-   "kinds": [
-    "ring",
-    "amulet",
-    "offhand",
-    "gloves"
-   ],
-   "weight": 7
-  }
- ]
+  "version": 1,
+  "_comment": [
+    "Аффиксы вещей. Семейство `tagDamage` разложено по ОСЯМ, а не свалено в одну",
+    "кучу: раньше был один аффикс с восемью тегами внутри, и шанс найти нужный",
+    "конкретный тег был около процента — собрать под него билд было нельзя.",
+    "",
+    "damage_element  -> стихия: Огонь, Холод, Молния, Пустота, Физический;",
+    "damage_form     -> ось силы: Атака (урон оружия) или Чары (сила чар);",
+    "damage_delivery -> доставка: Снаряд, Область;",
+    "damage_mechanic -> механика: Длительность, Проклятие, Тотем, Удар, Кровь.",
+    "",
+    "Тега «Аура» среди семейств нет намеренно: ауры не наносят урона, и такой",
+    "ролл был бы строкой, которая ничего не делает.",
+    "",
+    "spellPower — вторая ось силы. Имплицит левой руки даёт её так же, как",
+    "имплицит оружия даёт урон атаки: у каждой оси свой слот, с которого",
+    "начинается сборка.",
+    "",
+    "scales=true  -> значение растёт как itemScale(ilvl). Плоские числа.",
+    "scales=false -> значение постоянное, ролл решает перцентиль. Проценты,",
+    "                сопротивления, мана.",
+    "Это различие обязательное: если бы проценты тоже росли, сила билда шла бы",
+    "как itemScale^2 и формула стены (GDD §2.3) перестала бы сходиться."
+  ],
+  "affixes": [
+    {
+      "id": "max_hp_flat",
+      "ru": "+{value} к максимуму HP",
+      "stat": "maxHp",
+      "base": 30.0,
+      "scales": true,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 12
+    },
+    {
+      "id": "max_hp_pct",
+      "ru": "+{value:%} к максимуму HP",
+      "stat": "maxHpPct",
+      "base": 0.06,
+      "scales": false,
+      "kinds": [
+        "armor",
+        "amulet"
+      ],
+      "weight": 6
+    },
+    {
+      "id": "hp_regen",
+      "ru": "+{value} восстановления HP в секунду",
+      "stat": "hpRegen",
+      "base": 0.15,
+      "scales": true,
+      "kinds": [
+        "boots",
+        "ring",
+        "amulet"
+      ],
+      "weight": 7
+    },
+    {
+      "id": "armor_flat",
+      "ru": "+{value} к броне",
+      "stat": "armor",
+      "base": 6.0,
+      "scales": true,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "offhand",
+        "gloves"
+      ],
+      "weight": 12
+    },
+    {
+      "id": "armor_pct",
+      "ru": "+{value:%} к броне",
+      "stat": "armorPct",
+      "base": 0.08,
+      "scales": false,
+      "kinds": [
+        "armor",
+        "offhand"
+      ],
+      "weight": 6
+    },
+    {
+      "id": "resist_fire",
+      "ru": "+{value} к сопротивлению огню",
+      "stat": "resistFire",
+      "base": 8.0,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "resist_cold",
+      "ru": "+{value} к сопротивлению холоду",
+      "stat": "resistCold",
+      "base": 8.0,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "resist_lightning",
+      "ru": "+{value} к сопротивлению молнии",
+      "stat": "resistLightning",
+      "base": 8.0,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "resist_void",
+      "ru": "+{value} к сопротивлению пустоте",
+      "stat": "resistVoid",
+      "base": 8.0,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "armor",
+        "boots",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "attack_damage_flat",
+      "ru": "+{value} к урону оружия",
+      "stat": "attackDamage",
+      "base": 2.0,
+      "scales": true,
+      "kinds": [
+        "weapon",
+        "gloves",
+        "ring",
+        "amulet"
+      ],
+      "weight": 12
+    },
+    {
+      "id": "spell_power_flat",
+      "ru": "+{value} к силе чар",
+      "stat": "spellPower",
+      "base": 1.6,
+      "scales": true,
+      "kinds": [
+        "weapon",
+        "offhand",
+        "ring",
+        "amulet",
+        "helmet"
+      ],
+      "weight": 12
+    },
+    {
+      "id": "increased_damage",
+      "ru": "+{value:%} к урону",
+      "stat": "increasedDamage",
+      "base": 0.08,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "gloves",
+        "ring",
+        "amulet"
+      ],
+      "weight": 10
+    },
+    {
+      "id": "attack_speed",
+      "ru": "+{value:%} к скорости атаки",
+      "stat": "increasedAttackSpeed",
+      "base": 0.06,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "gloves",
+        "boots",
+        "ring"
+      ],
+      "weight": 9
+    },
+    {
+      "id": "crit_chance",
+      "ru": "+{value:%} к шансу критического удара",
+      "stat": "critChance",
+      "base": 0.03,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "gloves",
+        "ring",
+        "amulet"
+      ],
+      "weight": 8
+    },
+    {
+      "id": "crit_multi",
+      "ru": "+{value:%} к урону критических ударов",
+      "stat": "critMulti",
+      "base": 0.15,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "gloves",
+        "amulet"
+      ],
+      "weight": 8
+    },
+    {
+      "id": "cooldown_reduction",
+      "ru": "−{value:%} ко времени перезарядки",
+      "stat": "cooldownReduction",
+      "base": 0.05,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "gloves",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 7
+    },
+    {
+      "id": "leech",
+      "ru": "+{value:%} вампиризма",
+      "stat": "leech",
+      "base": 0.015,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "ring",
+        "amulet"
+      ],
+      "weight": 5
+    },
+    {
+      "id": "damage_element",
+      "ru": "+{value:%} {tag}",
+      "stat": "tagDamage",
+      "base": 0.12,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "offhand",
+        "ring",
+        "amulet",
+        "gloves"
+      ],
+      "weight": 18,
+      "family": [
+        "fire",
+        "cold",
+        "lightning",
+        "voidTag",
+        "physical"
+      ]
+    },
+    {
+      "id": "damage_form",
+      "ru": "+{value:%} {tag}",
+      "stat": "tagDamage",
+      "base": 0.15,
+      "scales": false,
+      "kinds": [
+        "weapon",
+        "offhand",
+        "amulet"
+      ],
+      "weight": 9,
+      "family": [
+        "attack",
+        "spell"
+      ]
+    },
+    {
+      "id": "damage_delivery",
+      "ru": "+{value:%} {tag}",
+      "stat": "tagDamage",
+      "base": 0.14,
+      "scales": false,
+      "kinds": [
+        "gloves",
+        "helmet",
+        "ring",
+        "offhand"
+      ],
+      "weight": 7,
+      "family": [
+        "projectile",
+        "area"
+      ]
+    },
+    {
+      "_comment": [
+        "Единственный тег, который усиливает НЕ урон: ауры его не наносят.",
+        "Множит величину ауры — броню «Каменной стойки», замедление «Морозного",
+        "покрова». Отдельным аффиксом, а не в семействе механик, потому что и",
+        "текст другой: «к силе Аур», а не «к урону»."
+      ],
+      "id": "aura_power",
+      "ru": "+{value:%} {tag}",
+      "stat": "tagDamage",
+      "base": 0.16,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 7,
+      "family": [
+        "aura"
+      ]
+    },
+    {
+      "id": "damage_mechanic",
+      "ru": "+{value:%} {tag}",
+      "stat": "tagDamage",
+      "base": 0.13,
+      "scales": false,
+      "kinds": [
+        "ring",
+        "amulet",
+        "gloves",
+        "boots"
+      ],
+      "weight": 9,
+      "family": [
+        "duration",
+        "curse",
+        "totem",
+        "strike",
+        "blood"
+      ]
+    },
+    {
+      "id": "loot_quality",
+      "ru": "+{value:%} к качеству добычи",
+      "stat": "lootQuality",
+      "base": 0.08,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "ring",
+        "amulet"
+      ],
+      "weight": 5
+    },
+    {
+      "id": "loot_quantity",
+      "ru": "+{value:%} к количеству добычи",
+      "stat": "lootQuantity",
+      "base": 0.06,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "boots",
+        "ring"
+      ],
+      "weight": 5
+    },
+    {
+      "id": "max_mana_flat",
+      "ru": "+{value} к максимуму маны",
+      "stat": "maxMana",
+      "base": 25.0,
+      "scales": false,
+      "kinds": [
+        "helmet",
+        "ring",
+        "amulet",
+        "offhand"
+      ],
+      "weight": 8
+    },
+    {
+      "id": "mana_regen",
+      "ru": "+{value} восстановления маны в секунду",
+      "stat": "manaRegen",
+      "base": 1.2,
+      "scales": false,
+      "kinds": [
+        "ring",
+        "amulet",
+        "offhand",
+        "gloves"
+      ],
+      "weight": 7
+    }
+  ]
 }

@@ -1,283 +1,283 @@
 {
- "version": 1,
- "_comment": [
-  "8 реликтов, по одному на тип слота. Уникальный эффект меняет правило, а не цифру,",
-  "не масштабируется от ilvl и не извлекается. Полное описание — docs/04-RELICS.md.",
-  "exclusiveWith — жёсткая пара: 'одна активка' и 'ноль активок' противоречат друг другу."
- ],
- "relics": [
-  {
-   "id": "ash_covenant",
-   "ru": "Пепельный завет",
-   "kind": "weapon",
-   "text": "Горение может критовать и накладывается до пяти раз. Прямой урон Огнём −50 %.",
-   "effect": "burnCanCrit",
-   "params": {
-    "maxStacks": 5,
-    "directFirePenalty": 0.5
-   }
-  },
-  {
-   "id": "split_counterweight",
-   "ru": "Расколотый противовес",
-   "kind": "offhand",
-   "text": "Двуручное оружие можно носить в одной руке. Максимум HP −40 %.",
-   "effect": "twoHandedInOneHand",
-   "params": {
-    "maxHpPenalty": 0.4
-   }
-  },
-  {
-   "id": "crown_of_obsession",
-   "ru": "Венец одержимого",
-   "kind": "helmet",
-   "text": "Доступна только одна активная способность. Её перезарядка −70 %, бьёт по всей волне.",
-   "effect": "singleActive",
-   "params": {
-    "cooldownReduction": 0.7
-   },
-   "exclusiveWith": [
-    "charm_of_silence"
-   ]
-  },
-  {
-   "id": "skin_of_despair",
-   "ru": "Кожа отчаяния",
-   "kind": "armor",
-   "text": "Максимум HP −65 %. Эффекты «ниже X % HP» активны постоянно. Вампиризм удвоен.",
-   "effect": "permanentLowLife",
-   "params": {
-    "maxHpPenalty": 0.65,
-    "leechMultiplier": 2.0
-   }
-  },
-  {
-   "id": "counter_of_moments",
-   "ru": "Счётчик мгновений",
-   "kind": "gloves",
-   "text": "Все эффекты со счётчиком срабатывают вдвое чаще. Критические удары недоступны.",
-   "effect": "doubleCounters",
-   "params": {
-    "rate": 2.0
-   }
-  },
-  {
-   "id": "boots_of_descent",
-   "ru": "Сапоги нисходящего",
-   "kind": "boots",
-   "text": "Волн на этаже на одну меньше. Золото и предметы обычной и необычной редкости не подбираются.",
-   "effect": "recordRun",
-   "params": {
-    "waveReduction": 1,
-    "minRarity": "rare",
-    "goldEnabled": false
-   }
-  },
-  {
-   "id": "seal_of_thousand_eyes",
-   "ru": "Печать тысячи глаз",
-   "kind": "ring",
-   "text": "Проклятия не спадают до конца этажа и переходят на новые волны. Урон по непроклятым −60 %.",
-   "effect": "eternalCurse",
-   "params": {
-    "uncursedPenalty": 0.6
-   }
-  },
-  {
-   "id": "charm_of_silence",
-   "ru": "Оберег молчания",
-   "kind": "amulet",
-   "text": "Каждый слот способностей вмещает две пассивные способности. Активные способности недоступны.",
-   "effect": "passivesOnly",
-   "params": {
-    "passivesPerSlot": 2
-   },
-   "exclusiveWith": [
-    "crown_of_obsession"
-   ]
-  },
-  {
-   "id": "mask_of_certainty",
-   "ru": "Маска неизбежности",
-   "kind": "helmet",
-   "text": "Каждый удар критический. Базовый урон −45 %.",
-   "effect": "alwaysCrit",
-   "params": {
-    "damagePenalty": 0.45
-   }
-  },
-  {
-   "id": "first_blood_gauntlet",
-   "ru": "Перчатка первой крови",
-   "kind": "gloves",
-   "text": "Первый удар по волне втрое сильнее. Все следующие −25 %.",
-   "effect": "firstStrike",
-   "params": {
-    "multiplier": 3.0,
-    "penalty": 0.25
-   }
-  },
-  {
-   "id": "reaper_edge",
-   "ru": "Жатва",
-   "kind": "weapon",
-   "text": "Враг ниже 18 % здоровья гибнет мгновенно. Урон −30 %.",
-   "effect": "executeLow",
-   "params": {
-    "threshold": 0.18,
-    "damagePenalty": 0.3
-   }
-  },
-  {
-   "id": "hide_of_prisms",
-   "ru": "Шкура призм",
-   "kind": "armor",
-   "text": "Броня не работает вовсе. +45 ко всем сопротивлениям.",
-   "effect": "armorIntoResist",
-   "params": {
-    "resistAll": 45.0
-   }
-  },
-  {
-   "id": "glass_crown",
-   "ru": "Стеклянный венец",
-   "kind": "helmet",
-   "text": "+70 % ко всему урону. Максимум HP −55 %.",
-   "effect": "fragilePower",
-   "params": {
-    "damageBonus": 0.7,
-    "maxHpPenalty": 0.55
-   }
-  },
-  {
-   "id": "scarred_pact",
-   "ru": "Клятый договор",
-   "kind": "armor",
-   "text": "Каждый полученный удар даёт +5 % урона до конца волны, до восьми раз.",
-   "effect": "painToPower",
-   "params": {
-    "perHit": 0.05,
-    "maxStacks": 8
-   }
-  },
-  {
-   "id": "blood_oath_ring",
-   "ru": "Кровавый обет",
-   "kind": "ring",
-   "text": "Лечит только вампиризм — ни отдыха, ни восстановления. Вампиризм ×3.",
-   "effect": "bloodPact",
-   "params": {
-    "leechMultiplier": 3.0
-   }
-  },
-  {
-   "id": "endless_censer",
-   "ru": "Бесконечная кадильница",
-   "kind": "offhand",
-   "text": "Умения не стоят маны. Перезарядка вдвое дольше.",
-   "effect": "freeCasts",
-   "params": {
-    "cooldownMultiplier": 2.0
-   }
-  },
-  {
-   "id": "seal_of_haste",
-   "ru": "Печать спешки",
-   "kind": "ring",
-   "text": "Перезарядка вдвое короче. Мана вдвое дороже.",
-   "effect": "swiftCasts",
-   "params": {
-    "cooldownMultiplier": 0.5,
-    "manaCostMultiplier": 2.0
-   }
-  },
-  {
-   "id": "ember_conduit",
-   "ru": "Проводник пепла",
-   "kind": "amulet",
-   "text": "Весь урон становится Огнём, +30 %. Сопротивление огню −50.",
-   "effect": "elementalConduit",
-   "params": {
-    "element": "fire",
-    "damageBonus": 0.3,
-    "resistPenalty": 50.0
-   }
-  },
-  {
-   "id": "rime_conduit",
-   "ru": "Проводник инея",
-   "kind": "amulet",
-   "text": "Весь урон становится Холодом, +30 %. Сопротивление холоду −50.",
-   "effect": "elementalConduit",
-   "params": {
-    "element": "cold",
-    "damageBonus": 0.3,
-    "resistPenalty": 50.0
-   }
-  },
-  {
-   "id": "storm_conduit",
-   "ru": "Проводник грозы",
-   "kind": "amulet",
-   "text": "Весь урон становится Молнией, +30 %. Сопротивление молнии −50.",
-   "effect": "elementalConduit",
-   "params": {
-    "element": "lightning",
-    "damageBonus": 0.3,
-    "resistPenalty": 50.0
-   }
-  },
-  {
-   "id": "void_conduit",
-   "ru": "Проводник пустоты",
-   "kind": "amulet",
-   "text": "Весь урон становится Пустотой, +30 %. Сопротивление пустоте −50.",
-   "effect": "elementalConduit",
-   "params": {
-    "element": "voidType",
-    "damageBonus": 0.3,
-    "resistPenalty": 50.0
-   }
-  },
-  {
-   "id": "tireless_boots",
-   "ru": "Неутомимые сапоги",
-   "kind": "boots",
-   "text": "Наёмник не отдыхает между этажами. Волн на этаже на одну меньше.",
-   "effect": "restless",
-   "params": {
-    "waveReduction": 1
-   }
-  },
-  {
-   "id": "horn_of_the_hunt",
-   "ru": "Рог охоты",
-   "kind": "helmet",
-   "text": "Боссы отдают вдвое больше. Все остальные враги +35 % HP.",
-   "effect": "bossbane",
-   "params": {
-    "bossReward": 2.0,
-    "mobHp": 0.35
-   }
-  },
-  {
-   "id": "rope_of_the_deep",
-   "ru": "Канат глубин",
-   "kind": "boots",
-   "text": "Спуск начинается на 10 этажей глубже. Максимум HP −30 %.",
-   "effect": "deepStart",
-   "params": {
-    "floors": 10,
-    "maxHpPenalty": 0.3
-   }
-  },
-  {
-   "id": "twin_rings",
-   "ru": "Парные кольца",
-   "kind": "ring",
-   "text": "Оба кольца дают вдвое. Амулет не работает.",
-   "effect": "twinRings",
-   "params": {}
-  }
- ]
+  "version": 1,
+  "_comment": [
+    "8 реликтов, по одному на тип слота. Уникальный эффект меняет правило, а не цифру,",
+    "не масштабируется от ilvl и не извлекается. Полное описание — docs/04-RELICS.md.",
+    "exclusiveWith — жёсткая пара: 'одна активка' и 'ноль активок' противоречат друг другу."
+  ],
+  "relics": [
+    {
+      "id": "ash_covenant",
+      "ru": "Пепельный завет",
+      "kind": "weapon",
+      "text": "Горение может критовать и накладывается до пяти раз. Прямой урон Огнём −50 %.",
+      "effect": "burnCanCrit",
+      "params": {
+        "maxStacks": 5,
+        "directFirePenalty": 0.5
+      }
+    },
+    {
+      "id": "split_counterweight",
+      "ru": "Расколотый противовес",
+      "kind": "offhand",
+      "text": "Двуручное оружие можно носить в одной руке. Максимум HP −40 %.",
+      "effect": "twoHandedInOneHand",
+      "params": {
+        "maxHpPenalty": 0.4
+      }
+    },
+    {
+      "id": "crown_of_obsession",
+      "ru": "Венец одержимого",
+      "kind": "helmet",
+      "text": "Доступна только одна активная способность. Её перезарядка −70 %, бьёт по всей волне.",
+      "effect": "singleActive",
+      "params": {
+        "cooldownReduction": 0.7
+      },
+      "exclusiveWith": [
+        "charm_of_silence"
+      ]
+    },
+    {
+      "id": "skin_of_despair",
+      "ru": "Кожа отчаяния",
+      "kind": "armor",
+      "text": "Максимум HP −65 %. Эффекты «ниже X % HP» активны постоянно. Вампиризм удвоен.",
+      "effect": "permanentLowLife",
+      "params": {
+        "maxHpPenalty": 0.65,
+        "leechMultiplier": 2.0
+      }
+    },
+    {
+      "id": "counter_of_moments",
+      "ru": "Счётчик мгновений",
+      "kind": "gloves",
+      "text": "Все эффекты со счётчиком срабатывают вдвое чаще. Критические удары недоступны.",
+      "effect": "doubleCounters",
+      "params": {
+        "rate": 2.0
+      }
+    },
+    {
+      "id": "boots_of_descent",
+      "ru": "Сапоги нисходящего",
+      "kind": "boots",
+      "text": "Волн на этаже на одну меньше. Золото и предметы обычной и необычной редкости не подбираются.",
+      "effect": "recordRun",
+      "params": {
+        "waveReduction": 1,
+        "minRarity": "rare",
+        "goldEnabled": false
+      }
+    },
+    {
+      "id": "seal_of_thousand_eyes",
+      "ru": "Печать тысячи глаз",
+      "kind": "ring",
+      "text": "Проклятия не спадают до конца этажа и переходят на новые волны. Урон по непроклятым −60 %.",
+      "effect": "eternalCurse",
+      "params": {
+        "uncursedPenalty": 0.6
+      }
+    },
+    {
+      "id": "charm_of_silence",
+      "ru": "Оберег молчания",
+      "kind": "amulet",
+      "text": "Каждый слот способностей вмещает две пассивные способности. Активные способности недоступны.",
+      "effect": "passivesOnly",
+      "params": {
+        "passivesPerSlot": 2
+      },
+      "exclusiveWith": [
+        "crown_of_obsession"
+      ]
+    },
+    {
+      "id": "mask_of_certainty",
+      "ru": "Маска неизбежности",
+      "kind": "helmet",
+      "text": "Каждый удар критический. Базовый урон −45 %.",
+      "effect": "alwaysCrit",
+      "params": {
+        "damagePenalty": 0.45
+      }
+    },
+    {
+      "id": "first_blood_gauntlet",
+      "ru": "Перчатка первой крови",
+      "kind": "gloves",
+      "text": "Первый удар по волне втрое сильнее. Все следующие −25 %.",
+      "effect": "firstStrike",
+      "params": {
+        "multiplier": 3.0,
+        "penalty": 0.25
+      }
+    },
+    {
+      "id": "reaper_edge",
+      "ru": "Жатва",
+      "kind": "weapon",
+      "text": "Враг ниже 18 % здоровья гибнет мгновенно. Урон −30 %.",
+      "effect": "executeLow",
+      "params": {
+        "threshold": 0.18,
+        "damagePenalty": 0.3
+      }
+    },
+    {
+      "id": "hide_of_prisms",
+      "ru": "Шкура призм",
+      "kind": "armor",
+      "text": "Броня не работает вовсе. +45 ко всем сопротивлениям.",
+      "effect": "armorIntoResist",
+      "params": {
+        "resistAll": 45.0
+      }
+    },
+    {
+      "id": "glass_crown",
+      "ru": "Стеклянный венец",
+      "kind": "helmet",
+      "text": "+70 % ко всему урону. Максимум HP −55 %.",
+      "effect": "fragilePower",
+      "params": {
+        "damageBonus": 0.7,
+        "maxHpPenalty": 0.55
+      }
+    },
+    {
+      "id": "scarred_pact",
+      "ru": "Клятый договор",
+      "kind": "armor",
+      "text": "Каждый полученный удар даёт +5 % урона до конца волны, до восьми раз.",
+      "effect": "painToPower",
+      "params": {
+        "perHit": 0.05,
+        "maxStacks": 8
+      }
+    },
+    {
+      "id": "blood_oath_ring",
+      "ru": "Кровавый обет",
+      "kind": "ring",
+      "text": "Лечит только вампиризм — ни отдыха, ни восстановления. Вампиризм ×3.",
+      "effect": "bloodPact",
+      "params": {
+        "leechMultiplier": 3.0
+      }
+    },
+    {
+      "id": "endless_censer",
+      "ru": "Бесконечная кадильница",
+      "kind": "offhand",
+      "text": "Умения не стоят маны. Перезарядка вдвое дольше.",
+      "effect": "freeCasts",
+      "params": {
+        "cooldownMultiplier": 2.0
+      }
+    },
+    {
+      "id": "seal_of_haste",
+      "ru": "Печать спешки",
+      "kind": "ring",
+      "text": "Перезарядка вдвое короче. Мана вдвое дороже.",
+      "effect": "swiftCasts",
+      "params": {
+        "cooldownMultiplier": 0.5,
+        "manaCostMultiplier": 2.0
+      }
+    },
+    {
+      "id": "ember_conduit",
+      "ru": "Проводник пепла",
+      "kind": "amulet",
+      "text": "Весь урон становится Огнём, +30 %. Сопротивление огню −50.",
+      "effect": "elementalConduit",
+      "params": {
+        "element": "fire",
+        "damageBonus": 0.3,
+        "resistPenalty": 50.0
+      }
+    },
+    {
+      "id": "rime_conduit",
+      "ru": "Проводник инея",
+      "kind": "amulet",
+      "text": "Весь урон становится Холодом, +30 %. Сопротивление холоду −50.",
+      "effect": "elementalConduit",
+      "params": {
+        "element": "cold",
+        "damageBonus": 0.3,
+        "resistPenalty": 50.0
+      }
+    },
+    {
+      "id": "storm_conduit",
+      "ru": "Проводник грозы",
+      "kind": "amulet",
+      "text": "Весь урон становится Молнией, +30 %. Сопротивление молнии −50.",
+      "effect": "elementalConduit",
+      "params": {
+        "element": "lightning",
+        "damageBonus": 0.3,
+        "resistPenalty": 50.0
+      }
+    },
+    {
+      "id": "void_conduit",
+      "ru": "Проводник пустоты",
+      "kind": "amulet",
+      "text": "Весь урон становится Пустотой, +30 %. Сопротивление пустоте −50.",
+      "effect": "elementalConduit",
+      "params": {
+        "element": "voidType",
+        "damageBonus": 0.3,
+        "resistPenalty": 50.0
+      }
+    },
+    {
+      "id": "tireless_boots",
+      "ru": "Неутомимые сапоги",
+      "kind": "boots",
+      "text": "Наёмник не отдыхает между этажами. Волн на этаже на одну меньше.",
+      "effect": "restless",
+      "params": {
+        "waveReduction": 1
+      }
+    },
+    {
+      "id": "horn_of_the_hunt",
+      "ru": "Рог охоты",
+      "kind": "helmet",
+      "text": "Боссы отдают вдвое больше. Все остальные враги +35 % HP.",
+      "effect": "bossbane",
+      "params": {
+        "bossReward": 2.0,
+        "mobHp": 0.35
+      }
+    },
+    {
+      "id": "rope_of_the_deep",
+      "ru": "Канат глубин",
+      "kind": "boots",
+      "text": "Спуск начинается на 10 этажей глубже. Максимум HP −30 %.",
+      "effect": "deepStart",
+      "params": {
+        "floors": 10,
+        "maxHpPenalty": 0.3
+      }
+    },
+    {
+      "id": "twin_rings",
+      "ru": "Парные кольца",
+      "kind": "ring",
+      "text": "Оба кольца дают вдвое. Амулет не работает.",
+      "effect": "twinRings",
+      "params": {}
+    }
+  ]
 }

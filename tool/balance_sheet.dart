@@ -52,6 +52,10 @@ void main(List<String> args) {
     case '--export':
       final written = BalanceSheet.export();
       stdout.writeln('Записано файлов: $written');
+      // Пересборка переписывает и сам контент — в той же записи, в которой
+      // его пишет `--apply`. Зеркало для APK об этом не знает, и без
+      // синхронизации оно расходится с источником посимвольно.
+      stdout.writeln('Дальше: cd app && dart run tool/sync_content.dart');
       stdout.writeln('BALANCE-SHEET: OK');
     case '--check':
       _report(BalanceSheet.apply(dryRun: true));
@@ -371,9 +375,13 @@ class BalanceSheet {
           'Оставьте её пустой.')
       ..writeln('* Дробная часть — через точку или запятую, обе понимаются. '
           'Список чисел в одной клетке разделяется запятой с пробелом.')
-      ..writeln('* Строки можно переставлять, между таблицами — дописывать '
-          'свои заметки. Разбирается только то, что размечено маркером '
-          '`<!-- balance: ... -->`; его трогать не надо.')
+      ..writeln('* Строки можно переставлять — разбирается только то, что '
+          'размечено маркером `<!-- balance: ... -->`; его трогать не надо.')
+      ..writeln('* **Заметки пишите в JSON, а не сюда.** Колонка «что это» '
+          'приходит из комментария рядом с числом в `assets/content`, и '
+          'пересборка таблиц (`--export`) перезаписывает файлы этой папки '
+          'целиком. Правки чисел не пропадут — их забирает `--apply`, — а '
+          'дописанный вокруг текст пропадёт.')
       ..writeln('* `--apply` либо применяет ВСЁ, либо не пишет ничего: '
           'сначала он собирает правки, потом проверяет получившийся контент '
           'целиком, и только чистый контент попадает на диск.')
@@ -723,15 +731,23 @@ class BalanceSheet {
       final cells = <_Cell>[];
       final notes = <String, String>{};
       _flatten(node, '', cells);
+
+      // Пояснение к числу берётся по ПОРЯДКУ, а не по имени: в JSON комментарий
+      // стоит перед тем, что объясняет, и зовётся как придётся —
+      // «_hireScaleComment» описывает «hireScaleFromDepth». Сопоставление по
+      // имени молча теряло такие пары, и колонка «что это» пустовала ровно
+      // там, где число страшнее всего трогать вслепую.
+      String? pending;
       for (final entry in node.entries) {
-        // «_итогоComment» рядом с «итого» — это и есть пояснение к числу.
-        if (!entry.key.startsWith('_') || !entry.key.endsWith('Comment')) {
+        final key = entry.key;
+        if (key.startsWith('_') && key.endsWith('Comment')) {
+          final value = entry.value;
+          pending = value is String ? value : null;
           continue;
         }
-        final key = entry.key.substring(1, entry.key.length - 'Comment'.length);
-        final value = entry.value;
-        if (value is String) {
-          notes[_lowerFirst(key)] = value;
+        if (pending != null) {
+          notes[key] = pending;
+          pending = null;
         }
       }
       return [_Row(id: source.path.last, name: '', cells: cells, notes: notes)];
@@ -919,8 +935,6 @@ class BalanceSheet {
   /// Труба внутри клетки разорвала бы таблицу.
   static String _escape(String text) => text.replaceAll('|', '\\|').trim();
 
-  static String _lowerFirst(String text) =>
-      text.isEmpty ? text : text[0].toLowerCase() + text.substring(1);
 }
 
 class _Row {
