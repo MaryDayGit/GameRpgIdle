@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:rift/core/model/lang.dart';
 
 import 'dev/core_probe_screen.dart';
 import 'state/game_controller.dart';
@@ -21,9 +23,31 @@ class RiftApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Слушаем контроллер здесь, на самом верху: смена языка меняет `locale`
+    // самого `MaterialApp`, а не только тексты внутри экранов. Перестрой мы
+    // одну Заставу — системные виджеты остались бы на прежнем языке.
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => _app(),
+    );
+  }
+
+  Widget _app() {
     return MaterialApp(
       title: 'Расселина',
       debugShowCheckedModeBanner: false,
+
+      // Язык берётся из настроек игры, а не из системной локали телефона.
+      // Игрок выбрал его сам в настройках, и системный русский не должен
+      // переключать обратно того, кто нарочно поставил английский.
+      //
+      // `Localizations` здесь отвечает только за виджеты Flutter — кнопки
+      // диалогов, меню выделения текста. Тексты самой игры идут через
+      // `Lang.current` (`ui/strings.dart`), потому что собираются в том числе
+      // вне дерева виджетов.
+      locale: Locale(controller.settings.lang.code),
+      supportedLocales: [for (final lang in Lang.values) Locale(lang.code)],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFC7643F),
@@ -57,7 +81,7 @@ class _Home extends StatelessWidget {
           child: Opacity(
             opacity: 0.4,
             child: IconButton(
-              tooltip: 'Дев-проба ядра',
+              tooltip: const Phrase('Дев-проба ядра', 'Core probe').text,
               icon: const Icon(Icons.science_outlined),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(

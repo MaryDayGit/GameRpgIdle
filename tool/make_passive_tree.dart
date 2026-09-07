@@ -36,6 +36,11 @@ void main(List<String> args) {
   final nodes = <Map<String, Object?>>[];
   final links = <List<String>>[];
 
+  // Накладка перевода собирается тем же проходом, что и сами узлы: иначе
+  // пришлось бы вторым инструментом сопоставлять роли с уже сгенерированными
+  // идентификаторами, а это ровно то место, где перевод и дерево разъезжаются.
+  final overlay = <String, Map<String, String>>{};
+
   // Перемычки между лучами держим отдельно: экран рисует их дугой, а не
   // прямой. Прямая через сектор соседа выглядит как случайное пересечение —
   // именно это и было замечено в живом прогоне.
@@ -51,6 +56,7 @@ void main(List<String> args) {
     'x': 0,
     'y': 0,
   });
+  overlay['root'] = {'name': 'The Mercenary', 'text': 'Where the path begins'};
 
   for (var c = 0; c < _clusters.length; c++) {
     final cluster = _clusters[c];
@@ -88,6 +94,13 @@ void main(List<String> args) {
           'x': _round(math.cos(theta) * radius),
           'y': _round(math.sin(theta) * radius),
         });
+
+        // Непереведённая роль кладёт русскую форму: накладка тогда ничего не
+        // меняет, а `--check` честно считает узел непереведённым.
+        overlay[idAt(ring, b)] = {
+          'name': role.en ?? role.name,
+          'text': role.enText ?? role.text,
+        };
 
         // Связь с предыдущим кольцом: первое — с корнем, на развилках новые
         // ветки цепляются за ближайшую старую.
@@ -132,9 +145,30 @@ void main(List<String> args) {
   });
 
   File(path).writeAsStringSync('$json\n');
+
+  // Накладка кладётся рядом с деревом, в каталог языка. Формат тот же, что у
+  // `tool/l10n.dart`: ключ — идентификатор узла, поля — `name` и `text`.
+  final overlayPath =
+      '${File(path).parent.path}/en/${File(path).uri.pathSegments.last}';
+  File(overlayPath).parent.createSync(recursive: true);
+  final keys = overlay.keys.toList()..sort();
+  File(overlayPath).writeAsStringSync(
+    '${const JsonEncoder.withIndent('  ').convert({
+          'version': 1,
+          '_comment': 'Сгенерировано `dart run tool/make_passive_tree.dart` '
+              'вместе с деревом — правьте английские формы в генераторе, '
+              'а не здесь.',
+          'entries': {for (final key in keys) key: overlay[key]},
+        })}\n',
+  );
+
+  final translated = overlay.values
+      .where((e) => e['name'] != null && e['text'] != null)
+      .length;
   stdout.writeln('$path: ${nodes.length} узлов, '
       '${links.length + bridges.length} связей '
       '(перемычек ${bridges.length})');
+  stdout.writeln('$overlayPath: $translated записей перевода');
 }
 
 /// Колец в каждом кластере.
@@ -272,6 +306,8 @@ class _Role {
   const _Role(
     this.name,
     this.text, {
+    this.en,
+    this.enText,
     this.kind = 'stat',
     this.icon = 'dot',
     this.stat,
@@ -285,6 +321,19 @@ class _Role {
 
   final String name;
   final String text;
+
+  /// Английские формы того же узла.
+  ///
+  /// Здесь, а не в `assets/content/en/passive_tree.json`, потому что в дереве
+  /// триста узлов, а ролей — шесть десятков: одна роль расставлена по многим
+  /// кольцам. Переводить готовый JSON значило бы перевести «Жилу» девять раз
+  /// и получить девять шансов перевести её по-разному.
+  ///
+  /// Пусто — узел ещё не переведён; накладка возьмёт русскую форму, и
+  /// `l10n.dart --check` посчитает его непереведённым, как любой другой.
+  final String? en;
+  final String? enText;
+
   final String kind;
 
   /// Что нарисовано в узле. Рисует клиент кодом — по той же причине, по
@@ -374,21 +423,29 @@ const _clusters = [
     id: 'flesh',
     smalls: [
       _Role('Жила', '+8 % к максимуму HP',
+          en: 'Vein', enText: '+8% maximum HP',
           icon: 'heart', stat: 'maxHpPct', value: 0.08),
       _Role('Плотная кожа', '+40 к максимуму HP',
+          en: 'Thick Hide', enText: '+40 maximum HP',
           icon: 'hide', stat: 'maxHp', value: 40.0),
       _Role('Ровное дыхание', '+1.5 восстановления HP в секунду',
+          en: 'Steady Breath', enText: '+1.5 HP regeneration per second',
           icon: 'breath', stat: 'hpRegen', value: 1.5),
     ],
     middle: _Role('Второе сердце', '+20 % к максимуму HP',
+        en: 'Second Heart', enText: '+20% maximum HP',
         kind: 'notable', icon: 'heart', stat: 'maxHpPct', value: 0.20),
     second: _Role('Крепкие кости', '+120 к максимуму HP',
+        en: 'Strong Bones', enText: '+120 maximum HP',
         kind: 'notable', icon: 'bone', stat: 'maxHp', value: 120.0),
     notable: _Role('Живучесть', '+26 % к максимуму HP',
+        en: 'Vitality', enText: '+26% maximum HP',
         kind: 'notable', icon: 'heart', stat: 'maxHpPct', value: 0.26),
     ruleNotable: _Role(
       'Второе дыхание',
       'Убийство восстанавливает 2 % максимума HP',
+      en: 'Second Wind',
+      enText: 'A kill restores 2% of maximum HP',
       kind: 'notable',
       icon: 'drop',
       rule: 'killHeal',
@@ -397,6 +454,8 @@ const _clusters = [
     keystone: _Role(
       'Кровь за силу',
       '+45 % к урону, но −30 % к максимуму HP',
+      en: 'Blood for Power',
+      enText: '+45% damage, but −30% maximum HP',
       kind: 'keystone',
       icon: 'drop',
       stat: 'increasedDamage',
@@ -409,21 +468,29 @@ const _clusters = [
     id: 'stone',
     smalls: [
       _Role('Панцирь', '+10 % к броне',
+          en: 'Carapace', enText: '+10% armor',
           icon: 'shield', stat: 'armorPct', value: 0.10),
       _Role('Пластина', '+35 к броне',
+          en: 'Plating', enText: '+35 armor',
           icon: 'plate', stat: 'armor', value: 35.0),
       _Role('Устойчивость', '+8 к сопротивлению пустоте',
+          en: 'Steadfast', enText: '+8 void resistance',
           icon: 'ward', stat: 'resistVoid', value: 8.0),
     ],
     middle: _Role('Скала', '+24 % к броне',
+        en: 'Bedrock', enText: '+24% armor',
         kind: 'notable', icon: 'shield', stat: 'armorPct', value: 0.24),
     second: _Role('Бастион', '+12 % к максимуму HP',
+        en: 'Bastion', enText: '+12% maximum HP',
         kind: 'notable', icon: 'plate', stat: 'maxHpPct', value: 0.12),
     notable: _Role('Утёс', '+30 % к броне',
+        en: 'The Cliff', enText: '+30% armor',
         kind: 'notable', icon: 'shield', stat: 'armorPct', value: 0.30),
     ruleNotable: _Role(
       'Каменная вера',
       '8 % брони считается сопротивлением всем стихиям',
+      en: 'Stone Faith',
+      enText: '8% of armor counts as resistance to all elements',
       kind: 'notable',
       icon: 'ward',
       rule: 'armorToResist',
@@ -432,6 +499,8 @@ const _clusters = [
     keystone: _Role(
       'Каменная кожа',
       '+70 % к броне, но −25 % к урону',
+      en: 'Stoneskin',
+      enText: '+70% armor, but −25% damage',
       kind: 'keystone',
       icon: 'plate',
       stat: 'armorPct',
@@ -444,15 +513,20 @@ const _clusters = [
     id: 'fang',
     smalls: [
       _Role('Клык', '+8 % к урону',
+          en: 'Fang', enText: '+8% damage',
           icon: 'fang', stat: 'increasedDamage', value: 0.08),
       _Role('Заточка', '+14 к урону оружия',
+          en: 'Whetstone', enText: '+14 weapon damage',
           icon: 'blade', stat: 'attackDamage', value: 14.0),
       _Role('Хватка', '+7 % к урону Ударами',
+          en: 'Grip', enText: '+7% Strike damage',
           icon: 'claw', stat: 'tagDamage', value: 0.07, tag: 'strike'),
     ],
     middle: _Role('Хищник', '+20 % к урону',
+        en: 'Predator', enText: '+20% damage',
         kind: 'notable', icon: 'fang', stat: 'increasedDamage', value: 0.20),
     second: _Role('Ярость', '+10 % к скорости атаки',
+        en: 'Fury', enText: '+10% attack speed',
         kind: 'notable',
         icon: 'claw',
         stat: 'increasedAttackSpeed',
@@ -461,11 +535,14 @@ const _clusters = [
     // сборка, и у неё, как у стихий, должен быть свой множитель. Уже́ общего,
     // зато крупнее — в этом и состоит размен.
     notable: _Role('Свирепость', '+32 % к физическому урону',
+        en: 'Ferocity', enText: '+32% Physical damage',
         kind: 'notable', icon: 'blade', stat: 'tagDamage', value: 0.32,
         tag: 'physical'),
     ruleNotable: _Role(
       'Отчаяние',
       'Ниже половины здоровья вы бьёте на 25 % сильнее',
+      en: 'Desperation',
+      enText: 'Below half health you hit 25% harder',
       kind: 'notable',
       icon: 'fang',
       rule: 'lowLifeDamage',
@@ -474,6 +551,8 @@ const _clusters = [
     keystone: _Role(
       'Безрассудство',
       '+55 % к урону, но −35 % к броне',
+      en: 'Recklessness',
+      enText: '+55% damage, but −35% armor',
       kind: 'keystone',
       icon: 'blade',
       stat: 'increasedDamage',
@@ -486,21 +565,29 @@ const _clusters = [
     id: 'spark',
     smalls: [
       _Role('Искра', '+2 % к шансу критического удара',
+          en: 'Spark', enText: '+2% critical strike chance',
           icon: 'spark', stat: 'critChance', value: 0.02),
       _Role('Точность', '+15 % к урону критических ударов',
+          en: 'Precision', enText: '+15% critical strike damage',
           icon: 'eye', stat: 'critMulti', value: 0.15),
       _Role('Взгляд', '+1.5 % к шансу критического удара',
+          en: 'Gaze', enText: '+1.5% critical strike chance',
           icon: 'eye', stat: 'critChance', value: 0.015),
     ],
     middle: _Role('Точный глаз', '+5 % к шансу критического удара',
+        en: 'Keen Eye', enText: '+5% critical strike chance',
         kind: 'notable', icon: 'eye', stat: 'critChance', value: 0.05),
     second: _Role('Хладнокровие', '+45 % к урону критических ударов',
+        en: 'Composure', enText: '+45% critical strike damage',
         kind: 'notable', icon: 'spark', stat: 'critMulti', value: 0.45),
     notable: _Role('Смертельный расчёт', '+6 % к шансу критического удара',
+        en: 'Lethal Calculation', enText: '+6% critical strike chance',
         kind: 'notable', icon: 'eye', stat: 'critChance', value: 0.06),
     ruleNotable: _Role(
       'Охотник на медленных',
       'По замедленным целям удар всегда критический',
+      en: 'Hunter of the Slow',
+      enText: 'Strikes against slowed targets always crit',
       kind: 'notable',
       icon: 'spark',
       rule: 'critVsSlowed',
@@ -509,6 +596,8 @@ const _clusters = [
     keystone: _Role(
       'Жажда крови',
       '+90 % к урону критических ударов, но −30 % к скорости атаки',
+      en: 'Bloodlust',
+      enText: '+90% critical strike damage, but −30% attack speed',
       kind: 'keystone',
       icon: 'spark',
       stat: 'critMulti',
@@ -521,23 +610,29 @@ const _clusters = [
     id: 'wind',
     smalls: [
       _Role('Порыв', '+5 % к скорости атаки',
+          en: 'Gust', enText: '+5% attack speed',
           icon: 'wind', stat: 'increasedAttackSpeed', value: 0.05),
       _Role('Лёгкость', '−4 % ко времени перезарядки',
+          en: 'Lightness', enText: '−4% cooldown time',
           icon: 'feather', stat: 'cooldownReduction', value: 0.04),
       _Role('Ритм', '+7 % к урону Атаками',
+          en: 'Rhythm', enText: '+7% Attack damage',
           icon: 'wind', stat: 'tagDamage', value: 0.07, tag: 'attack'),
     ],
     middle: _Role('Вихрь', '+13 % к скорости атаки',
+        en: 'Whirl', enText: '+13% attack speed',
         kind: 'notable',
         icon: 'wind',
         stat: 'increasedAttackSpeed',
         value: 0.13),
     second: _Role('Сквозняк', '−15 % ко времени перезарядки',
+        en: 'Draught', enText: '−15% cooldown time',
         kind: 'notable',
         icon: 'feather',
         stat: 'cooldownReduction',
         value: 0.15),
     notable: _Role('Буря', '+16 % к скорости атаки',
+        en: 'Tempest', enText: '+16% attack speed',
         kind: 'notable',
         icon: 'wind',
         stat: 'increasedAttackSpeed',
@@ -545,6 +640,8 @@ const _clusters = [
     ruleNotable: _Role(
       'Первый удар',
       'Первый удар по новой волне сильнее на 60 %',
+      en: 'First Strike',
+      enText: 'The first hit on a new wave is 60% stronger',
       kind: 'notable',
       icon: 'feather',
       rule: 'firstStrike',
@@ -553,6 +650,8 @@ const _clusters = [
     keystone: _Role(
       'Рваный ритм',
       '+35 % к скорости атаки, но −30 % к множителю крита',
+      en: 'Broken Rhythm',
+      enText: '+35% attack speed, but −30% critical strike multiplier',
       kind: 'keystone',
       icon: 'wind',
       stat: 'increasedAttackSpeed',
@@ -565,21 +664,29 @@ const _clusters = [
     id: 'mind',
     smalls: [
       _Role('Сосредоточенность', '+12 к максимуму маны',
+          en: 'Concentration', enText: '+12 maximum mana',
           icon: 'mana', stat: 'maxMana', value: 12.0),
       _Role('Ясность', '+0.5 восстановления маны в секунду',
+          en: 'Clarity', enText: '+0.5 mana regeneration per second',
           icon: 'spiral', stat: 'manaRegen', value: 0.5),
       _Role('Медитация', '+18 к максимуму маны',
+          en: 'Meditation', enText: '+18 maximum mana',
           icon: 'mana', stat: 'maxMana', value: 18.0),
     ],
     middle: _Role('Ясный ум', '+1 восстановления маны в секунду',
+        en: 'Clear Mind', enText: '+1 mana regeneration per second',
         kind: 'notable', icon: 'spiral', stat: 'manaRegen', value: 1.0),
     second: _Role('Глубокий сосуд', '+45 к максимуму маны',
+        en: 'Deep Vessel', enText: '+45 maximum mana',
         kind: 'notable', icon: 'mana', stat: 'maxMana', value: 45.0),
     notable: _Role('Поток мысли', '+1.5 восстановления маны в секунду',
+        en: 'Stream of Thought', enText: '+1.5 mana regeneration per second',
         kind: 'notable', icon: 'spiral', stat: 'manaRegen', value: 1.5),
     ruleNotable: _Role(
       'Сила разума',
       '+1 % к урону за каждые 20 маны в запасе',
+      en: 'Force of Mind',
+      enText: '+1% damage per 20 maximum mana',
       kind: 'notable',
       icon: 'mana',
       rule: 'manaToDamage',
@@ -588,6 +695,8 @@ const _clusters = [
     keystone: _Role(
       'Расточительство',
       '−35 % ко времени перезарядки, но −60 к максимуму маны',
+      en: 'Profligacy',
+      enText: '−35% cooldown time, but −60 maximum mana',
       kind: 'keystone',
       icon: 'spiral',
       stat: 'cooldownReduction',
@@ -600,21 +709,29 @@ const _clusters = [
     id: 'hunt',
     smalls: [
       _Role('Намётанный глаз', '+5 % к количеству добычи',
+          en: 'Trained Eye', enText: '+5% loot quantity',
           icon: 'coin', stat: 'lootQuantity', value: 0.05),
       _Role('Кошель', '+12 % к находимому золоту',
+          en: 'Purse', enText: '+12% gold found',
           icon: 'purse', stat: 'goldFind', value: 0.12),
       _Role('Чутьё', '+4 % к качеству добычи',
+          en: 'Instinct', enText: '+4% loot quality',
           icon: 'gem', stat: 'lootQuality', value: 0.04),
     ],
     middle: _Role('Чутьё на золото', '+20 % к находимому золоту',
+        en: 'Nose for Gold', enText: '+20% gold found',
         kind: 'notable', icon: 'purse', stat: 'goldFind', value: 0.20),
     second: _Role('Знаток', '+15 % к качеству добычи',
+        en: 'Connoisseur', enText: '+15% loot quality',
         kind: 'notable', icon: 'gem', stat: 'lootQuality', value: 0.15),
     notable: _Role('Добытчик', '+18 % к количеству добычи',
+        en: 'Provider', enText: '+18% loot quantity',
         kind: 'notable', icon: 'coin', stat: 'lootQuantity', value: 0.18),
     ruleNotable: _Role(
       'Тяжёлая поступь',
       '4 % максимума HP считается бронёй',
+      en: 'Heavy Tread',
+      enText: '4% of maximum HP counts as armor',
       kind: 'notable',
       icon: 'plate',
       rule: 'hpToArmor',
@@ -623,6 +740,8 @@ const _clusters = [
     keystone: _Role(
       'Мародёр',
       '+40 % к количеству добычи, но −25 % к максимуму HP',
+      en: 'Marauder',
+      enText: '+40% loot quantity, but −25% maximum HP',
       kind: 'keystone',
       icon: 'coin',
       stat: 'lootQuantity',
@@ -635,21 +754,29 @@ const _clusters = [
     id: 'leech',
     smalls: [
       _Role('Пиявка', '+0.8 % вампиризма',
+          en: 'Leech', enText: '+0.8% life leech',
           icon: 'leech', stat: 'leech', value: 0.008),
       _Role('Жажда', '+7 % к урону Кровью',
+          en: 'Thirst', enText: '+7% Blood damage',
           icon: 'chalice', stat: 'tagDamage', value: 0.07, tag: 'blood'),
       _Role('Кровосток', '+1.2 восстановления HP в секунду',
+          en: 'Bloodflow', enText: '+1.2 HP regeneration per second',
           icon: 'breath', stat: 'hpRegen', value: 1.2),
     ],
     middle: _Role('Кровосос', '+2 % вампиризма',
+        en: 'Bloodsucker', enText: '+2% life leech',
         kind: 'notable', icon: 'leech', stat: 'leech', value: 0.02),
     second: _Role('Насыщение', '+2.5 % вампиризма',
+        en: 'Satiation', enText: '+2.5% life leech',
         kind: 'notable', icon: 'chalice', stat: 'leech', value: 0.025),
     notable: _Role('Ненасытная кровь', '+3 % вампиризма',
+        en: 'Insatiable Blood', enText: '+3% life leech',
         kind: 'notable', icon: 'leech', stat: 'leech', value: 0.03),
     ruleNotable: _Role(
       'Кровь на клинке',
       'Критический удар восстанавливает 1 % максимума HP',
+      en: 'Blood on the Blade',
+      enText: 'A critical strike restores 1% of maximum HP',
       kind: 'notable',
       icon: 'chalice',
       rule: 'critHeal',
@@ -658,6 +785,8 @@ const _clusters = [
     keystone: _Role(
       'Ненасытность',
       '+6 % вампиризма, но −30 % к максимуму HP',
+      en: 'Insatiability',
+      enText: '+6% life leech, but −30% maximum HP',
       kind: 'keystone',
       icon: 'leech',
       stat: 'leech',
@@ -685,24 +814,32 @@ const _clusters = [
     id: 'ember',
     smalls: [
       _Role('Уголёк', '+15 % к урону Огнём',
+          en: 'Ember', enText: '+15% Fire damage',
           icon: 'flame', stat: 'tagDamage', value: 0.15, tag: 'fire'),
       _Role('Жар', '+7 к сопротивлению огню',
+          en: 'Swelter', enText: '+7 fire resistance',
           icon: 'ward', stat: 'resistFire', value: 7.0),
       _Role('Тлеющий след', '+13 % к длительному урону',
+          en: 'Smouldering Trail', enText: '+13% damage over time',
           icon: 'ember', stat: 'tagDamage', value: 0.13, tag: 'duration'),
     ],
     middle: _Role('Костёр', '+34 % к урону Огнём',
+        en: 'Bonfire', enText: '+34% Fire damage',
         kind: 'notable', icon: 'flame', stat: 'tagDamage', value: 0.34,
         tag: 'fire'),
     second: _Role('Горнило', '+26 % к урону Чарами',
+        en: 'Crucible', enText: '+26% Spell damage',
         kind: 'notable', icon: 'rune', stat: 'tagDamage', value: 0.26,
         tag: 'spell'),
     notable: _Role('Пожарище', '+45 % к урону Огнём',
+        en: 'Conflagration', enText: '+45% Fire damage',
         kind: 'notable', icon: 'flame', stat: 'tagDamage', value: 0.45,
         tag: 'fire'),
     ruleNotable: _Role(
       'Тлеющий уголь',
       'Длительный урон на 35 % сильнее',
+      en: 'Smouldering Coal',
+      enText: 'Damage over time is 35% stronger',
       kind: 'notable',
       icon: 'ember',
       rule: 'dotMoreDamage',
@@ -711,6 +848,8 @@ const _clusters = [
     keystone: _Role(
       'Выжженная земля',
       '+130 % к урону Огнём, но −35 % к максимуму HP',
+      en: 'Scorched Earth',
+      enText: '+130% Fire damage, but −35% maximum HP',
       kind: 'keystone',
       icon: 'flame',
       stat: 'tagDamage',
@@ -724,23 +863,31 @@ const _clusters = [
     id: 'frost',
     smalls: [
       _Role('Иней', '+15 % к урону Холодом',
+          en: 'Rime', enText: '+15% Cold damage',
           icon: 'snowflake', stat: 'tagDamage', value: 0.15, tag: 'cold'),
       _Role('Стужа', '+7 к сопротивлению холоду',
+          en: 'Bitter Cold', enText: '+7 cold resistance',
           icon: 'ward', stat: 'resistCold', value: 7.0),
       _Role('Ледяная крошка', '+13 % к урону Снарядами',
+          en: 'Ice Chips', enText: '+13% Projectile damage',
           icon: 'icicle', stat: 'tagDamage', value: 0.13, tag: 'projectile'),
     ],
     middle: _Role('Наст', '+34 % к урону Холодом',
+        en: 'Crust', enText: '+34% Cold damage',
         kind: 'notable', icon: 'snowflake', stat: 'tagDamage', value: 0.34,
         tag: 'cold'),
     second: _Role('Панцирь льда', '+14 % к броне',
+        en: 'Ice Carapace', enText: '+14% armor',
         kind: 'notable', icon: 'icicle', stat: 'armorPct', value: 0.14),
     notable: _Role('Вечная мерзлота', '+45 % к урону Холодом',
+        en: 'Permafrost', enText: '+45% Cold damage',
         kind: 'notable', icon: 'snowflake', stat: 'tagDamage', value: 0.45,
         tag: 'cold'),
     ruleNotable: _Role(
       'Стылая хватка',
       'Ваши удары замедляют цель на 20 %',
+      en: 'Chilling Grip',
+      enText: 'Your hits slow the target by 20%',
       kind: 'notable',
       icon: 'icicle',
       rule: 'chillOnHit',
@@ -749,6 +896,8 @@ const _clusters = [
     keystone: _Role(
       'Ледяное сердце',
       '+130 % к урону Холодом, но −30 % к скорости атаки',
+      en: 'Heart of Ice',
+      enText: '+130% Cold damage, but −30% attack speed',
       kind: 'keystone',
       icon: 'snowflake',
       stat: 'tagDamage',
@@ -762,24 +911,32 @@ const _clusters = [
     id: 'storm',
     smalls: [
       _Role('Статика', '+15 % к урону Молнией',
+          en: 'Static', enText: '+15% Lightning damage',
           icon: 'bolt', stat: 'tagDamage', value: 0.15, tag: 'lightning'),
       _Role('Заземление', '+7 к сопротивлению молнии',
+          en: 'Grounding', enText: '+7 lightning resistance',
           icon: 'ward', stat: 'resistLightning', value: 7.0),
       _Role('Гул', '+13 % к урону по области',
+          en: 'Rumble', enText: '+13% Area damage',
           icon: 'cloud', stat: 'tagDamage', value: 0.13, tag: 'area'),
     ],
     middle: _Role('Раскат', '+34 % к урону Молнией',
+        en: 'Thunderclap', enText: '+34% Lightning damage',
         kind: 'notable', icon: 'bolt', stat: 'tagDamage', value: 0.34,
         tag: 'lightning'),
     second: _Role('Ветер перед бурей', '−12 % ко времени перезарядки',
+        en: 'Wind Before the Storm', enText: '−12% cooldown time',
         kind: 'notable', icon: 'cloud', stat: 'cooldownReduction',
         value: 0.12),
     notable: _Role('Громовержец', '+45 % к урону Молнией',
+        en: 'Stormbringer', enText: '+45% Lightning damage',
         kind: 'notable', icon: 'bolt', stat: 'tagDamage', value: 0.45,
         tag: 'lightning'),
     ruleNotable: _Role(
       'Перескок',
       'Урон Молнией задевает вторую цель — на 35 % от нанесённого',
+      en: 'Arc Jump',
+      enText: 'Lightning damage strikes a second target for 35% of the amount dealt',
       kind: 'notable',
       icon: 'bolt',
       rule: 'shockSplash',
@@ -788,6 +945,8 @@ const _clusters = [
     keystone: _Role(
       'Буревестник',
       '+130 % к урону Молнией, но −40 % к броне',
+      en: 'Storm Petrel',
+      enText: '+130% Lightning damage, but −40% armor',
       kind: 'keystone',
       icon: 'cloud',
       stat: 'tagDamage',
@@ -801,24 +960,32 @@ const _clusters = [
     id: 'abyss',
     smalls: [
       _Role('Шёпот', '+15 % к урону Пустотой',
+          en: 'Whisper', enText: '+15% Void damage',
           icon: 'rift', stat: 'tagDamage', value: 0.15, tag: 'voidTag'),
       _Role('Отрешённость', '+7 к сопротивлению пустоте',
+          en: 'Detachment', enText: '+7 void resistance',
           icon: 'ward', stat: 'resistVoid', value: 7.0),
       _Role('Дурной глаз', '+13 % к урону Проклятиями',
+          en: 'Evil Eye', enText: '+13% Curse damage',
           icon: 'skull', stat: 'tagDamage', value: 0.13, tag: 'curse'),
     ],
     middle: _Role('Провал', '+34 % к урону Пустотой',
+        en: 'The Chasm', enText: '+34% Void damage',
         kind: 'notable', icon: 'rift', stat: 'tagDamage', value: 0.34,
         tag: 'voidTag'),
     second: _Role('Немой зов', '+26 % к урону Тотемами',
+        en: 'Silent Call', enText: '+26% Totem damage',
         kind: 'notable', icon: 'skull', stat: 'tagDamage', value: 0.26,
         tag: 'totem'),
     notable: _Role('Голодная тьма', '+45 % к урону Пустотой',
+        en: 'Hungry Dark', enText: '+45% Void damage',
         kind: 'notable', icon: 'rift', stat: 'tagDamage', value: 0.45,
         tag: 'voidTag'),
     ruleNotable: _Role(
       'Печать увядания',
       'По проклятым целям вы бьёте на 30 % сильнее',
+      en: 'Seal of Withering',
+      enText: 'You hit cursed targets 30% harder',
       kind: 'notable',
       icon: 'skull',
       rule: 'curseMoreDamage',
@@ -827,6 +994,8 @@ const _clusters = [
     keystone: _Role(
       'Пустой сосуд',
       '+130 % к урону Пустотой, но −45 к максимуму маны',
+      en: 'Empty Vessel',
+      enText: '+130% Void damage, but −45 maximum mana',
       kind: 'keystone',
       icon: 'rift',
       stat: 'tagDamage',
@@ -840,22 +1009,30 @@ const _clusters = [
     id: 'arcane',
     smalls: [
       _Role('Наговор', '+15 % к урону Чарами',
+          en: 'Incantation', enText: '+15% Spell damage',
           icon: 'rune', stat: 'tagDamage', value: 0.15, tag: 'spell'),
       _Role('Знание', '+3 к силе чар',
+          en: 'Lore', enText: '+3 spell power',
           icon: 'orb', stat: 'spellPower', value: 3.0),
       _Role('Шёпот строк', '+10 к максимуму маны',
+          en: 'Whispered Lines', enText: '+10 maximum mana',
           icon: 'mana', stat: 'maxMana', value: 10.0),
     ],
     middle: _Role('Формула', '+7 к силе чар',
+        en: 'Formula', enText: '+7 spell power',
         kind: 'notable', icon: 'orb', stat: 'spellPower', value: 7.0),
     second: _Role('Свод заклятий', '+30 % к урону Чарами',
+        en: 'Codex of Spells', enText: '+30% Spell damage',
         kind: 'notable', icon: 'rune', stat: 'tagDamage', value: 0.30,
         tag: 'spell'),
     notable: _Role('Высокое искусство', '+11 к силе чар',
+        en: 'High Art', enText: '+11 spell power',
         kind: 'notable', icon: 'orb', stat: 'spellPower', value: 11.0),
     ruleNotable: _Role(
       'Ум как сосуд',
       '+1 к силе чар за каждые 8 маны в запасе',
+      en: 'Mind as Vessel',
+      enText: '+1 spell power per 8 maximum mana',
       kind: 'notable',
       icon: 'mana',
       rule: 'manaToSpellPower',
@@ -864,6 +1041,8 @@ const _clusters = [
     keystone: _Role(
       'Отречение от стали',
       '+145 % к урону Чарами, но −50 % к скорости атаки',
+      en: 'Renouncing Steel',
+      enText: '+145% Spell damage, but −50% attack speed',
       kind: 'keystone',
       icon: 'rune',
       stat: 'tagDamage',

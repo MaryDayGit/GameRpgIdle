@@ -1,25 +1,32 @@
 import 'grammar.dart';
+import 'lang.dart';
 
 /// Тип предмета. Восемь типов на девять слотов: колец два (GDD §4.1).
 ///
 /// Отдельно от слота намеренно: аффиксы и реликты привязаны к типу предмета,
 /// а не к тому, в какой из двух слотов кольцо надето.
 enum GearKind {
-  weapon('Оружие', Gender.neuter),
-  offhand('Левая рука', Gender.feminine),
-  helmet('Шлем', Gender.masculine),
-  armor('Доспех', Gender.masculine),
-  gloves('Перчатки', Gender.plural),
-  boots('Ботинки', Gender.plural),
-  ring('Кольцо', Gender.neuter),
-  amulet('Амулет', Gender.masculine);
+  weapon(Phrase('Оружие', 'Weapon'), Gender.neuter),
+  offhand(Phrase('Левая рука', 'Off-hand'), Gender.feminine),
+  helmet(Phrase('Шлем', 'Helmet'), Gender.masculine),
+  armor(Phrase('Доспех', 'Body armor'), Gender.masculine),
+  gloves(Phrase('Перчатки', 'Gloves'), Gender.plural),
+  boots(Phrase('Ботинки', 'Boots'), Gender.plural),
+  ring(Phrase('Кольцо', 'Ring'), Gender.neuter),
+  amulet(Phrase('Амулет', 'Amulet'), Gender.masculine);
 
-  const GearKind(this.ru, this.gender);
+  const GearKind(this._title, this.gender);
 
-  final String ru;
+  final Phrase _title;
 
-  /// Род названия. По нему согласуется всё, что стоит рядом: редкость в
-  /// заголовке вещи, «надет / надета / надето / надеты» в сообщениях.
+  String get title => _title.text;
+
+  /// Род РУССКОГО названия. По нему согласуется всё, что стоит рядом:
+  /// редкость в заголовке вещи, «надет / надета / надето / надеты».
+  ///
+  /// Поле остаётся при типе предмета и на языках без согласования: род — это
+  /// свойство слова, а не интерфейса, и языку, которому он не нужен, он
+  /// просто не задаётся вопросом (см. [Rarity.forKind]).
   final Gender gender;
 }
 
@@ -27,23 +34,39 @@ enum GearKind {
 /// растёт от ilvl и перцентиля роллов (GDD §4.2), иначе редкость входила бы
 /// в баланс вторым множителем и ломала формулу стены.
 enum Rarity {
-  common('Обычный', Forms('Обычный', 'Обычная', 'Обычное', 'Обычные')),
-  uncommon(
-      'Необычный', Forms('Необычный', 'Необычная', 'Необычное', 'Необычные')),
-  rare('Редкий', Forms('Редкий', 'Редкая', 'Редкое', 'Редкие')),
+  common(Phrase('Обычный', 'Common'),
+      Forms('Обычный', 'Обычная', 'Обычное', 'Обычные')),
+  uncommon(Phrase('Необычный', 'Uncommon'),
+      Forms('Необычный', 'Необычная', 'Необычное', 'Необычные')),
+  rare(Phrase('Редкий', 'Rare'),
+      Forms('Редкий', 'Редкая', 'Редкое', 'Редкие')),
   // «Реликт» — существительное, а не прилагательное: оно не согласуется, и
   // «Кольцо · Реликт» читается как приложение, а не как ошибка.
-  relic('Реликт', Forms('Реликт', 'Реликт', 'Реликт', 'Реликт'));
+  relic(Phrase('Реликт', 'Relic'),
+      Forms('Реликт', 'Реликт', 'Реликт', 'Реликт'));
 
-  const Rarity(this.ru, this._forms);
+  const Rarity(this._title, this._forms);
 
-  /// Название в мужском роде — для мест, где рядом нет вещи.
-  final String ru;
+  final Phrase _title;
 
+  /// Название само по себе — для мест, где рядом нет вещи. В русском это
+  /// мужской род как словарная форма.
+  String get title => _title.text;
+
+  /// Русские формы. Отдельным полем, а не внутри [Phrase], потому что
+  /// согласование — свойство одного языка, а не всех: заводить четыре формы
+  /// там, где язык обходится одной, значит просить переводчика заполнить
+  /// четыре одинаковые клетки и потом гадать, опечатка это или замысел.
   final Forms _forms;
 
-  /// Согласованное название: «Редкое кольцо», «Редкие перчатки».
-  String forKind(GearKind kind) => _forms.of(kind.gender);
+  /// Согласованное название: «Редкое кольцо», «Редкие перчатки», «Rare Ring».
+  ///
+  /// Язык без согласования берёт одну форму и род не спрашивает — это не
+  /// заглушка, а факт языка.
+  String forKind(GearKind kind) => switch (Lang.current) {
+        Lang.ru => _forms.of(kind.gender),
+        Lang.en => _title.of(Lang.en),
+      };
 
   /// Порядок для сравнений «не ниже, чем». Реликт — старший.
   int get rank => index;

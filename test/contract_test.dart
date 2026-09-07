@@ -179,19 +179,30 @@ void main() {
     test('надетое возвращается в сундук вместе с добычей', () {
       final p = _player();
       final c1 = p.deploy(p.roster.reserve.first, seed: 42);
+      final wornByFirst = c1.loadout.slots.whereType<Item>().toList();
+      expect(wornByFirst, isNotEmpty);
+
       _waitOut(p);
       p.collect(c1);
 
-      final stashAfterFirst = List<Item>.from(p.stash);
-      expect(stashAfterFirst, isNotEmpty);
+      // Первое: надетое пережило наёмника.
+      expect(p.stash, containsAll(wornByFirst));
 
-      // Второй наёмник экипируется из сундука — и уходит глубже.
+      // Второе: следующий контракт его не съедает — свои слоты наёмник
+      // закрывает своим набором, а наследство лежит в сундуке и ждёт сборки.
+      //
+      // Проверяется предметами, а не глубиной второго спуска: разброс
+      // глубины между сидами (p10 18, p90 37) шире прибавки от снаряжения,
+      // и сравнение двух ранов проверяло бы удачу сида. Прежняя пара сидов
+      // на ней и держалась — шаг развилки 3 -> 5 её перевернул, не тронув
+      // баланс (среднее по 200 ранам 29.9 -> 29.4 этажа).
       p.roster.reserve.add(_merc());
       final c2 = p.deploy(p.roster.reserve.first, seed: 43);
       _waitOut(p);
       p.collect(c2);
 
-      expect(c2.result!.maxDepth, greaterThan(c1.result!.maxDepth));
+      expect(p.stash, containsAll(wornByFirst),
+          reason: 'наследство первого наёмника пережило и второй контракт');
     });
 
     test('экипировка изымается из сундука на время спуска', () {

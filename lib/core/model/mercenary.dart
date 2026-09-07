@@ -8,6 +8,7 @@ import 'echo_tree.dart';
 import 'equipment.dart';
 import 'grammar.dart';
 import 'hero.dart';
+import 'lang.dart';
 import 'passive_tree.dart';
 import 'stat_block.dart';
 import 'tags.dart';
@@ -19,22 +20,32 @@ import 'tags.dart';
 enum MercRank {
   // Женская форма нужна только Оборванцу: «Ветеран», «Клинок» и «Легенда»
   // в русском одинаковы для обоих родов.
-  ragged('Оборванец', 1.00, 8, feminine: 'Оборванка'),
-  veteran('Ветеран', 1.35, 10),
-  blade('Клинок', 1.80, 12),
-  legend('Легенда', 2.40, 16);
+  ragged(Phrase('Оборванец', 'Ragged'), 1.00, 8, feminine: 'Оборванка'),
+  veteran(Phrase('Ветеран', 'Veteran'), 1.35, 10),
+  blade(Phrase('Клинок', 'Blade'), 1.80, 12),
+  legend(Phrase('Легенда', 'Legend'), 2.40, 16);
 
-  const MercRank(this.ru, this.statMultiplier, this.backpackSlots,
+  const MercRank(this._title, this.statMultiplier, this.backpackSlots,
       {String? feminine})
       : _feminine = feminine;
 
-  final String ru;
+  final Phrase _title;
 
+  /// Женская форма — только русская. Английскому ранг по роду не согласуется,
+  /// и заводить там второе поле значило бы просить переводчика дважды
+  /// написать одно слово.
   final String? _feminine;
 
+  /// Словарная форма — для мест, где рядом нет наёмника.
+  String get title => _title.text;
+
   /// Ранг, согласованный с наёмником.
-  String forGender(Gender gender) =>
-      gender == Gender.feminine ? (_feminine ?? ru) : ru;
+  String forGender(Gender gender) => switch (Lang.current) {
+        Lang.ru => gender == Gender.feminine
+            ? (_feminine ?? _title.of(Lang.ru))
+            : _title.of(Lang.ru),
+        Lang.en => _title.of(Lang.en),
+      };
 
   /// Множитель к базовому StatBlock.
   final double statMultiplier;
@@ -51,31 +62,50 @@ enum MercRank {
 /// выгоден. Собранный игроком лоадаут и черта наёмника должны совпасть —
 /// это и есть решение перед отправкой.
 enum MercTrait {
-  emberborn('Погорелец', 'Погорелица', 'Урон с тегом Огонь +25 %'),
-  coldblooded('Хладнокровный', 'Хладнокровная', 'Урон с тегом Холод +25 %'),
-  voidmarked('Меченый бездной', 'Меченная бездной',
-      'Урон с тегом Пустота +25 %'),
-  bonebreaker('Костолом', 'Костоломка', 'Урон с тегом Удар +20 %, броня +10 %'),
-  bloodsupper('Кровопийца', 'Кровопийца', 'Вампиризм +4 %'),
-  hardy('Живучий', 'Живучая', 'Максимальное HP +20 %'),
-  swift('Скорый', 'Скорая', 'Скорость атаки +12 %'),
-  lucky('Удачливый', 'Удачливая', 'Качество лута +15 %');
+  emberborn(Phrase('Погорелец', 'Emberborn'), 'Погорелица',
+      Phrase('Урон с тегом Огонь +25 %', 'Fire-tagged damage +25%')),
+  coldblooded(Phrase('Хладнокровный', 'Coldblooded'), 'Хладнокровная',
+      Phrase('Урон с тегом Холод +25 %', 'Cold-tagged damage +25%')),
+  voidmarked(Phrase('Меченый бездной', 'Void-marked'), 'Меченная бездной',
+      Phrase('Урон с тегом Пустота +25 %', 'Void-tagged damage +25%')),
+  bonebreaker(
+      Phrase('Костолом', 'Bonebreaker'),
+      'Костоломка',
+      Phrase('Урон с тегом Удар +20 %, броня +10 %',
+          'Strike-tagged damage +20%, armor +10%')),
+  bloodsupper(Phrase('Кровопийца', 'Bloodsupper'), 'Кровопийца',
+      Phrase('Вампиризм +4 %', 'Life leech +4%')),
+  hardy(Phrase('Живучий', 'Hardy'), 'Живучая',
+      Phrase('Максимальное HP +20 %', 'Maximum HP +20%')),
+  swift(Phrase('Скорый', 'Swift'), 'Скорая',
+      Phrase('Скорость атаки +12 %', 'Attack speed +12%')),
+  lucky(Phrase('Удачливый', 'Lucky'), 'Удачливая',
+      Phrase('Качество лута +15 %', 'Loot quality +15%'));
 
-  const MercTrait(this.ru, this._feminine, this.description);
+  const MercTrait(this._title, this._feminine, this._description);
 
-  /// Название в мужском роде.
-  final String ru;
+  final Phrase _title;
 
+  /// Женская форма — только русская, по той же причине, что у [MercRank].
   final String _feminine;
 
-  final String description;
+  final Phrase _description;
+
+  /// Словарная форма названия.
+  String get title => _title.text;
+
+  String get description => _description.text;
 
   /// Черта, согласованная с наёмником: «Живучий» или «Живучая».
   ///
   /// Половина имён в пуле женские, и «Нира · Живучий» — ровно то «странное
-  /// слово», на которое пожаловался живой прогон.
-  String forGender(Gender gender) =>
-      gender == Gender.feminine ? _feminine : ru;
+  /// слово», на которое пожаловался живой прогон. Английский согласования не
+  /// требует и берёт одну форму.
+  String forGender(Gender gender) => switch (Lang.current) {
+        Lang.ru =>
+          gender == Gender.feminine ? _feminine : _title.of(Lang.ru),
+        Lang.en => _title.of(Lang.en),
+      };
 
   /// Вклад черты в агрегированный StatBlock.
   /// Величины долевые — складываются в аддитивную корзину.
@@ -169,16 +199,49 @@ class Mercenary {
       );
 
   @override
-  String toString() => '$name (${rank.ru}, ${trait.ru})';
+  String toString() => '$name (${rank.title}, ${trait.title})';
 }
 
 /// Генератор кандидатов для Таверны.
 class MercFactory {
   MercFactory._();
 
-  /// Имена и род. Половина пула женские, и прозвище обязано это знать:
-  /// «Мирена Последний» — это не колорит, а несогласованная строка.
+  /// Имена и род. Половина пула женские: род нужен всему, что о наёмнике
+  /// говорит, — рангу, черте, исходу спуска, уведомлению о гибели.
+  ///
+  /// ## Почему имена английские на обоих языках
+  ///
+  /// Имя не переводится вместе с интерфейсом, потому что оно **лежит в
+  /// сейве**, а не собирается при показе. Переводимый пул означал бы, что
+  /// наёмник, нанятый по-английски, останется «Corwin the Blind» и после
+  /// переключения на русский: строку в сейве переключение языка не трогает.
+  /// Одно имя на все языки — это не упущение, а единственный способ не
+  /// получить в одном отряде половину имён на одном языке и половину на
+  /// другом.
   static const _firstNames = [
+    ('Corwin', Gender.masculine),
+    ('Tala', Gender.feminine),
+    ('Jorn', Gender.masculine),
+    ('Mirena', Gender.feminine),
+    ('Gask', Gender.masculine),
+    ('Ulva', Gender.feminine),
+    ('Deren', Gender.masculine),
+    ('Solveig', Gender.feminine),
+    ('Kramm', Gender.masculine),
+    ('Asta', Gender.feminine),
+    ('Bjorn', Gender.masculine),
+    ('Nira', Gender.feminine),
+  ];
+
+  /// Русские имена прежних сборок.
+  ///
+  /// Нужны ровно одному: [genderOf] на СТАРОМ сейве. Имя там записано
+  /// по-русски, и без этого списка все нанятые до перевода наёмницы стали бы
+  /// мужского рода — «Мирена Слепая погиб» в первом же уведомлении.
+  ///
+  /// Новых наёмников отсюда не выдают: список нужен для чтения, а не для
+  /// генерации, и в [roll] он не участвует.
+  static const _legacyNames = [
     ('Корвин', Gender.masculine),
     ('Тала', Gender.feminine),
     ('Йорн', Gender.masculine),
@@ -193,19 +256,23 @@ class MercFactory {
     ('Нира', Gender.feminine),
   ];
 
-  /// Прозвища в двух формах. «Молчун» — существительное, и его женская форма
-  /// тоже существительное, а не прилагательное.
+  /// Прозвища. По одной форме на каждое: английское прилагательное по роду
+  /// не согласуется, и второй формы у него не бывает.
+  ///
+  /// Длина списка та же, что была у русского: `roll` берёт из него по
+  /// индексу, и другое число вариантов сдвинуло бы всех наёмников на одном
+  /// и том же сиде — то есть сломало бы воспроизводимость спуска.
   static const _epithets = [
-    ('Хромой', 'Хромая'),
-    ('Тихий', 'Тихая'),
-    ('Меченый', 'Меченая'),
-    ('Однорукий', 'Однорукая'),
-    ('Пепельный', 'Пепельная'),
-    ('Слепой', 'Слепая'),
-    ('Долговязый', 'Долговязая'),
-    ('Молчун', 'Молчунья'),
-    ('Ржавый', 'Ржавая'),
-    ('Последний', 'Последняя'),
+    'the Lame',
+    'the Quiet',
+    'the Marked',
+    'the One-Armed',
+    'the Ashen',
+    'the Blind',
+    'the Lanky',
+    'the Silent',
+    'the Rusted',
+    'the Last',
   ];
 
   /// Род наёмника по его имени.
@@ -217,6 +284,11 @@ class MercFactory {
   static Gender genderOf(String fullName) {
     final first = fullName.split(' ').first;
     for (final (name, gender) in _firstNames) {
+      if (name == first) return gender;
+    }
+    // Сейв, сделанный до перевода имён. Проверяется вторым, а не первым:
+    // новых имён в игре больше, и они должны находиться за один проход.
+    for (final (name, gender) in _legacyNames) {
       if (name == first) return gender;
     }
     return Gender.masculine;
@@ -257,9 +329,9 @@ class MercFactory {
       roll -= weights[i];
     }
 
-    final (first, gender) = _firstNames[rng.nextInt(_firstNames.length)];
-    final (male, female) = _epithets[rng.nextInt(_epithets.length)];
-    final name = '$first ${gender == Gender.feminine ? female : male}';
+    final (first, _) = _firstNames[rng.nextInt(_firstNames.length)];
+    final epithet = _epithets[rng.nextInt(_epithets.length)];
+    final name = '$first $epithet';
 
     return Mercenary(
       id: '$idPrefix${rng.nextRaw().abs() % 1000000}',

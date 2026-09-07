@@ -15,6 +15,7 @@ import '../state/descent_replay.dart';
 import 'fork_card.dart';
 import '../state/game_controller.dart';
 import 'format.dart';
+import 'strings.dart';
 
 /// Что происходит в бездне прямо сейчас.
 ///
@@ -142,22 +143,25 @@ class _BattleScreenState extends State<BattleScreen>
     return switch (beat.kind) {
       // Цель видна в шапке экрана, поэтому в строке только удар: склонять
       // имена мобов («Крит по Владыка Пепла») читается как ошибка.
-      BeatKind.enemyHit => beat.crit ? 'Крит · ${money(beat.amount)}' : null,
+      BeatKind.enemyHit =>
+        beat.crit ? S.critFor(money(beat.amount)) : null,
       // Имя берётся из самой записи, а не из текущего снимка: запись
       // забирается кадром позже, и волны к тому моменту может уже не быть.
       // Согласовано по роду: «Кровавая пиявка» — она, и «пал» про неё
       // читается как ошибка. Род приходит вместе с записью.
-      BeatKind.enemyDied => beat.gender == Gender.feminine
-          ? '«${beat.name}» повержена'
-          : '«${beat.name}» повержен',
+      BeatKind.enemyDied => S.battleKilled(beat.name,
+          she: beat.gender == Gender.feminine),
+
+
       BeatKind.heroCast =>
-        'Умение: ${ContentPack.current.ability(beat.id)?.name ?? beat.id}',
+        S.battleAbility(
+            ContentPack.current.ability(beat.id)?.name ?? beat.id),
       // Нулевой урон в ленту не идёт: строка «Получено 0» читается как
       // поломка счёта, а означает лишь округление.
       BeatKind.heroHurt => beat.amount < 0.5
           ? null
-          : 'Получено ${money(beat.amount)}',
-      BeatKind.heroDied => 'Наёмник погиб',
+          : S.battleTook(money(beat.amount)),
+      BeatKind.heroDied => S.battleMercFell,
       BeatKind.waveStarted || BeatKind.heroSwing => null,
     };
   }
@@ -186,21 +190,18 @@ class _BattleScreenState extends State<BattleScreen>
     final agreed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Отозвать наёмника?'),
+        title: Text(S.recallTitle),
         // Без номера этажа намеренно: спуск идёт, пока диалог открыт, и
         // любое число здесь успевает устареть до нажатия «Отозвать».
-        content: const Text(
-          'Спуск закончится там, где наёмник сейчас. Добыча и Эхо остаются '
-          'при нём — штрафа за отзыв нет.',
-        ),
+        content: Text(S.recallAbout),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Пусть идёт дальше'),
+            child: Text(S.recallLetThemGo),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Отозвать'),
+            child: Text(S.recall),
           ),
         ],
       ),
@@ -239,24 +240,25 @@ class _BattleScreenState extends State<BattleScreen>
                     children: [
                       Text(
                         finished && !atFork
-                            ? 'Спуск окончен'
-                            : 'Этаж ${snapshot.depth}'
-                                '${!atFork && snapshot.isBossWave ? " · БОСС" : ""}',
+                            ? S.battleOver
+                            : S.battleFloor(snapshot.depth,
+                                boss: !atFork && snapshot.isBossWave),
+
                         style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.w600),
                       ),
                       Text(
                         atFork
-                            ? 'Развилка · наёмник ждёт решения'
+                            ? S.battleAtFork
                             : finished
-                            ? 'Наёмник ждёт вас на Заставе'
+                            ? S.battleWaitsAtOutpost
                             // Переход между этажами занимает время рана.
                             // Пауза, которую нечем объяснить, читается как
                             // зависшая игра — именно это и увидел живой
                             // прогон: «стоит секунд пять и прыгает вперёд».
                             : snapshot.resting
-                                ? 'Переход · наёмник переводит дух'
-                                : 'Волна ${snapshot.waveIndex}'
+                                ? S.battleResting
+                                : '${S.battleWave(snapshot.waveIndex)}'
                                     '/${snapshot.waveCount}'
                                     ' · ${snapshot.enemyName}',
                         style: const TextStyle(
@@ -299,13 +301,15 @@ class _BattleScreenState extends State<BattleScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _Bar(
-                      label: 'HP наёмника',
+                      label: S.battleMercHp,
                       value: heroHpFraction,
                       color: const Color(0xFF7FB069),
                     ),
                     const SizedBox(height: 8),
                     _Bar(
-                      label: snapshot.resting ? 'Переход' : 'Волна',
+                      label: snapshot.resting
+                          ? S.battleRest
+                          : S.battleWaveShort,
                       value: snapshot.resting
                           ? snapshot.restProgress
                           : snapshot.waveProgress,
@@ -324,7 +328,7 @@ class _BattleScreenState extends State<BattleScreen>
                       const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: _confirmRecall,
-                        child: const Text('Отозвать наёмника'),
+                        child: Text(S.recallMercenary),
                       ),
                     ] else if (!finished) ...[
                       const SizedBox(height: 16),
@@ -336,13 +340,13 @@ class _BattleScreenState extends State<BattleScreen>
                       const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: _confirmRecall,
-                        child: const Text('Отозвать наёмника'),
+                        child: Text(S.recallMercenary),
                       ),
                     ],
                     const SizedBox(height: 12),
-                    const Text(
-                      'Вы наблюдаете. Сборка заперта до конца контракта.',
-                      style: TextStyle(fontSize: 12, color: Colors.white38),
+                    Text(
+                      S.battleWatching,
+                      style: const TextStyle(fontSize: 12, color: Colors.white38),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -452,7 +456,7 @@ class _Forecast extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Путь · ${plural(floors.length, "этаж", "этажа", "этажей")}',
+        Text(S.battlePath(floors.length),
             style: const TextStyle(fontSize: 12, color: Colors.white38)),
         const SizedBox(height: 6),
         for (final (i, floor) in floors.indexed)
@@ -478,7 +482,7 @@ class _Forecast extends StatelessWidget {
                 ),
                 Expanded(child: Text(
                     floor.depth == currentDepth
-                        ? 'сейчас · ${_describe(floor, i)}'
+                        ? S.battleNow(_describe(floor, i))
                         : _describe(floor, i),
                     style: const TextStyle(fontSize: 12,
                         color: Colors.white70))),
@@ -499,18 +503,18 @@ class _Forecast extends StatelessWidget {
     // Босс и тип его урона — первое, что нужно знать: именно он решает,
     // доживёт ли наёмник до следующей развилки.
     final boss = floor.boss;
-    if (boss != null) parts.add('${boss.name} · ${boss.damageType.ru}');
+    if (boss != null) parts.add('${boss.name} · ${boss.damageType.title}');
 
     final modifier = floor.modifier;
     if (modifier != null) {
       final same = index > 0 && floors[index - 1].modifier?.id == modifier.id;
       parts.add(floor.forkHere
-          ? 'Развилка → ${modifier.name}: ${modifier.minus}'
+          ? S.battleForkAhead(modifier.name, modifier.minus)
           : same
               ? modifier.name
               : '${modifier.name}: ${modifier.minus}');
     } else {
-      parts.add('Ровный путь');
+      parts.add(S.battleClearPath);
     }
 
     return parts.join(' · ');

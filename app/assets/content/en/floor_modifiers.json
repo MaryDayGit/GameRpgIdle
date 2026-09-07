@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "_comment": "Перевод floor_modifiers.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "abundance": {
+      "name": "Abundance",
+      "plus": "+50% loot quantity",
+      "minus": "Enemies hit 20% harder"
+    },
+    "chill": {
+      "name": "Bitter Cold",
+      "plus": "Cooldowns −15%",
+      "minus": "−30 cold resistance"
+    },
+    "heat": {
+      "name": "Swelter",
+      "plus": "+15% Fire damage dealt",
+      "minus": "−30 fire resistance"
+    },
+    "hunger": {
+      "name": "Hunger",
+      "plus": "+40% loot",
+      "minus": "HP regeneration does not work"
+    },
+    "silence": {
+      "name": "Silence",
+      "plus": "+50% auto-attack damage",
+      "minus": "Totems and auras that affect enemies do not work"
+    },
+    "swarm": {
+      "name": "Swarm",
+      "plus": "Enemies −40% HP, +30% loot quantity",
+      "minus": "Twice the waves, twice the enemies"
+    },
+    "vice": {
+      "name": "The Vice",
+      "plus": "Bosses give double Echo",
+      "minus": "Cooldowns +25%"
+    },
+    "void_rot": {
+      "name": "Void Rot",
+      "plus": "+1 chest rarity rank",
+      "minus": "−30 void resistance"
+    }
+  }
+}

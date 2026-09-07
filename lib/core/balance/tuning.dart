@@ -23,13 +23,13 @@ class TuningConfig {
     this.tickSeconds = 0.1,
     this.wavesPerFloor = 3,
     this.wavesPerBossFloor = 1,
-    this.restSecondsBetweenFloors = 5.0,
+    this.restSecondsBetweenFloors = 2.0,
     this.restHealFraction = 0.35,
     this.waveTimeoutSeconds = 3600.0,
     this.stallCheckSeconds = 30.0,
     this.stallProgressThreshold = 0.01,
     this.abilitySlots = 4,
-    this.forkEveryFloors = 3,
+    this.forkEveryFloors = 5,
     this.forkWaitSeconds = 45.0,
     this.boldForkLootBonus = 0.0,
     this.boldForkRarityBonus = 0,
@@ -124,6 +124,17 @@ class TuningConfig {
   final double tickSeconds;
   final int wavesPerFloor;
   final int wavesPerBossFloor;
+
+  /// Переход между этажами. Было 5 с — и это половина этажа: замер профиля
+  /// даёт 5-13 игровых секунд на этаж, так что пауза читалась дольше боя,
+  /// который её заслужил. 2 с короче любого этажа и всё ещё дают полоске
+  /// здоровья подпрыгнуть — переход виден, но не ощущается зависанием.
+  ///
+  /// Ниже не опускаем: пауза — единственное, что здесь режется, и на 40
+  /// ранах медиана падает с 7.6 до 6.1 минуты; 1.5 с дали бы 5.9 и вывели
+  /// ран из окна 8-20 минут (GDD §1). Глубина не сдвинулась ни на этаж, и
+  /// лечение тоже: основная доля — `restHealFraction` от максимума, а не
+  /// регенерация за секунды отдыха.
   final double restSecondsBetweenFloors;
   final double restHealFraction;
   final double waveTimeoutSeconds;
@@ -136,6 +147,10 @@ class TuningConfig {
 
   /// Развилка на входе на каждый N-й этаж: два пути, у каждого свой
   /// модификатор (GDD §2.6). Между развилками этажи чистые.
+  ///
+  /// Было 3: на восьмиминутном спуске развилка выпадала каждые полминуты и
+  /// перестала быть событием. 5 растягивает шаг до чистой четвёрки этажей
+  /// между решениями.
   final int forkEveryFloors;
 
   /// Сколько секунд наёмник ждёт решения на развилке, прежде чем решить сам.

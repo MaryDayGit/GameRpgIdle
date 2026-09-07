@@ -7,6 +7,7 @@ import 'package:rift/core/sim/fork_cost.dart';
 
 import '../state/game_controller.dart';
 import 'format.dart';
+import 'strings.dart';
 
 /// Развилка: где наёмник стоит и куда его послать.
 ///
@@ -54,24 +55,27 @@ class ForkCard extends StatelessWidget {
           // Этаж, на который он ВОЙДЁТ, а не тот, что позади: выбранный
           // путь действует начиная с него. `currentFloorAt` показывал бы
           // пройденный — «остановился у этажа 1», стоя перед третьим.
-          '${she ? "Остановилась" : "Остановился"} перед этажом '
-          '${contract.result!.maxDepth + 1}. '
-          '${left.inSeconds > 0 ? "Ждёт ещё ${duration(left)}" : "Больше не ждёт"}, '
-          'потом решит сам${she ? "а" : ""}: ${contract.forkPolicy.ru.toLowerCase()}.',
+          S.forkStanding(
+            she: she,
+            floor: contract.result!.maxDepth + 1,
+            waiting: left.inSeconds > 0
+                ? S.forkWaitsMore(duration(left))
+                : S.forkWaitsNoMore,
+            order: contract.forkPolicy.title.toLowerCase(),
+          ),
           style: const TextStyle(fontSize: 12, color: Colors.white60),
         ),
         const SizedBox(height: 6),
         Text(
           floors.isEmpty
-              ? 'Прошлый этаж дался без единой царапины.'
+              ? S.forkHealthUntouched
               : worst > 0.7
-                  ? 'На прошлом этаже опускал${she ? "ась" : "ся"} до '
-                      '${percent(worst)} здоровья — запас есть.'
+                  ? '${S.forkHealth(she: she, left: percent(worst))}'
+                      '${S.forkHealthRoomLeft}'
                   : worst > 0.35
-                      ? 'На прошлом этаже опускал${she ? "ась" : "ся"} до '
-                          '${percent(worst)} здоровья.'
-                      : 'На прошлом этаже ${she ? "была" : "был"} на '
-                          '${percent(worst)} здоровья — ещё немного, и всё.',
+                      ? '${S.forkHealth(she: she, left: percent(worst))}.'
+                      : '${S.forkHealth(she: she, left: percent(worst))}'
+                          '${S.forkHealthNearlyOut(she: she)}',
           style: TextStyle(
             fontSize: 12,
             color: worst > 0.35 ? Colors.white38 : Colors.orangeAccent,
@@ -96,7 +100,7 @@ class ForkCard extends StatelessWidget {
           // задумывался как ставка с двойной платой. Платы у него больше
           // нет — платой служит присутствие, — и подпись обязана говорить
           // именно это.
-          'Открыт, только пока вы в игре',
+          S.forkBoldOnlyWhilePresent,
           style: TextStyle(
             fontSize: 11,
             color: Theme.of(context).colorScheme.primary,
@@ -170,7 +174,7 @@ class _ForkOption extends StatelessWidget {
           if (cost.text case final text?) ...[
             const SizedBox(height: 4),
             Text(
-              cost.harmless ? '$text Эта плата вам почти ничего не стоит' : text,
+              cost.harmless ? '$text ${S.forkCostHarmless}' : text,
               style: TextStyle(
                 fontSize: 11,
                 color: cost.harmless

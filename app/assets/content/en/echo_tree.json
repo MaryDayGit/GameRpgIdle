@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "_comment": "Перевод echo_tree.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "abyss": {
+      "name": "The Abyss",
+      "about": "Rules"
+    },
+    "abyss_ability_slot": {
+      "name": "Fifth Slot",
+      "text": "+1 ability slot"
+    },
+    "abyss_affix_slot": {
+      "name": "Master's Seal",
+      "text": "+1 affix slot on every item"
+    },
+    "abyss_depth_1": {
+      "name": "Familiar Path",
+      "text": "Starting depth +5"
+    },
+    "abyss_depth_2": {
+      "name": "Beaten Descent",
+      "text": "Starting depth +12"
+    },
+    "abyss_depth_3": {
+      "name": "Shortcut",
+      "text": "Starting depth +25"
+    },
+    "abyss_keep_shard": {
+      "name": "Shard of Memory",
+      "text": "One shard makes it home even when the Bench is full"
+    },
+    "blade": {
+      "name": "The Blade",
+      "about": "Damage"
+    },
+    "blade_cooldown": {
+      "name": "Flow",
+      "text": "−8% ability cooldown"
+    },
+    "blade_crit_chance": {
+      "name": "Precision",
+      "text": "+3% critical strike chance"
+    },
+    "blade_crit_multi": {
+      "name": "Cruelty",
+      "text": "+25% critical strike multiplier"
+    },
+    "blade_crit_multi_2": {
+      "name": "Cold Calculation",
+      "text": "+35% critical strike multiplier"
+    },
+    "blade_damage_1": {
+      "name": "Honed Edge I",
+      "text": "+8% damage"
+    },
+    "blade_damage_2": {
+      "name": "Honed Edge II",
+      "text": "+14% damage"
+    },
+    "blade_damage_3": {
+      "name": "Honed Edge III",
+      "text": "+18% damage"
+    },
+    "blade_speed": {
+      "name": "Swiftness",
+      "text": "+8% attack speed"
+    },
+    "blood": {
+      "name": "Blood",
+      "about": "Survival"
+    },
+    "blood_armor": {
+      "name": "Tempering",
+      "text": "+12% armor"
+    },
+    "blood_armor_2": {
+      "name": "Ancestral Plate",
+      "text": "+18% armor"
+    },
+    "blood_hp_1": {
+      "name": "Vitality I",
+      "text": "+8% maximum HP"
+    },
+    "blood_hp_2": {
+      "name": "Vitality II",
+      "text": "+14% maximum HP"
+    },
+    "blood_hp_3": {
+      "name": "Vitality III",
+      "text": "+18% maximum HP"
+    },
+    "blood_regen": {
+      "name": "Second Wind",
+      "text": "+2 HP regeneration per second"
+    },
+    "blood_resist": {
+      "name": "Fortitude",
+      "text": "+10 to all resistances"
+    },
+    "blood_threshold": {
+      "name": "Threshold",
+      "text": "Once per descent, a lethal blow leaves 1 HP"
+    }
+  }
+}

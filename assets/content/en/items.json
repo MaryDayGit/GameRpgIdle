@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "_comment": "Перевод items.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "amulet": {
+      "name": "Anything"
+    },
+    "armor": {
+      "name": "Defense, HP"
+    },
+    "boots": {
+      "name": "Defense, regeneration"
+    },
+    "gloves": {
+      "name": "Damage, speed"
+    },
+    "helmet": {
+      "name": "Defense"
+    },
+    "offhand": {
+      "name": "Spell power"
+    },
+    "ring": {
+      "name": "Tag damage, resistances"
+    },
+    "weapon": {
+      "name": "Damage"
+    }
+  }
+}

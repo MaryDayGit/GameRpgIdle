@@ -185,9 +185,9 @@ void main() {
         final first = Outpost.effectAt(b, 0);
         final last = Outpost.effectAt(b, Building.maxLevel);
 
-        expect(first, isNotEmpty, reason: b.ru);
+        expect(first, isNotEmpty, reason: b.title);
         expect(last, isNot(first),
-            reason: '${b.ru}: восемь уровней ничего не меняют');
+            reason: '${b.title}: восемь уровней ничего не меняют');
       }
     });
 

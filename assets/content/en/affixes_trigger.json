@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "_comment": "Перевод affixes_trigger.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "blood_tithe": {
+      "name": "Blood Tithe",
+      "text": "Killing a cursed enemy: +{fraction:%} of maximum HP"
+    },
+    "chase": {
+      "name": "The Chase",
+      "text": "On kill: +{value:%} attack speed for {duration:s}, stacking up to {maxStacks} times"
+    },
+    "desperation": {
+      "name": "Desperation",
+      "text": "Below {threshold:%} HP: +{moreDamage:%} damage, −{lessArmor:%} armor"
+    },
+    "discharge": {
+      "name": "Discharge",
+      "text": "On critical strike, {chance:%} chance: reset a random ability's cooldown"
+    },
+    "double_strike": {
+      "name": "Double Strike",
+      "text": "Every {period:s} the next ability strikes twice"
+    },
+    "frost_chain": {
+      "name": "Frost Chain",
+      "text": "A chilled enemy that dies chills its neighbours for {duration:s}"
+    },
+    "metronome": {
+      "name": "Metronome",
+      "text": "Every {n}th hit deals {multiplier:x} damage"
+    },
+    "pestilence": {
+      "name": "Pestilence",
+      "text": "Curses spread to the whole wave"
+    },
+    "reflection": {
+      "name": "Reflection",
+      "text": "When hit, {chance:%} chance: Void damage equal to {armorFraction:%} of armor"
+    },
+    "smoulder": {
+      "name": "Smoulder",
+      "text": "Fire-tagged abilities ignite for {duration:s}"
+    },
+    "totem_resonance": {
+      "name": "Totem Resonance",
+      "text": "Totems last {duration:%} longer and strike {rate:%} harder"
+    },
+    "vanguard": {
+      "name": "Vanguard",
+      "text": "First hit on a new wave: +{moreDamage:%} damage"
+    }
+  }
+}

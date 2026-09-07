@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rift/core/content/content_pack.dart';
+import 'package:rift/core/content/text_overlay.dart';
 import 'package:rift/core/model/gear.dart';
+import 'package:rift/core/model/lang.dart';
 import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/player_profile.dart';
@@ -50,9 +52,29 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory dir;
-  late ContentBundle content;
   late GameController controller;
   late PlayerProfile profile;
+
+  /// Готовый пакет на каждый язык. Собирается один раз: разбор контента
+  /// стоит десятки миллисекунд, а экранов в этом файле два десятка.
+  late Map<Lang, ContentBundle> bundles;
+
+  /// Переключает язык теста: словарь ядра, разобранный контент и контроллер.
+  ///
+  /// Экраны читают контент через контроллер, поэтому мало переставить
+  /// `Lang.current` — пакет надо подменить целиком, ровно как это делает
+  /// `GameController.setLanguage` в игре.
+  void useLang(Lang lang) {
+    Lang.current = lang;
+    bundles[lang]!.pack.apply();
+    controller = GameController(
+      content: bundles[lang]!,
+      store: SaveStore(dir),
+      profile: profile,
+      clock: () => DateTime.utc(2026, 8, 1),
+      seed: 7,
+    );
+  }
 
   setUpAll(() {
     final raw = <String, Object?>{};
@@ -60,14 +82,35 @@ void main() {
       raw[name] =
           jsonDecode(File('assets/content/$name.json').readAsStringSync());
     }
-    content = ContentBundle(raw: raw, pack: ContentPack.parse(raw));
-    content.pack.apply();
+
+    final overlays = <String, TextOverlay>{};
+    for (final name in ContentPack.fileNames) {
+      final file = File('assets/content/en/$name.json');
+      if (!file.existsSync()) continue;
+      overlays[name] = TextOverlay.fromJson(jsonDecode(file.readAsStringSync()));
+    }
+    final translated = TextOverlay.applyAll(raw, overlays);
+
+    bundles = {
+      Lang.ru: ContentBundle(raw: raw, pack: ContentPack.parse(raw)),
+      Lang.en: ContentBundle(
+          raw: translated,
+          pack: ContentPack.parse(translated),
+          lang: Lang.en),
+    };
   });
 
   /// Профиль, у которого всё наполнено: пустой экран не переполняется никогда,
   /// и проверять его бессмысленно.
   setUp(() {
     dir = Directory.systemTemp.createTempSync('rift_layout_test');
+
+    // Пакет применяется ДО сборки профиля: `ItemFactory` катит вещи из
+    // разобранного контента, и без этого `ContentPack.current` пуст. Русский,
+    // потому что накладка меняет только текст — роллы вещей от неё не зависят,
+    // и профиль обязан получиться одинаковым на любом языке.
+    Lang.current = Lang.ru;
+    bundles[Lang.ru]!.pack.apply();
 
     profile = PlayerProfile(
       gold: 1e6,
@@ -104,17 +147,14 @@ void main() {
       bossesKilled: {'ash_lord', 'void_devourer'},
     ));
 
-    controller = GameController(
-      content: content,
-      store: SaveStore(dir),
-      profile: profile,
-      clock: () => DateTime.utc(2026, 8, 1),
-      seed: 7,
-    );
+    useLang(Lang.ru);
   });
 
   tearDown(() {
     controller.dispose();
+    // Язык — статик ядра. Тест, оставивший после себя английский, ломал бы
+    // соседние файлы через порядок запуска, а не через код.
+    Lang.current = Lang.ru;
     try {
       dir.deleteSync(recursive: true);
     } on FileSystemException {
@@ -154,10 +194,46 @@ void main() {
 
     // Подробности Flutter пишет в диагностику ошибки — без них в отчёте
     // остаётся «на 74 точки вправо» и ни слова о том, где именно.
+    //
+    // `toStringDeep`, а не `toString`: цепочка создателей виджета
+    // (`Row ← Column ← Expanded ← …`) лежит вложенным свойством, и плоская
+    // печать её теряет — остаётся одна строка «A RenderFlex overflowed», по
+    // которой место в коде не найти.
     final details = error is FlutterError
-        ? error.diagnostics.map((d) => d.toString()).join(' | ')
+        ? error.diagnostics.map((d) => d.toStringDeep()).join('\n')
         : '$error';
-    fail('$where: вёрстка не помещается в экран. $details');
+    fail('$where: вёрстка не помещается в экран.\n$details');
+  }
+
+  /// Прокручивает экран до конца, проверяя переполнение на каждом шаге.
+  ///
+  /// Без прокрутки проверялась бы только верхушка. `ListView` раскладывает
+  /// лишь видимое: на Заставе в дерево попадали двадцать четыре надписи из
+  /// сотни, а панель построек — двадцать строк «имя · уровень · цена», самое
+  /// тесное место экрана — не строилась вовсе. Тест был зелёным, потому что
+  /// не доходил до того, что мог сломать.
+  Future<void> sweep(WidgetTester tester, String where) async {
+    expectNoOverflow(tester, '$where, сверху');
+
+    final scrollable = find.byType(Scrollable);
+    if (scrollable.evaluate().isEmpty) return;
+
+    final position = tester.state<ScrollableState>(scrollable.first).position;
+    if (!position.maxScrollExtent.isFinite) return;
+
+    // Позиция двигается напрямую, а не жестом. `tester.drag` тянет из центра
+    // найденного виджета, а на Заставе скроллов два — жест уходил во
+    // вложенный, и список оставался на нуле: проверка была, прокрутки не было.
+    var previous = double.nan;
+    for (var step = 0; step < 60 && position.pixels != previous; step++) {
+      previous = position.pixels;
+
+      // Предел растёт по мере того, как строятся новые куски списка, поэтому
+      // читается заново на каждом шаге, а не запоминается до цикла.
+      position.jumpTo((position.pixels + 300).clamp(0.0, position.maxScrollExtent));
+      await tester.pump();
+      expectNoOverflow(tester, '$where, прокрутка ${step + 1}');
+    }
   }
 
   /// Экраны, которые проверяются целиком. Каждый — с наполненным профилем.
@@ -173,26 +249,35 @@ void main() {
         'Справка': () => const HelpScreen(),
       };
 
-  group('узкий экран', () {
-    for (final entry in screens().entries) {
-      testWidgets('${entry.key}: ничего не вылезает', (tester) async {
-        await show(tester, entry.value());
-        expectNoOverflow(tester, entry.key);
-      });
-    }
-  });
+  // Оба языка, а не только русский. Перевод меняет длину каждой подписи на
+  // экране, и «Rare gloves» вместо «Редкие перчатки» ломает вёрстку ничуть не
+  // хуже, чем длинное слово: колонка, подогнанная под одну длину, рассыпается
+  // от любой другой. Проверять это глазами можно один раз — следующая правка
+  // перевода сломает всё заново.
+  for (final lang in Lang.values) {
+    group('узкий экран · ${lang.code}', () {
+      for (final entry in screens().entries) {
+        testWidgets('${entry.key}: ничего не вылезает', (tester) async {
+          useLang(lang);
+          await show(tester, entry.value());
+          await sweep(tester, '${entry.key} (${lang.code})');
+        });
+      }
+    });
 
-  group('крупный системный шрифт', () {
-    // Полтора кегля — не экзотика: это системная настройка, которую включают
-    // ради читаемости. Верстка, рассыпающаяся от неё, рассыпается у реальных
-    // людей, а не у выдуманных.
-    for (final entry in screens().entries) {
-      testWidgets('${entry.key}: держит ×1.3', (tester) async {
-        await show(tester, entry.value(), textScale: 1.3);
-        expectNoOverflow(tester, '${entry.key} ×1.3');
-      });
-    }
-  });
+    group('крупный системный шрифт · ${lang.code}', () {
+      // Полтора кегля — не экзотика: это системная настройка, которую включают
+      // ради читаемости. Верстка, рассыпающаяся от неё, рассыпается у реальных
+      // людей, а не у выдуманных.
+      for (final entry in screens().entries) {
+        testWidgets('${entry.key}: держит ×1.3', (tester) async {
+          useLang(lang);
+          await show(tester, entry.value(), textScale: 1.3);
+          await sweep(tester, '${entry.key} ×1.3 (${lang.code})');
+        });
+      }
+    });
+  }
 
   testWidgets('журнал спуска помещается', (tester) async {
     final contract = controller.deploy(profile.roster.reserve.first)!;

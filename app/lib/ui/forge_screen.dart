@@ -7,6 +7,7 @@ import 'package:rift/core/sim/crafting.dart';
 
 import '../state/game_controller.dart';
 import 'format.dart';
+import 'strings.dart';
 import 'gear_grid.dart';
 import 'help_screen.dart';
 import 'gear_icons.dart';
@@ -87,18 +88,18 @@ class _ForgeScreenState extends State<ForgeScreen> {
               ),
               const SizedBox(height: 16),
               if (before.isNotEmpty) ...[
-                const Text(
-                  'Сейчас',
-                  style: TextStyle(fontSize: 11, color: Colors.white38),
+                Text(
+                  S.forgeNow,
+                  style: const TextStyle(fontSize: 11, color: Colors.white38),
                 ),
                 for (final line in before)
                   Text(line, style: const TextStyle(fontSize: 13)),
                 const SizedBox(height: 12),
               ],
               if (after.isNotEmpty) ...[
-                const Text(
-                  'Станет',
-                  style: TextStyle(fontSize: 11, color: Colors.white38),
+                Text(
+                  S.forgeBecomes,
+                  style: const TextStyle(fontSize: 11, color: Colors.white38),
                 ),
                 for (final line in after)
                   Text(
@@ -128,7 +129,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Отмена'),
+                child: Text(S.cancel),
               ),
             ],
           ),
@@ -160,25 +161,25 @@ class _ForgeScreenState extends State<ForgeScreen> {
     final risky = range.worst.value < current.value;
 
     final ok = await _confirm(
-      title: 'Перебросить свойство',
-      what:
-          'Число у свойства бросается заново. Что именно выпадет — '
-          'неизвестно; известно, между чем и чем.',
+      title: S.rerollTitle,
+      what: S.rerollAbout,
+
+
       before: [
         _affixLine(item, index, current),
-        'качество ${(current.percentile * 100).round()} из 100',
+        S.qualityOutOf((current.percentile * 100).round()),
       ],
       after: [
-        'не хуже: ${_affixLine(item, index, range.worst)}',
-        'не лучше: ${_affixLine(item, index, range.best)}',
+        S.rerollNoWorse(_affixLine(item, index, range.worst)),
+        S.rerollNoBetter(_affixLine(item, index, range.best)),
       ],
       warning: risky
-          ? 'Может выпасть хуже, чем сейчас. Кузница поднимает нижнюю '
-                'границу — чем она выше, тем безопаснее переброс.'
-          : 'Хуже не станет: Кузница подняла нижнюю границу выше '
-                'нынешнего числа.',
+          ? S.rerollRisk
+
+          : S.rerollSafe,
+
       cost: Crafting.rerollCost(item, index),
-      action: 'Перебросить',
+      action: S.reroll,
     );
     if (!ok || !mounted) return;
 
@@ -186,7 +187,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
     if (!mounted) return;
     Navigator.of(context).pop();
     if (result == null) {
-      _toast('Не хватает золота');
+      _toast(S.notEnoughGoldShort);
       return;
     }
     // Открываем ту же вещь заново: игрок пришёл смотреть, что выпало.
@@ -197,16 +198,16 @@ class _ForgeScreenState extends State<ForgeScreen> {
     final shard = Crafting.extract(item, index);
 
     final ok = await _confirm(
-      title: 'Разобрать на осколок',
-      what:
-          'Вещь исчезает целиком. От неё остаётся одно свойство — то, что вы '
-          'выбрали, — в виде осколка. Осколок помнит, насколько УДАЧНО оно '
-          'выпало, а не само число: поэтому его можно перенести на вещь '
-          'получше, и там он даст больше.',
+      title: S.extractTitle,
+      what: S.extractAbout,
+
+
+
+
       before: [_affixLine(item, index, item.affixes[index])],
-      after: ['осколок качества ${shard.quality} из 100'],
-      warning: 'Остальные свойства этой вещи пропадут.',
-      action: 'Разобрать',
+      after: [S.shardOfQuality(shard.quality)],
+      warning: S.extractLoseRest,
+      action: S.extract,
     );
     if (!ok || !mounted) return;
 
@@ -215,8 +216,8 @@ class _ForgeScreenState extends State<ForgeScreen> {
     Navigator.of(context).pop();
     _toast(
       result == null
-          ? 'Хранилище осколков заполнено'
-          : 'Осколок качества ${result.quality} готов',
+          ? S.shardStorageFull
+          : S.shardReady(result.quality),
     );
   }
 
@@ -224,15 +225,15 @@ class _ForgeScreenState extends State<ForgeScreen> {
     final next = Crafting.deepen(item, c.profile.maxDepthEver);
 
     final ok = await _confirm(
-      title: 'Углубить реликт',
-      what:
-          'Уровень реликта поднимается до ${next.ilvl}, и всё, что от него '
-          'зависит, пересчитывается. Уникальный эффект не меняется — он и не '
-          'стареет.',
+      title: S.deepenTitle,
+      what: S.deepenAbout(next.ilvl),
+
+
+
       before: ItemText.lines(item),
       after: ItemText.lines(next),
       cost: Crafting.deepenCost(item),
-      action: 'Углубить',
+      action: S.deepen,
     );
     if (!ok || !mounted) return;
 
@@ -240,7 +241,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
     if (!mounted) return;
     Navigator.of(context).pop();
     if (result == null) {
-      _toast('Не хватает золота');
+      _toast(S.notEnoughGoldShort);
       return;
     }
     await _openItem(result);
@@ -293,28 +294,28 @@ class _ForgeScreenState extends State<ForgeScreen> {
       final added = preview.item.affixes.last;
 
       final ok = await _confirm(
-        title: 'Впечатать осколок',
-        what:
-            'Осколок ляжет в свободное место. Его удача пересчитается под '
-            'уровень этой вещи — поэтому старый осколок не устаревает.',
+        title: S.imprintTitle,
+        what: S.imprintAbout,
+
+
         before: [
           ItemText.title(item),
-          'осколок качества ${shard.quality}',
+          S.shardQualityShort(shard.quality),
         ],
         after: [
           ItemText.lines(preview.item)[preview.item.affixes.length -
               1 +
               (item.implicit == null ? 0 : 1)],
         ],
-        action: 'Впечатать',
+        action: S.imprint,
       );
       if (!ok || !mounted) return;
 
       final result = c.imprintShard(item, shard);
       _toast(
         result == null
-            ? 'Не подошло'
-            : 'Вставлено, качество ${(added.percentile * 100).round()}',
+            ? S.didNotFit
+            : S.imprinted((added.percentile * 100).round()),
       );
       setState(() {});
       return;
@@ -347,21 +348,21 @@ class _ForgeScreenState extends State<ForgeScreen> {
     final chance = c.profile.outpost.shardSalvageOnOverwrite;
 
     final ok = await _confirm(
-      title: 'Заменить свойство',
-      what: 'Свободных мест нет: осколок займёт место выбранного свойства.',
+      title: S.replaceTitle,
+      what: S.replaceNoRoom,
       before: [_affixLine(item, index, item.affixes[index])],
       after: [ItemText.lines(preview.item)[index + offset]],
       warning: chance > 0
-          ? 'Стёртое свойство пропадёт. Верстак осколков спасает его с '
-                'вероятностью ${(chance * 100).round()} %.'
-          : 'Стёртое свойство пропадёт насовсем. Шанс сохранить его даёт '
-                'Верстак осколков.',
-      action: 'Заменить',
+          ? S.replaceSaveChance((chance * 100).round())
+  
+          : S.replaceNoChance,
+  
+      action: S.replace,
     );
     if (!ok || !mounted) return;
 
     final result = c.imprintShard(item, shard, slotIndex: index);
-    _toast(result == null ? 'Не подошло' : 'Свойство заменено');
+    _toast(result == null ? S.didNotFit : S.propertyReplaced);
     setState(() {});
   }
 
@@ -376,12 +377,12 @@ class _ForgeScreenState extends State<ForgeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Кузница'),
+            title: Text(S.forgeTitle),
             actions: [
               // Справка открывается сразу на крафте: в Кузницу приходят с
               // вопросом про перекат, а не про цикл игры.
               IconButton(
-                tooltip: 'Как это работает',
+                tooltip: S.howItWorks,
                 icon: const Icon(Icons.menu_book_outlined),
                 onPressed: () => openHelp(context, section: 'craft'),
               ),
@@ -391,7 +392,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
               Text(
-                'Золото ${money(profile.gold)}',
+                S.goldAmount(money(profile.gold)),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -400,16 +401,17 @@ class _ForgeScreenState extends State<ForgeScreen> {
               const SizedBox(height: 20),
 
               _Header(
-                'Осколки · ${profile.shards.length} из '
-                '${profile.outpost.shardCapacity}',
+                S.shardsHeader(profile.shards.length,
+                    profile.outpost.shardCapacity),
+
               ),
               if (profile.shards.isEmpty)
-                const Text(
-                  'Осколок помнит, насколько удачно выпало свойство, а не '
-                  'само число. Поэтому он не стареет: его можно переносить на '
-                  'всё более глубокие вещи. Разберите вещь, чтобы получить '
-                  'первый.',
-                  style: TextStyle(fontSize: 13, color: Colors.white54),
+                Text(
+                  S.shardsEmptyAbout,
+
+
+
+                  style: const TextStyle(fontSize: 13, color: Colors.white54),
                 )
               else
                 for (final shard in profile.shards)
@@ -417,13 +419,13 @@ class _ForgeScreenState extends State<ForgeScreen> {
 
               const SizedBox(height: 24),
               _Header(
-                'Сундук · ${stash.length} из '
-                '${profile.outpost.stashSlots}',
+                S.stashHeader(stash.length, profile.outpost.stashSlots),
+
               ),
               if (stash.isEmpty)
-                const Text(
-                  'Пусто. Добыча приходит с наёмниками.',
-                  style: TextStyle(fontSize: 13, color: Colors.white54),
+                Text(
+                  S.stashEmptyForge,
+                  style: const TextStyle(fontSize: 13, color: Colors.white54),
                 )
               else
                 for (final item in stash)
@@ -468,11 +470,11 @@ class _ShardRow extends StatelessWidget {
     // на месте числа стоит многоточие. Вырезать число совсем было хуже:
     // строки читались обрывками — «к урону», «вампиризма».
     final title = def == null
-        ? shard.stat.ru
+        ? shard.stat.label
         : def.template
               .replaceAll('{value:%}', '… %')
               .replaceAll('{value}', '…')
-              .replaceAll('{tag}', shard.tag?.ru ?? '');
+              .replaceAll('{tag}', shard.tag?.title ?? '');
 
     return InkWell(
       onTap: onTap,
@@ -558,9 +560,9 @@ class _ItemRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'свойств ${Crafting.usedSlots(item)} из '
-                    '${Crafting.affixCapacity(item)}'
-                    '${item.isRelic ? " · реликт" : ""}',
+                    S.propertyCount(Crafting.usedSlots(item),
+                        Crafting.affixCapacity(item),
+                        relic: item.isRelic),
                     style: const TextStyle(fontSize: 12, color: Colors.white54),
                   ),
                 ],
@@ -620,8 +622,8 @@ class _ItemSheet extends StatelessWidget {
             for (var i = 0; i < item.affixes.length; i++) ...[
               Text(lines[i + offset], style: const TextStyle(fontSize: 13)),
               Text(
-                'качество ${(item.affixes[i].percentile * 100).round()}'
-                '${item.affixes[i].rerolls > 0 ? " · перебросов ${item.affixes[i].rerolls}" : ""}',
+                S.affixQuality((item.affixes[i].percentile * 100).round(),
+                    item.affixes[i].rerolls),
                 style: const TextStyle(fontSize: 11, color: Colors.white38),
               ),
               const SizedBox(height: 6),
@@ -632,12 +634,12 @@ class _ItemSheet extends StatelessWidget {
                     // одно и то же число на двух кнопках подряд читается как
                     // «я уже заплатил».
                     onPressed: () => onReroll(i),
-                    child: const Text('Перебросить'),
+                    child: Text(S.reroll),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
                     onPressed: () => onExtract(i),
-                    child: const Text('В осколок'),
+                    child: Text(S.toShard),
                   ),
                 ],
               ),
@@ -647,13 +649,12 @@ class _ItemSheet extends StatelessWidget {
             if (canDeepen)
               FilledButton(
                 onPressed: onDeepen,
-                child: Text('Углубить до ${item.ilvl + 10}'),
+                child: Text(S.deepenTo(item.ilvl + 10)),
               ),
             if (item.isRelic && !canDeepen)
-              const Text(
-                'Углубление доступно, пока уровень реликта ниже вашего рекорда '
-                'глубины.',
-                style: TextStyle(fontSize: 12, color: Colors.white38),
+              Text(
+                S.deepenGate,
+                style: const TextStyle(fontSize: 12, color: Colors.white38),
               ),
           ],
         ),
@@ -685,20 +686,19 @@ class _ShardSheet extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           children: [
             Text(
-              'Осколок качества ${shard.quality} из 100',
+              S.shardOfQuality(shard.quality),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Число пересчитается под уровень выбранной вещи: чем она '
-              'глубже, тем больше даст та же удача.',
-              style: TextStyle(fontSize: 12, color: Colors.white54),
+            Text(
+              S.shardRecomputeNote,
+              style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
             const SizedBox(height: 16),
             if (targets.isEmpty)
-              const Text(
-                'Нет подходящих предметов в сундуке.',
-                style: TextStyle(fontSize: 13, color: Colors.white54),
+              Text(
+                S.noSuitableItems,
+                style: const TextStyle(fontSize: 13, color: Colors.white54),
               )
             else
               for (final item in targets)
@@ -722,8 +722,8 @@ class _ShardSheet extends StatelessWidget {
                         ),
                         Text(
                           Crafting.hasFreeSlot(item)
-                              ? 'свободный слот'
-                              : 'перезапись',
+                              ? S.freeSlot
+                              : S.overwrite,
                           style: TextStyle(
                             fontSize: 11,
                             color: Crafting.hasFreeSlot(item)
@@ -765,13 +765,13 @@ class _OverwriteSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Что стереть', style: Theme.of(context).textTheme.titleMedium),
+            Text(S.whatToErase,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            const Text(
-              'Свободных мест нет: осколок займёт место одного из свойств.',
-              style: TextStyle(fontSize: 12, color: Colors.white54),
+            Text(
+              S.replaceNoRoomAny,
+              style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
-            const SizedBox(height: 12),
             for (var i = 0; i < item.affixes.length; i++)
               ListTile(
                 dense: true,
@@ -784,7 +784,9 @@ class _OverwriteSheet extends StatelessWidget {
                 // встанет на это место: выбирать «что стереть», не видя, на
                 // что меняешь, — это выбор вслепую.
                 subtitle: Text(
-                  'станет: ${ItemText.lines(Crafting.imprint(item, shard, slotIndex: i).item)[i + offset]}',
+                  S.becomes(ItemText.lines(
+                      Crafting.imprint(item, shard, slotIndex: i)
+                          .item)[i + offset]),
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF7FB069),

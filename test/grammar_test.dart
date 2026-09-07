@@ -3,13 +3,14 @@ import 'package:rift/core/content/item_text.dart';
 import 'package:rift/core/model/gear.dart';
 import 'package:rift/core/model/grammar.dart';
 import 'package:rift/core/model/item.dart';
+import 'package:rift/core/model/lang.dart';
 import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/sim/rng.dart';
 import 'package:test/test.dart';
 
 import '../tool/content_io.dart';
 
-/// Игра говорит по-русски.
+/// Игра говорит по-русски грамотно.
 ///
 /// Живой прогон дал это замечанием «иногда странные слова», и слова были
 /// такие: «Кольцо · Редкий», «Мирена Последний», «Перчатки распылён»,
@@ -18,6 +19,12 @@ import '../tool/content_io.dart';
 ///
 /// Тесты держат правило, а не конкретные слова: **если строка собирается из
 /// частей, род берётся у той части, которая задаёт смысл.**
+///
+/// Согласование осталось русским и после перевода игры: английскому оно не
+/// нужно. Имена наёмников — исключение в другую сторону: они английские на
+/// обоих языках, потому что лежат в сейве, а не собираются при показе. Род у
+/// них при этом читается по-прежнему — им пользуются ранг, черта и исход
+/// спуска.
 void main() {
   setUpAll(() => loadContentFromDisk().apply());
 
@@ -26,7 +33,7 @@ void main() {
       for (final kind in GearKind.values) {
         for (final rarity in Rarity.values) {
           final word = rarity.forKind(kind);
-          expect(word, isNotEmpty, reason: '${kind.ru} · ${rarity.name}');
+          expect(word, isNotEmpty, reason: '${kind.title} · ${rarity.name}');
 
           // Признак женского и среднего рода — окончание. Проверяется не
           // словарь, а то, что форма ВООБЩЕ выбирается по роду.
@@ -34,13 +41,13 @@ void main() {
           final tail = word.substring(word.length - 2);
           switch (kind.gender) {
             case Gender.feminine:
-              expect(['ая', 'яя'], contains(tail), reason: kind.ru);
+              expect(['ая', 'яя'], contains(tail), reason: kind.title);
             case Gender.neuter:
-              expect(['ое', 'ее'], contains(tail), reason: kind.ru);
+              expect(['ое', 'ее'], contains(tail), reason: kind.title);
             case Gender.plural:
-              expect(['ые', 'ие'], contains(tail), reason: kind.ru);
+              expect(['ые', 'ие'], contains(tail), reason: kind.title);
             case Gender.masculine:
-              expect(['ый', 'ий', 'ой'], contains(tail), reason: kind.ru);
+              expect(['ый', 'ий', 'ой'], contains(tail), reason: kind.title);
           }
         }
       }
@@ -66,19 +73,33 @@ void main() {
   });
 
   group('наёмники', () {
-    test('прозвище согласовано с именем', () {
-      // Половина имён в пуле женские. «Мирена Последний» — не колорит,
-      // а несогласованная строка.
+    test('имя не зависит от языка', () {
+      // Ради этого имена и сделаны английскими на обоих языках. Имя ЛЕЖИТ В
+      // СЕЙВЕ, а не собирается при показе: будь пул переводимым, наёмник,
+      // нанятый по-английски, остался бы английским и после переключения на
+      // русский — и в одном отряде оказалась бы половина имён на одном языке,
+      // половина на другом.
+      for (var seed = 1; seed <= 50; seed++) {
+        Lang.current = Lang.ru;
+        final ru = MercFactory.roll(Rng(seed), idPrefix: 'g').name;
+        Lang.current = Lang.en;
+        final en = MercFactory.roll(Rng(seed), idPrefix: 'g').name;
+
+        expect(ru, en, reason: 'имя на сиде $seed разъехалось с языком');
+      }
+      Lang.current = Lang.ru;
+    });
+
+    test('в пуле примерно поровну мужских и женских имён', () {
+      // Половина пула женские: род нужен рангу, черте, исходу спуска и
+      // уведомлению о гибели.
+      var feminine = 0;
       for (var seed = 1; seed <= 200; seed++) {
         final merc = MercFactory.roll(Rng(seed), idPrefix: 'g');
-        final epithet = merc.name.split(' ').last;
-
-        // Женские окончания прозвищ: «Хромая», «Последняя», «Молчунья».
-        final tail = epithet.substring(epithet.length - 2);
-        final feminine = ['ая', 'яя', 'ья'].contains(tail);
-
-        expect(feminine, merc.gender == Gender.feminine, reason: merc.name);
+        if (merc.gender == Gender.feminine) feminine++;
       }
+      expect(feminine, greaterThan(50),
+          reason: 'женских имён в пуле должно быть примерно половина');
     });
 
     test('ранг и черта согласованы с наёмником', () {
@@ -96,9 +117,15 @@ void main() {
       // Имя уже лежит в сейве: второе поле означало бы смену формата ради
       // того, что и так однозначно выводится. Незнакомое имя — мужской род,
       // как в старых сейвах и в тестах.
+      expect(MercFactory.genderOf('Mirena the Blind'), Gender.feminine);
+      expect(MercFactory.genderOf('Corwin the Lame'), Gender.masculine);
+      expect(MercFactory.genderOf('Nobody Nameless'), Gender.masculine);
+
+      // Сейв, сделанный до перевода имён, обязан читаться так же. Иначе у
+      // всех нанятых раньше наёмниц сменился бы род, и первое же уведомление
+      // сказало бы «Мирена Слепая погиб».
       expect(MercFactory.genderOf('Мирена Последняя'), Gender.feminine);
       expect(MercFactory.genderOf('Корвин Хромой'), Gender.masculine);
-      expect(MercFactory.genderOf('Некто Безымянный'), Gender.masculine);
     });
   });
 

@@ -1,4 +1,5 @@
 import '../model/item.dart';
+import '../model/lang.dart';
 import 'content_pack.dart';
 import 'text_template.dart';
 
@@ -23,8 +24,9 @@ class ItemText {
       // Имплицит подписан отдельно намеренно. Он и аффикс могут давать один и
       // тот же стат, и две одинаковые строки подряд читаются как ошибка: игрок
       // не понимает, почему «+48 к броне» написано дважды.
-      out.add('Основа: ${_sign(implicit.value)} '
-          '${def?.stat.ru ?? implicit.stat.ru}');
+      const base = Phrase('Основа', 'Base');
+      out.add('${base.text}: ${_sign(implicit.value)} '
+          '${def?.stat.label ?? implicit.stat.label}');
     }
 
     for (final roll in item.affixes) {
@@ -33,7 +35,7 @@ class ItemText {
         // Определение вырезали из контента, а ролл остался. Показать значение
         // всё равно честнее, чем спрятать строку и оставить игрока гадать,
         // почему предмет сильнее, чем выглядит.
-        out.add('${_sign(roll.value)} ${roll.stat.ru}');
+        out.add('${_sign(roll.value)} ${roll.stat.label}');
         continue;
       }
       out.add(TextTemplate.render(
@@ -62,10 +64,17 @@ class ItemText {
 
   /// Заголовок карточки: тип, уровень, редкость.
   static String title(Item item) {
-    final hands = item.twoHanded ? ' (двуручное)' : '';
+    const twoHanded = Phrase('двуручное', 'two-handed');
+    final hands = item.twoHanded ? ' (${twoHanded.text})' : '';
     // Редкость согласуется с типом вещи. Иначе заголовок читается как
     // «Кольцо · Редкий» — и это первое, обо что спотыкается глаз.
-    return '${item.kind.ru}$hands · ${item.ilvl} ур. · '
+    //
+    // Уровень пишется по-разному: русскому нужно «40 ур.» после числа,
+    // английскому — «ilvl 40» перед ним.
+    final level = Lang.current == Lang.ru
+        ? '${item.ilvl} ур.'
+        : 'ilvl ${item.ilvl}';
+    return '${item.kind.title}$hands · $level · '
         '${item.rarity.forKind(item.kind)}';
   }
 

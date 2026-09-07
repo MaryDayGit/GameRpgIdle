@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "_comment": "Перевод abilities.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "abyss_seal": {
+      "name": "Seal of the Abyss",
+      "text": "A cursed enemy explodes on death for {fractionOfMaxHp:%} of its HP pool"
+    },
+    "arc_lash": {
+      "name": "Arc Lash",
+      "text": "Chains to {targets} targets: {weaponMultiplier:x} spell power, each next one {falloff:%} weaker"
+    },
+    "ashfield": {
+      "name": "Ashfield",
+      "text": "A critical strike ignites for {duration:s}: {dpsFraction:%} of your weapon damage per second"
+    },
+    "battle_focus": {
+      "name": "Battle Focus",
+      "text": "For {duration:s}: +{value:%} damage"
+    },
+    "berserk_rush": {
+      "name": "Berserk Rush",
+      "text": "For {duration:s}: +{value:%} attack speed"
+    },
+    "blade_echo": {
+      "name": "Blade Echo",
+      "text": "{chance:%} chance to strike with your weapon again"
+    },
+    "blood_oath": {
+      "name": "Blood Oath",
+      "text": "Aura: +{value:%} life leech"
+    },
+    "bloodletting": {
+      "name": "Bloodletting",
+      "text": "Bleed for {duration:s}: {dpsFraction:%} of your weapon damage per second"
+    },
+    "butcher": {
+      "name": "Butcher",
+      "text": "+{armorPct:%} armor, {attackSpeedPct:%} attack speed"
+    },
+    "cinder_totem": {
+      "name": "Cinder Totem",
+      "text": "Totem for {duration:s}: strikes {targets} targets every {interval:s} for {weaponMultiplier:x} spell power"
+    },
+    "cleave": {
+      "name": "Cleave",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} weapon damage"
+    },
+    "conduction": {
+      "name": "Conduction",
+      "text": "Brand for {duration:s}: the target takes +{damageTakenIncrease:%} damage"
+    },
+    "coup_de_grace": {
+      "name": "Coup de Grâce",
+      "text": "Finisher for {weaponMultiplier:x} weapon damage, +{bonusBelow:%} against a target below {threshold:%} HP"
+    },
+    "ember_burst": {
+      "name": "Ember Burst",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} spell power"
+    },
+    "ember_infusion": {
+      "name": "Flame on the Blade",
+      "text": "Auto-attacks deal Fire, +{moreDamage:%} to their damage"
+    },
+    "entropy": {
+      "name": "Entropy",
+      "text": "{chance:%} chance that a Spell-tagged ability triggers twice"
+    },
+    "field_dressing": {
+      "name": "Field Dressing",
+      "text": "Restores {fractionOfMaxHp:%} of maximum HP"
+    },
+    "fire_brand": {
+      "name": "Fire Brand",
+      "text": "Brand for {duration:s}: the target takes +{damageTakenIncrease:%} damage"
+    },
+    "flame_lash": {
+      "name": "Flame Lash",
+      "text": "Strikes one target for {weaponMultiplier:x} weapon damage"
+    },
+    "fortitude": {
+      "name": "Fortitude",
+      "text": "+{armorPct:%} armor, {attackSpeedPct:%} attack speed"
+    },
+    "frost_bite": {
+      "name": "Frostbite",
+      "text": "A critical strike freezes for {duration:s}: {dpsFraction:%} of your weapon damage per second"
+    },
+    "frost_chain_bolt": {
+      "name": "Frost Arc",
+      "text": "Chains to {targets} targets: {weaponMultiplier:x} spell power, each next one {falloff:%} weaker"
+    },
+    "frost_shroud": {
+      "name": "Frost Shroud",
+      "text": "Aura: those who strike you are slowed by {slow:%}"
+    },
+    "frost_spike": {
+      "name": "Frost Spike",
+      "text": "Strikes for {weaponMultiplier:x} spell power, +{bonusVsSlowed:%} against slowed targets"
+    },
+    "glacier_shard": {
+      "name": "Glacier Shard",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} spell power, +{bonusVsSlowed:%} against slowed targets"
+    },
+    "hex_of_frailty": {
+      "name": "Hex of Frailty",
+      "text": "Brand for {duration:s}: the target takes +{damageTakenIncrease:%} damage"
+    },
+    "hoarfrost": {
+      "name": "Hoarfrost",
+      "text": "Frostbite for {duration:s}: {dpsFraction:%} of your spell power per second"
+    },
+    "hunters_mark": {
+      "name": "Hunter's Mark",
+      "text": "Aura: +{value:%} critical strike chance"
+    },
+    "impale": {
+      "name": "Impale",
+      "text": "Wound for {duration:s}: {dpsFraction:%} of your weapon damage per second"
+    },
+    "last_stand": {
+      "name": "Last Stand",
+      "text": "Below {threshold:%} HP you take {lessDamageTaken:%} less damage"
+    },
+    "mana_font": {
+      "name": "Mana Font",
+      "text": "Aura: +{value} mana regeneration per second"
+    },
+    "null_totem": {
+      "name": "Totem of Silence",
+      "text": "Totem for {duration:s}: strikes {targets} targets every {interval:s} for {weaponMultiplier:x} spell power"
+    },
+    "overcharge": {
+      "name": "Overcharge",
+      "text": "{chance:%} chance that a Spell-tagged ability triggers twice"
+    },
+    "pyre": {
+      "name": "Pyre",
+      "text": "Flame for {duration:s}: {dpsFraction:%} of your spell power per second"
+    },
+    "quickened_mind": {
+      "name": "Quickened Mind",
+      "text": "Aura: −{value:%} cooldown time"
+    },
+    "rift": {
+      "name": "Rift",
+      "text": "Strikes the whole wave for {weaponMultiplier:x} spell power"
+    },
+    "rime_infusion": {
+      "name": "Rime on the Blade",
+      "text": "Auto-attacks deal Cold, +{moreDamage:%} to their damage"
+    },
+    "second_wind_blade": {
+      "name": "Second Blade",
+      "text": "{chance:%} chance to strike with your weapon again"
+    },
+    "spark_bolt": {
+      "name": "Spark Bolt",
+      "text": "Strikes one target for {weaponMultiplier:x} spell power"
+    },
+    "spiked_guard": {
+      "name": "Spiked Guard",
+      "text": "{fractionReturned:%} of damage taken is returned to whoever struck you"
+    },
+    "static_field": {
+      "name": "Static Field",
+      "text": "Discharges for {duration:s}: {dpsFraction:%} of your spell power per second"
+    },
+    "stone_stance": {
+      "name": "Stone Stance",
+      "text": "Aura: +{value:%} armor"
+    },
+    "storm_call": {
+      "name": "Storm Call",
+      "text": "Strikes the whole wave for {weaponMultiplier:x} spell power"
+    },
+    "storm_infusion": {
+      "name": "Storm on the Blade",
+      "text": "Auto-attacks deal Lightning, +{moreDamage:%} to their damage"
+    },
+    "sunder": {
+      "name": "Sunder",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} weapon damage"
+    },
+    "thirst": {
+      "name": "Thirst",
+      "text": "Below {threshold:%} HP your life leech is {leechMultiplier:x} stronger"
+    },
+    "thunder_totem": {
+      "name": "Thunder Totem",
+      "text": "Totem for {duration:s}: strikes {targets} targets every {interval:s} for {weaponMultiplier:x} spell power"
+    },
+    "totem_of_fury": {
+      "name": "Totem of Fury",
+      "text": "Totem for {duration:s}: +{value:%} attack speed"
+    },
+    "venom": {
+      "name": "Venom",
+      "text": "Poison for {duration:s}: {dpsFraction:%} of your spell power per second"
+    },
+    "void_infusion": {
+      "name": "Void on the Blade",
+      "text": "Auto-attacks deal Void, +{moreDamage:%} to their damage"
+    },
+    "void_lance": {
+      "name": "Void Lance",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} spell power"
+    },
+    "war_cry": {
+      "name": "War Cry",
+      "text": "Aura: +{value:%} damage"
+    },
+    "wardens_vigil": {
+      "name": "Warden's Vigil",
+      "text": "Aura: +{value} to all resistances"
+    },
+    "whirlwind": {
+      "name": "Whirlwind",
+      "text": "Strikes {targets} targets for {weaponMultiplier:x} weapon damage"
+    },
+    "winter_totem": {
+      "name": "Winter Totem",
+      "text": "Totem for {duration:s}: strikes {targets} targets every {interval:s} for {weaponMultiplier:x} spell power"
+    }
+  }
+}

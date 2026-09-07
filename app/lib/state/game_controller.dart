@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/content/content_pack.dart';
+import 'package:rift/core/model/lang.dart';
 import 'package:rift/core/model/haul.dart';
 import 'package:rift/core/model/item.dart';
 import 'package:rift/core/model/shard.dart';
@@ -50,15 +51,19 @@ class GameController extends ChangeNotifier {
 
   /// Загружает контент и сейв. Новый сейв заводится, только если старого нет.
   static Future<GameController> boot() async {
-    final content = await ContentBundle.load();
-    content.pack.apply();
-
+    // Настройки читаются ПЕРВЫМИ, до контента. От выбранного языка зависит,
+    // какие накладки перевода накладывать при разборе, а разобрать контент
+    // дважды — значит показать первый кадр не на том языке.
     final store = await SaveStore.forApp();
-    final saved = await store.load();
-    final notifier = await LocalDeathNotifier.create();
-
     final settingsStore = SettingsStore(store.directory);
     final settings = settingsStore.load();
+    Lang.current = settings.lang;
+
+    final content = await ContentBundle.load(lang: settings.lang);
+    content.pack.apply();
+
+    final saved = await store.load();
+    final notifier = await LocalDeathNotifier.create();
 
     final feedback = GameFeedback(
       sound: settings.sound,
@@ -66,7 +71,7 @@ class GameController extends ChangeNotifier {
     );
     await feedback.init();
 
-    return GameController(
+    final controller = GameController(
       content: content,
       store: store,
       notifier: notifier,
@@ -77,9 +82,26 @@ class GameController extends ChangeNotifier {
           PlayerProfile.newGame(
               seed: DateTime.now().millisecondsSinceEpoch & 0x7fffffff),
     );
+
+    // Спрашиваем на старте, а не после первой гибели. Прежнее правило
+    // выглядело честнее, но платило за это первым спуском: разрешения нет,
+    // когда наёмник встаёт на первой развилке, и система молча выбрасывает
+    // единственное уведомление, ради которого игра вообще закрывается.
+    //
+    // Не ждём ответа: диалог рисует система поверх игры, и первый кадр
+    // Заставы не должен зависеть от того, когда игрок нажмёт «Разрешить».
+    unawaited(controller.askForNotifications());
+
+    return controller;
   }
 
-  final ContentBundle content;
+  /// Контент на текущем языке.
+  ///
+  /// Не `final`: смена языка перезагружает пакет целиком. Экраны читают
+  /// контент через контроллер, а не держат свою ссылку, — иначе после
+  /// переключения половина игры осталась бы на прежнем языке.
+  ContentBundle content;
+
   final SaveStore store;
   final DeathNotifier _notifier;
 
@@ -105,6 +127,32 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Переключает язык игры.
+  ///
+  /// Контент перечитывается целиком, а не подменяется по строчке: имена,
+  /// описания и шаблоны аффиксов разбираются вместе с числами, и наложить
+  /// перевод на уже разобранный пакет нельзя, не собрав его заново.
+  ///
+  /// Профиль не трогается вовсе. Сейв хранит идентификаторы — `cleave`,
+  /// `max_hp_flat`, — а не показанные слова, поэтому смена языка не меняет
+  /// ни одной вещи в сундуке и ни одного узла в дереве. Это и есть причина,
+  /// по которой перевод делается накладкой на контент, а не правкой сейва.
+  Future<void> setLanguage(Lang lang) async {
+    if (lang == settings.lang) return;
+
+    final loaded = await ContentBundle.load(lang: lang);
+
+    // Статик ядра переключается только после успешной загрузки: упади разбор
+    // на полпути — игра осталась бы с языком, для которого нет контента.
+    Lang.current = lang;
+    loaded.pack.apply();
+    content = loaded;
+
+    settings.lang = lang;
+    _settingsStore?.save(settings);
+    notifyListeners();
+  }
+
   /// Обучение пройдено или пропущено — второй раз не показывается.
   void finishTutorial() {
     if (settings.tutorialDone) return;
@@ -113,8 +161,19 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Разрешение спрашивается один раз и после первой гибели, а не на старте.
+  /// Разрешение спрашивается один раз за запуск — на старте.
   bool _askedForNotifications = false;
+
+  /// Спрашивает разрешение на уведомления. Вызывается один раз, на старте.
+  ///
+  /// Вызов отдельным методом, а не из конструктора: так тесты и дев-экраны
+  /// поднимают контроллер, не трогая системный диалог, а решение «когда
+  /// спрашивать» остаётся в одном месте — в `boot()`.
+  Future<void> askForNotifications() async {
+    if (_askedForNotifications) return;
+    _askedForNotifications = true;
+    await _notifier.ensurePermission();
+  }
 
   final PlayerProfile _profile;
   PlayerProfile get profile => _profile;
@@ -176,14 +235,6 @@ class GameController extends ChangeNotifier {
     if (finished.isNotEmpty) {
       justFinished.addAll(finished);
       feedback.play(Sfx.death, bump: Bump.heavy);
-
-      // Первая гибель — единственный момент, когда вопрос про уведомления
-      // осмыслен: игрок уже понял, что наёмник уходит надолго и возвращается
-      // не сам. На первом запуске тот же вопрос — просто помеха.
-      if (!_askedForNotifications) {
-        _askedForNotifications = true;
-        unawaited(_notifier.ensurePermission());
-      }
     }
     notifyListeners();
   }

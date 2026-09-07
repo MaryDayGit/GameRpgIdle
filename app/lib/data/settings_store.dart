@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-/// Настройки приложения: звук, вибрация, пройдено ли обучение.
+import 'package:rift/core/model/lang.dart';
+
+/// Настройки приложения: язык, звук, вибрация, пройдено ли обучение.
 ///
 /// Отдельный файл, а не поле в сейве, потому что это не состояние игры.
 /// Сейв описывает Заставу и наёмников — он переживает переустановку, его
@@ -9,10 +11,19 @@ import 'dart:io';
 /// хранить его вместе с профилем значило бы гонять миграцию из-за галочки.
 class AppSettings {
   AppSettings({
+    this.lang = Lang.ru,
     this.sound = true,
     this.haptics = true,
     this.tutorialDone = false,
   });
+
+  /// Язык игры.
+  ///
+  /// Здесь, а не в сейве, по той же причине, что и звук: это настройка
+  /// устройства, а не состояние игры. Но следствие важнее — язык читается
+  /// ДО контента (`GameController.boot`), потому что от него зависит, какие
+  /// накладки грузить, а сейв к этому моменту ещё не открыт.
+  Lang lang;
 
   bool sound;
   bool haptics;
@@ -22,6 +33,7 @@ class AppSettings {
   bool tutorialDone;
 
   Map<String, dynamic> toJson() => {
+        'lang': lang.code,
         'sound': sound,
         'haptics': haptics,
         'tutorialDone': tutorialDone,
@@ -30,6 +42,9 @@ class AppSettings {
   /// Читает настройки, прощая всё. Испорченный файл настроек не повод не
   /// пустить игрока в игру: непонятое поле берётся по умолчанию.
   factory AppSettings.fromJson(Map<String, dynamic> j) => AppSettings(
+        // Неизвестный код языка — русский, а не отказ: файл настроек,
+        // написанный будущей версией с ещё одним языком, обязан открыться.
+        lang: Lang.byCode(j['lang'] is String ? j['lang'] as String : null),
         sound: j['sound'] is bool ? j['sound'] as bool : true,
         haptics: j['haptics'] is bool ? j['haptics'] as bool : true,
         tutorialDone:

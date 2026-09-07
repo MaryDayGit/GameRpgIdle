@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "_comment": "Перевод affixes_stat.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "armor_flat": {
+      "name": "+{value} armor"
+    },
+    "armor_pct": {
+      "name": "+{value:%} armor"
+    },
+    "attack_damage_flat": {
+      "name": "+{value} weapon damage"
+    },
+    "attack_speed": {
+      "name": "+{value:%} attack speed"
+    },
+    "aura_power": {
+      "name": "+{value:%} {tag}"
+    },
+    "cooldown_reduction": {
+      "name": "−{value:%} cooldown time"
+    },
+    "crit_chance": {
+      "name": "+{value:%} critical strike chance"
+    },
+    "crit_multi": {
+      "name": "+{value:%} critical strike damage"
+    },
+    "damage_delivery": {
+      "name": "+{value:%} {tag}"
+    },
+    "damage_element": {
+      "name": "+{value:%} {tag}"
+    },
+    "damage_form": {
+      "name": "+{value:%} {tag}"
+    },
+    "damage_mechanic": {
+      "name": "+{value:%} {tag}"
+    },
+    "hp_regen": {
+      "name": "+{value} HP regeneration per second"
+    },
+    "increased_damage": {
+      "name": "+{value:%} damage"
+    },
+    "leech": {
+      "name": "+{value:%} life leech"
+    },
+    "loot_quality": {
+      "name": "+{value:%} loot quality"
+    },
+    "loot_quantity": {
+      "name": "+{value:%} loot quantity"
+    },
+    "mana_regen": {
+      "name": "+{value} mana regeneration per second"
+    },
+    "max_hp_flat": {
+      "name": "+{value} maximum HP"
+    },
+    "max_hp_pct": {
+      "name": "+{value:%} maximum HP"
+    },
+    "max_mana_flat": {
+      "name": "+{value} maximum mana"
+    },
+    "resist_cold": {
+      "name": "+{value} cold resistance"
+    },
+    "resist_fire": {
+      "name": "+{value} fire resistance"
+    },
+    "resist_lightning": {
+      "name": "+{value} lightning resistance"
+    },
+    "resist_void": {
+      "name": "+{value} void resistance"
+    },
+    "spell_power_flat": {
+      "name": "+{value} spell power"
+    }
+  }
+}

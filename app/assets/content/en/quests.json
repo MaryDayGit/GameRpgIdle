@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "_comment": "Перевод quests.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "ash_lord": {
+      "name": "Lord of Ash",
+      "text": "Bring down the Lord of Ash — he waits on every fifth floor"
+    },
+    "aura_blood": {
+      "name": "Blood Oath",
+      "text": "Finish a descent with two Blood-tagged abilities in the loadout"
+    },
+    "aura_font": {
+      "name": "Mana Font",
+      "text": "Raise the Shard Bench to level 2"
+    },
+    "aura_hunter": {
+      "name": "Hunter's Mark",
+      "text": "Buy 10 nodes of the Echo tree"
+    },
+    "aura_mind": {
+      "name": "Quickened Mind",
+      "text": "Finish a descent with an aura in the loadout"
+    },
+    "aura_shroud": {
+      "name": "Frost Shroud",
+      "text": "Spend 8 passive tree points"
+    },
+    "aura_war_cry": {
+      "name": "War Cry",
+      "text": "Reach a depth record of floor 25"
+    },
+    "cold_blade": {
+      "name": "Blade in Ice",
+      "text": "Finish a descent with two Cold-tagged abilities in the loadout"
+    },
+    "cold_chain": {
+      "name": "The Arc",
+      "text": "Reach a depth record of floor 30"
+    },
+    "cold_crit": {
+      "name": "Frostbite",
+      "text": "Hold 6 shards on the Bench at once"
+    },
+    "cold_mastery": {
+      "name": "Permafrost",
+      "text": "Deal 70% Cold damage in a single descent"
+    },
+    "cold_share": {
+      "name": "Cold Calculation",
+      "text": "Deal 40% Cold damage in a single descent — you have Frost Spike from the start"
+    },
+    "deeper": {
+      "name": "Deeper",
+      "text": "Reach a depth record of floor 15"
+    },
+    "fire_blade": {
+      "name": "Blade in Flame",
+      "text": "Finish a descent with two Fire-tagged abilities in the loadout"
+    },
+    "fire_crit": {
+      "name": "Spark in Dry Grass",
+      "text": "Put crit chance to use: spend 12 passive tree points"
+    },
+    "fire_deep": {
+      "name": "Halls of Ash",
+      "text": "Reach a depth record of floor 35"
+    },
+    "fire_mastery": {
+      "name": "Conflagration",
+      "text": "Deal 70% Fire damage in a single descent"
+    },
+    "fire_share": {
+      "name": "Arsonist",
+      "text": "Deal 40% Fire damage in a single descent — you have Ember Burst from the start"
+    },
+    "first_return": {
+      "name": "First Return",
+      "text": "Close one contract: wait for the mercenary to fall and collect the haul"
+    },
+    "guard_last_stand": {
+      "name": "Last Stand",
+      "text": "Raise the Forge to level 2"
+    },
+    "guard_stone": {
+      "name": "Stone Stance",
+      "text": "Find your first relic"
+    },
+    "guard_totem": {
+      "name": "Totem of Fury",
+      "text": "Raise the Tavern to level 3"
+    },
+    "guard_warden": {
+      "name": "Warden's Vigil",
+      "text": "Find three relics"
+    },
+    "storm_blade": {
+      "name": "Blade in Storm",
+      "text": "Finish a descent with two Lightning-tagged abilities in the loadout"
+    },
+    "storm_call_q": {
+      "name": "Storm Call",
+      "text": "Reach a depth record of floor 45"
+    },
+    "storm_curse": {
+      "name": "Conduction",
+      "text": "Buy 6 nodes of the Echo tree"
+    },
+    "storm_echo": {
+      "name": "Overcharge",
+      "text": "Finish a descent with three Spell-tagged abilities in the loadout"
+    },
+    "storm_share": {
+      "name": "Conductor",
+      "text": "Deal 40% Lightning damage in a single descent — you have Spark Bolt from the start"
+    },
+    "storm_totem": {
+      "name": "Stormbringer",
+      "text": "Deal 70% Lightning damage in a single descent"
+    },
+    "veteran": {
+      "name": "Veteran of the Outpost",
+      "text": "Close five contracts"
+    },
+    "void_devourer": {
+      "name": "The Void Devourer",
+      "text": "Bring down the Void Devourer — it waits on every tenth floor"
+    },
+    "void_entropy": {
+      "name": "Entropy",
+      "text": "Spend 25 passive tree points"
+    },
+    "void_hex": {
+      "name": "The Hex",
+      "text": "Reach a depth record of floor 40"
+    },
+    "void_rift": {
+      "name": "Rift",
+      "text": "Deal 70% Void damage in a single descent"
+    },
+    "void_seal": {
+      "name": "Seal of the Abyss",
+      "text": "Bring down the Void Devourer at Brand 2 or higher"
+    },
+    "void_share": {
+      "name": "Voice of the Abyss",
+      "text": "Deal 40% Void damage in a single descent — Void Lance comes from the Lord of Ash quest"
+    },
+    "void_totem": {
+      "name": "Totem of Silence",
+      "text": "Finish a descent with two Curse-tagged abilities in the loadout"
+    },
+    "void_venom": {
+      "name": "Venom",
+      "text": "Finish a descent with two Void-tagged abilities in the loadout"
+    },
+    "war_butcher": {
+      "name": "Butcher",
+      "text": "Raise the Armory to level 2"
+    },
+    "war_execute": {
+      "name": "Coup de Grâce",
+      "text": "Deal 70% Physical damage in a single descent"
+    },
+    "war_focus": {
+      "name": "Battle Focus",
+      "text": "Raise the Campfire to level 2"
+    },
+    "war_impale": {
+      "name": "Impale",
+      "text": "Finish a descent with three Attack-tagged abilities in the loadout"
+    },
+    "war_rush": {
+      "name": "Berserk Rush",
+      "text": "Reach a depth record of floor 50"
+    },
+    "war_second_blade": {
+      "name": "Second Blade",
+      "text": "Close ten contracts"
+    }
+  }
+}

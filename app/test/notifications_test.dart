@@ -130,29 +130,50 @@ void main() {
     expect(notifier.cancelled, [GameController.notificationIdFor(contract)]);
   });
 
-  test('разрешение спрашивается после первой гибели, а не на старте', () {
-    // На первом запуске игрок ещё не понимает, зачем игре уведомления.
-    expect(notifier.permissionAsks, 0);
+  test('разрешение спрашивается на старте и один раз', () async {
+    // Правило было обратным — «после первой гибели, там вопрос осмысленнее».
+    // Оно стоило первого спуска: наёмник встаёт на развилке через минуты
+    // после отправки, разрешения к тому моменту ещё нет, и система молча
+    // выбрасывает единственное уведомление, ради которого игру закрывают.
+    expect(notifier.permissionAsks, 0, reason: 'конструктор не спрашивает сам');
+
+    await controller.askForNotifications();
+    expect(notifier.permissionAsks, 1);
+
+    // Второй раз не спрашиваем: отказ есть отказ, а системный диалог всё
+    // равно показывается один раз.
+    await controller.askForNotifications();
+    expect(notifier.permissionAsks, 1);
 
     final merc = controller.profile.roster.reserve.first;
     final contract = controller.deploy(merc)!;
-    controller.tick();
-    expect(notifier.permissionAsks, 0, reason: 'наёмник ещё жив');
-
     clock = contract.segmentEndsAtUtc!.add(const Duration(days: 1));
     controller.tick();
-    expect(notifier.permissionAsks, 1);
 
-    // Второй раз не спрашиваем: отказ есть отказ.
-    controller.collect(contract);
-    final second = controller.profile.roster.candidates.first;
-    controller.profile.gold += 100000;
-    controller.hire(second);
-    final next = controller.deploy(second)!;
-    clock = next.segmentEndsAtUtc!.add(const Duration(days: 1));
-    controller.tick();
+    expect(notifier.permissionAsks, 1, reason: 'гибель больше не спрашивает');
+  });
 
-    expect(notifier.permissionAsks, 1);
+  test('манифест объявляет приёмники плагина уведомлений', () {
+    // Доставка — дело системы, но одна её часть лежит в нашем репозитории.
+    // С 19-й версии flutter_local_notifications не объявляет приёмники в
+    // своём манифесте, и слияние их не добавит: без ScheduledNotification-
+    // Receiver будильник срабатывает в пустоту, и уведомление о гибели не
+    // появляется даже при выданном разрешении. Проверяется файлом, потому
+    // что иначе это ловится только на живом устройстве.
+    final manifest =
+        File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+
+    expect(
+        manifest,
+        contains('com.dexterous.flutterlocalnotifications'
+            '.ScheduledNotificationReceiver'));
+    expect(
+        manifest,
+        contains('com.dexterous.flutterlocalnotifications'
+            '.ScheduledNotificationBootReceiver'));
+    expect(manifest, contains('android.permission.POST_NOTIFICATIONS'));
+    expect(manifest, contains('android.intent.action.BOOT_COMPLETED'),
+        reason: 'будильники переставляются после перезагрузки телефона');
   });
 
   test('идентификатор уведомления переживает перезапуск', () {

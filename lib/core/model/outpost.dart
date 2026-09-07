@@ -1,5 +1,7 @@
 import '../balance/curves.dart';
 import '../balance/tuning.dart';
+import '../content/text_template.dart';
+import 'lang.dart';
 
 /// Постройки Заставы (GDD §6.2).
 ///
@@ -8,20 +10,46 @@ import '../balance/tuning.dart';
 /// Пересечений быть не должно: если узел древа и постройка делают одно и то
 /// же, одна из валют лишняя.
 enum Building {
-  tavern('Таверна', 'Кто приходит наниматься: больше людей и опытнее'),
-  armory('Оружейная', 'Сколько вещей находит наёмник и насколько хороших'),
-  forge('Кузница', 'Насколько выгодно перебрасывать свойства вещей'),
-  vault('Хранилище', 'Сколько вещей влезает в сундук'),
-  shardBench('Верстак осколков',
-      'Сколько осколков хранится и что уцелеет при замене'),
-  altar('Алтарь', 'Сколько золота даёт переплавка лишних вещей'),
-  cartographer('Картограф', 'На сколько этажей вперёд виден путь'),
-  campfire('Костёр', 'Сколько здоровья наёмник восстановит между этажами');
+  tavern(
+      Phrase('Таверна', 'Tavern'),
+      Phrase('Кто приходит наниматься: больше людей и опытнее',
+          'Who shows up for hire: more of them, and better')),
+  armory(
+      Phrase('Оружейная', 'Armory'),
+      Phrase('Сколько вещей находит наёмник и насколько хороших',
+          'How much the mercenary finds, and how good it is')),
+  forge(
+      Phrase('Кузница', 'Forge'),
+      Phrase('Насколько выгодно перебрасывать свойства вещей',
+          'How favourable rerolling an item’s properties is')),
+  vault(
+      Phrase('Хранилище', 'Vault'),
+      Phrase('Сколько вещей влезает в сундук',
+          'How many items the stash holds')),
+  shardBench(
+      Phrase('Верстак осколков', 'Shard Bench'),
+      Phrase('Сколько осколков хранится и что уцелеет при замене',
+          'How many shards you keep, and what survives a swap')),
+  altar(
+      Phrase('Алтарь', 'Altar'),
+      Phrase('Сколько золота даёт переплавка лишних вещей',
+          'How much gold salvaging surplus items yields')),
+  cartographer(
+      Phrase('Картограф', 'Cartographer'),
+      Phrase('На сколько этажей вперёд виден путь',
+          'How many floors ahead the path is visible')),
+  campfire(
+      Phrase('Костёр', 'Campfire'),
+      Phrase('Сколько здоровья наёмник восстановит между этажами',
+          'How much health the mercenary recovers between floors'));
 
-  const Building(this.ru, this.description);
+  const Building(this._title, this._description);
 
-  final String ru;
-  final String description;
+  final Phrase _title;
+  final Phrase _description;
+
+  String get title => _title.text;
+  String get description => _description.text;
 
   static int get maxLevel => Tuning.maxBuildingLevel;
 
@@ -72,21 +100,40 @@ class Outpost {
   /// одну цифру в описании и другую в бою.
   static String effectAt(Building b, int level) {
     final o = Outpost({b: level});
-    String pct(double v) => '${(v * 100).round()} %';
+    // Пробел перед знаком процента ставится по правилам языка, а не по вкусу:
+    // русский ставит пробел перед знаком, английский набирает вплотную.
+    final pct = TextTemplate.percent;
 
-    return switch (b) {
-      Building.tavern => 'наёмников на выбор: ${o.tavernCandidates}',
-      Building.armory => 'добыча лучше на ${pct(o.lootQuality)}, '
-          'её больше на ${pct(o.lootQuantity)}',
-      Building.forge => 'переброс не опустит свойство ниже '
-          '${pct(o.rerollFloorPercentile)} качества',
-      Building.vault => 'мест в сундуке: ${o.stashSlots}',
-      Building.shardBench => 'осколков влезает ${o.shardCapacity}, '
-          'при замене уцелеет ${pct(o.shardSalvageOnOverwrite)}',
-      Building.altar => 'переплавка возвращает ${pct(o.salvageRate)} цены',
-      Building.cartographer => 'видно на ${o.forecastFloors} этажей вперёд',
-      Building.campfire =>
-        'отдых вернёт ещё ${pct(o.restHealBonus)} здоровья',
+    return switch (Lang.current) {
+      Lang.ru => switch (b) {
+          Building.tavern => 'наёмников на выбор: ${o.tavernCandidates}',
+          Building.armory => 'добыча лучше на ${pct(o.lootQuality)}, '
+              'её больше на ${pct(o.lootQuantity)}',
+          Building.forge => 'переброс не опустит свойство ниже '
+              '${pct(o.rerollFloorPercentile)} качества',
+          Building.vault => 'мест в сундуке: ${o.stashSlots}',
+          Building.shardBench => 'осколков влезает ${o.shardCapacity}, '
+              'при замене уцелеет ${pct(o.shardSalvageOnOverwrite)}',
+          Building.altar => 'переплавка возвращает ${pct(o.salvageRate)} цены',
+          Building.cartographer => 'видно на ${o.forecastFloors} этажей вперёд',
+          Building.campfire =>
+            'отдых вернёт ещё ${pct(o.restHealBonus)} здоровья',
+        },
+      Lang.en => switch (b) {
+          Building.tavern => '${o.tavernCandidates} candidates to choose from',
+          Building.armory => 'loot ${pct(o.lootQuality)} better, '
+              '${pct(o.lootQuantity)} more of it',
+          Building.forge => 'a reroll will not drop a property below '
+              '${pct(o.rerollFloorPercentile)} quality',
+          Building.vault => '${o.stashSlots} slots in the stash',
+          Building.shardBench => '${o.shardCapacity} shards fit, '
+              '${pct(o.shardSalvageOnOverwrite)} survives a swap',
+          Building.altar => 'salvage returns ${pct(o.salvageRate)} of the price',
+          Building.cartographer =>
+            '${o.forecastFloors} floors visible ahead',
+          Building.campfire =>
+            'rest restores another ${pct(o.restHealBonus)} health',
+        },
     };
   }
 

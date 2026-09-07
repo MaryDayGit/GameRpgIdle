@@ -209,11 +209,23 @@ void main() {
         driver.tick();
       }
 
-      expect(waveCounts[1], Tuning.wavesPerFloor,
+      // База зависит от этажа: с шагом развилки 5 первая развилка попадает
+      // ровно на босса, а у босса волна одна. Считаем от бестиария, иначе
+      // тест проверял бы расписание боссов, а не «Рой».
+      int expected(int depth, {required bool onPath}) {
+        final base = Bestiary.bossFor(depth) != null
+            ? Tuning.wavesPerBossFloor
+            : Tuning.wavesPerFloor;
+        return onPath ? base * 2 : base;
+      }
+
+      expect(waveCounts[1], expected(1, onPath: false),
           reason: 'до первой развилки путь не выбран');
-      expect(waveCounts[3], Tuning.wavesPerFloor * 2,
+      expect(waveCounts[Tuning.forkEveryFloors],
+          expected(Tuning.forkEveryFloors, onPath: true),
           reason: 'развилка выбрана — путь начался');
-      expect(waveCounts[4], Tuning.wavesPerFloor * 2,
+      expect(waveCounts[Tuning.forkEveryFloors + 1],
+          expected(Tuning.forkEveryFloors + 1, onPath: true),
           reason: 'путь держится до следующей развилки, а не один этаж');
     });
 

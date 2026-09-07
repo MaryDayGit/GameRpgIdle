@@ -8,6 +8,7 @@ import 'package:rift/core/model/tags.dart';
 import 'package:rift/core/sim/abilities.dart';
 
 import 'format.dart';
+import 'strings.dart';
 import 'mercenary_screen.dart' show TagChips, tagColor;
 
 /// Полный лист характеристик наёмника.
@@ -67,94 +68,98 @@ class MercenaryStatsSheet extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
           children: [
-            Text('Характеристики',
+            Text(S.statsTitle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 2),
             Text(
-              '${mercenary.name} · всё, с чем '
-              '${mercenary.gender == Gender.feminine ? 'она' : 'он'} '
-              'уйдёт вниз. Проценты посчитаны для глубины $depth.',
+              S.statsAbout(mercenary.name, depth,
+                  she: mercenary.gender == Gender.feminine),
+
+
               style: const TextStyle(fontSize: 12, color: Colors.white38),
             ),
             const SizedBox(height: 18),
 
-            _Group('Живучесть', [
-              _Line('Максимум HP', money(stats.maxHp)),
-              _Line('Восстановление HP',
-                  '${precise(stats.hpRegen)} в секунду',
+            _Group(S.statsGroupSurvival, [
+              _Line(S.statMaxHp, money(stats.maxHp)),
+              _Line(S.statHpRegen,
+                  S.perSecond(precise(stats.hpRegen)),
                   hint: stats.hpRegen <= 0.0
-                      ? 'Между этажами наёмник всё равно отдыхает'
+                      ? S.statsRestNote
                       : null),
               _Line(
-                'Броня',
+                S.statArmor,
                 money(stats.armor),
                 hint: _armorHint(stats.armor),
               ),
             ]),
 
-            _Group('Сопротивления', [
+            _Group(S.statsGroupResists, [
               for (final (name, value, tag) in [
-                ('Огню', stats.resistFire, Tag.fire),
-                ('Холоду', stats.resistCold, Tag.cold),
-                ('Молнии', stats.resistLightning, Tag.lightning),
-                ('Пустоте', stats.resistVoid, Tag.voidTag),
+                (S.resistFire, stats.resistFire, Tag.fire),
+                (S.resistCold, stats.resistCold, Tag.cold),
+                (S.resistLightning, stats.resistLightning, Tag.lightning),
+                (S.resistVoid, stats.resistVoid, Tag.voidTag),
               ])
                 _Line(name, money(value), hint: _resistHint(value), tag: tag),
-            ], note: 'Физический урон режет броня, стихийный — сопротивления. '
-                'Потолок сопротивления — ${balance.Curves.resistCap.round()}.'),
+            ], note: S.resistsAbout(balance.Curves.resistCap.round())),
 
-            _Group('Урон', [
-              _Line('Урон оружия', money(stats.attackDamage),
-                  hint: 'От него растут умения с тегом «Атака» и автоатака'),
-              _Line('Сила чар', money(stats.spellPower),
-                  hint: 'От неё растут умения с тегом «Чары». Автоатака — нет'),
-              _Line('Увеличение урона', percent(stats.increasedDamage)),
+
+            _Group(S.statsGroupDamage, [
+              _Line(S.statWeaponDamage, money(stats.attackDamage),
+                  hint: S.statWeaponDamageAbout),
+              _Line(S.statSpellPower, money(stats.spellPower),
+                  hint: S.statSpellPowerAbout),
+              _Line(S.statIncreasedDamage, percent(stats.increasedDamage)),
               // Поправка может быть и отрицательной — черта «Погорелица»
               // забирает скорость. «база 1.20 и -10 % сверху» читалось как
               // опечатка, поэтому знак называется словом.
-              _Line('Скорость атаки',
-                  '${stats.effectiveAttackSpeed.toStringAsFixed(2)} уд/с',
+              _Line(S.statAttackSpeed,
+                  S.hitsPerSecond(stats.effectiveAttackSpeed.toStringAsFixed(2)),
                   hint: stats.increasedAttackSpeed == 0.0
                       ? null
-                      : 'база ${stats.attackSpeed.toStringAsFixed(2)}, '
-                          '${stats.increasedAttackSpeed > 0 ? "сверху" : "минус"} '
-                          '${percent(stats.increasedAttackSpeed.abs())}'),
-              _Line('Шанс крита', percent(stats.critChance)),
-              _Line('Множитель крита', '×${(1.0 + stats.critMulti).toStringAsFixed(2)}',
+                      : S.attackSpeedBreakdown(
+                          stats.attackSpeed.toStringAsFixed(2),
+                          percent(stats.increasedAttackSpeed.abs()),
+                          positive: stats.increasedAttackSpeed > 0)),
+
+
+              _Line(S.statCritChance, percent(stats.critChance)),
+              _Line(S.statCritMulti,
+                  '×${(1.0 + stats.critMulti).toStringAsFixed(2)}',
                   hint: _critHint(stats)),
             ]),
 
-            _Group('Способности', [
-              _Line('Запас маны', money(stats.maxMana),
+            _Group(S.statsGroupAbilities, [
+              _Line(S.statMana, money(stats.maxMana),
                   hint: reserved <= 0.0
                       ? null
-                      : 'ауры держат занятыми ${percent(reserved)}'),
-              _Line('Восстановление маны',
-                  '${precise(stats.manaRegen)} в секунду'),
-              _Line('Перезарядка', percent(-stats.cooldownReduction),
+                      : S.manaReserved(percent(reserved))),
+              _Line(S.statManaRegen,
+                  S.perSecond(precise(stats.manaRegen))),
+              _Line(S.statCooldown, percent(-stats.cooldownReduction),
                   hint: stats.cooldownReduction <= 0.0
-                      ? 'Умения перезаряжаются за своё время'
+                      ? S.statCooldownAbout
                       : null),
-              _Line('Вампиризм', percent(stats.leech),
+              _Line(S.statLeech, percent(stats.leech),
                   hint: stats.leech <= 0.0
                       ? null
-                      : 'доля нанесённого урона возвращается здоровьем'),
+                      : S.statLeechAbout),
             ]),
 
-            _Group('Добыча', [
-              _Line('Качество добычи', percent(stats.lootQuality),
-                  hint: 'Сдвигает выпадение к старшим редкостям'),
-              _Line('Количество добычи', percent(stats.lootQuantity)),
-              _Line('Находимое золото', percent(stats.goldFind)),
+            _Group(S.statsGroupLoot, [
+              _Line(S.statLootQuality, percent(stats.lootQuality),
+                  hint: S.statLootQualityAbout),
+              _Line(S.statLootQuantity, percent(stats.lootQuantity)),
+              _Line(S.statGoldFind, percent(stats.goldFind)),
             ]),
 
             if (stats.tagDamage.entries.any((e) => e.value.abs() > 0.001)) ...[
               const SizedBox(height: 4),
-              const _GroupTitle('Множители по тегам'),
+              _GroupTitle(S.statsGroupTags),
               const SizedBox(height: 6),
-              const Text(
-                'Работают только на умениях с этим тегом — и на автоатаке, '
-                'если её тег совпал.',
+              Text(
+                S.statsTagsAbout,
                 style: TextStyle(fontSize: 12, color: Colors.white38),
               ),
               const SizedBox(height: 10),
@@ -188,25 +193,23 @@ class MercenaryStatsSheet extends StatelessWidget {
       ]..sort((a, b) => b.value.compareTo(a.value));
 
   String? _armorHint(double armor) {
-    if (armor <= 0.0) return 'Брони нет — физический урон приходит целиком';
+    if (armor <= 0.0) return S.statsNoArmor;
     final cut = balance.Curves.armorMitigation(armor, depth);
     final capped = cut >= balance.Curves.armorDrCap - 1e-9;
-    return 'Физический урон меньше на ${percent(cut)}'
-        '${capped ? ' — это потолок' : ''}';
+    return S.statsPhysicalCut(percent(cut), capped: capped);
   }
 
   String? _resistHint(double value) {
     if (value <= 0.0) return null;
     final capped = value >= balance.Curves.resistCap;
     final applied = capped ? balance.Curves.resistCap : value;
-    return 'Урон меньше на ${percent(applied / 100.0)}'
-        '${capped ? ' — выше потолка не считается' : ''}';
+    return S.statsDamageCut(percent(applied / 100.0), capped: capped);
   }
 
   String? _critHint(StatBlock stats) {
-    if (stats.critChance <= 0.0) return 'Критов нет — множитель ни на что';
+    if (stats.critChance <= 0.0) return S.statsNoCrits;
     final average = 1.0 + stats.critChance * stats.critMulti;
-    return 'В среднем ×${average.toStringAsFixed(2)} по всему урону';
+    return S.statsAverageCrit(average.toStringAsFixed(2));
   }
 }
 

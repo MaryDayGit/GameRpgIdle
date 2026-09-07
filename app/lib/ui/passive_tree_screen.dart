@@ -3,7 +3,7 @@ import 'package:rift/core/content/passive_tree_def.dart';
 import 'package:rift/core/model/passive_tree.dart';
 
 import '../state/game_controller.dart';
-import 'format.dart';
+import 'strings.dart';
 import 'passive_icons.dart';
 
 /// Дерево пассивок — граф, а не список.
@@ -68,12 +68,12 @@ class _PassiveTreeScreenState extends State<PassiveTreeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Дерево пассивок'),
+            title: Text(S.passiveTreeTitle),
             actions: [
               if (tree.spent > 0)
                 TextButton(
                   onPressed: () => _confirmReset(context),
-                  child: const Text('Сбросить'),
+                  child: Text(S.reset),
                 ),
             ],
           ),
@@ -152,19 +152,16 @@ class _PassiveTreeScreenState extends State<PassiveTreeScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Сбросить дерево?'),
-        content: const Text(
-          'Все очки вернутся, и дерево можно будет собрать заново. '
-          'Ничего не теряется — кроме самой сборки.',
-        ),
+        title: Text(S.passiveResetTitle),
+        content: Text(S.passiveResetAbout),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Оставить'),
+            child: Text(S.keep),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Сбросить'),
+            child: Text(S.reset),
           ),
         ],
       ),
@@ -229,8 +226,8 @@ class _Header extends StatelessWidget {
             Flexible(
               child: Text(
                 left > 0
-                    ? '${plural(left, "очко", "очка", "очков")} свободно'
-                    : 'Очков нет',
+                    ? S.passivePointsFree(left)
+                    : S.passiveNoPoints,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -243,8 +240,8 @@ class _Header extends StatelessWidget {
               flex: 2,
               child: Text(
                 nextAt == null
-                    ? 'вложено $spent из $total'
-                    : 'вложено $spent из $total · следующее с этажа $nextAt',
+                    ? S.passiveSpent(spent, total)
+                    : S.passiveSpent(spent, total, nextAt: nextAt),
                 style: const TextStyle(fontSize: 12, color: Colors.white38),
               ),
             ),
@@ -327,7 +324,7 @@ class _NodeCard extends StatelessWidget {
                                     ? const Color(0xFFC7643F)
                                     : const Color(0xFF7FB069))),
                       if (node.rule != null)
-                        const Text('правило',
+                        Text(S.passiveRuleMark,
                             style: TextStyle(
                                 fontSize: 11, color: Color(0xFF9AA7D0))),
                     ],
@@ -343,12 +340,12 @@ class _NodeCard extends StatelessWidget {
             if (taken)
               OutlinedButton(
                 onPressed: canRefund ? onRefund : null,
-                child: const Text('Снять'),
+                child: Text(S.drop),
               )
             else
               FilledButton(
                 onPressed: canTake ? onTake : null,
-                child: const Text('Взять'),
+                child: Text(S.take),
               ),
           ],
         ),
@@ -385,8 +382,8 @@ class _IconPainter extends CustomPainter {
 /// Класс узла словом. У дороги имени нет: её и так видно по размеру, а
 /// подпись у каждого второго узла превратилась бы в шум.
 String? _classLabel(PassiveKind kind) => switch (kind) {
-      PassiveKind.keystone => 'ключевой',
-      PassiveKind.notable => 'крупный',
+      PassiveKind.keystone => S.passiveKeystone,
+      PassiveKind.notable => S.passiveNotable,
       _ => null,
     };
 

@@ -5,6 +5,7 @@ import 'package:rift/core/model/quest_log.dart';
 
 import '../state/game_controller.dart';
 import 'mercenary_screen.dart' show TagChips;
+import 'strings.dart';
 
 /// Журнал заданий.
 ///
@@ -42,7 +43,7 @@ class QuestsScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Задания'),
+            title: Text(S.questsTitle),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(28),
               child: Padding(
@@ -50,8 +51,7 @@ class QuestsScreen extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Выполнено ${done.length} из ${all.length} · '
-                    'каждое открывает умение',
+                    S.questsDone(done.length, all.length),
                     style: const TextStyle(
                         fontSize: 12, color: Colors.white54),
                   ),
@@ -66,10 +66,10 @@ class QuestsScreen extends StatelessWidget {
                 const _Empty()
               else ...[
                 if (open.isNotEmpty) ...[
-                  const _Header('Сейчас'),
+                  _Header(S.questsNow),
                   for (final chain in _chainsOf(open))
                     _Chain(
-                      title: _chainNames[chain] ?? chain,
+                      title: _chainNames[chain]?.text ?? chain,
                       quests: [
                         for (final q in open) if (q.chain == chain) q,
                       ],
@@ -82,14 +82,14 @@ class QuestsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 12),
                     child: Text(
-                      'Ещё $hidden открывается дальше по цепочкам.',
+                      S.questsHiddenAhead(hidden),
                       style: const TextStyle(
                           fontSize: 12, color: Colors.white30),
                     ),
                   ),
                 if (done.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  const _Header('Выполнено'),
+                  _Header(S.questsFinished),
                   for (final quest in done)
                     _QuestRow(
                         quest: quest, log: log, facts: facts, done: true),
@@ -113,15 +113,20 @@ class QuestsScreen extends StatelessWidget {
   }
 }
 
+/// Имена цепей заданий.
+///
+/// Живут здесь, а не в `quests.json`, потому что цепь — это не сущность
+/// контента, а способ сгруппировать задания на экране: в контенте у задания
+/// есть только строка `chain`, по которой оно группируется.
 const _chainNames = {
-  'prologue': 'Начало',
-  'ember': 'Пепел · Огонь',
-  'frost': 'Наледь · Холод',
-  'storm': 'Гроза · Молния',
-  'abyss': 'Провал · Пустота',
-  'war': 'Ремесло войны',
-  'guard': 'Стойкость',
-  'auras': 'Знамёна',
+  'prologue': Phrase('Начало', 'Beginning'),
+  'ember': Phrase('Пепел · Огонь', 'Ash · Fire'),
+  'frost': Phrase('Наледь · Холод', 'Rime · Cold'),
+  'storm': Phrase('Гроза · Молния', 'Storm · Lightning'),
+  'abyss': Phrase('Провал · Пустота', 'Chasm · Void'),
+  'war': Phrase('Ремесло войны', 'The Craft of War'),
+  'guard': Phrase('Стойкость', 'Fortitude'),
+  'auras': Phrase('Знамёна', 'Banners'),
 };
 
 class _Chain extends StatelessWidget {
@@ -226,7 +231,7 @@ class _QuestRow extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_num(progress.$1)} из ${_num(progress.$2)}',
+                S.outOf(_num(progress.$1), _num(progress.$2)),
                 style:
                     const TextStyle(fontSize: 11, color: Colors.white38),
               ),
@@ -242,10 +247,8 @@ class _QuestRow extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      done
-                          ? 'Открыто: ${reward.name}'
-                          : 'Награда: ${reward.name}'
-                              '${quest.rewardEcho > 0 ? ' · ${quest.rewardEcho} Эха' : ''}',
+                      S.questReward(reward.name,
+                          opened: done, echo: quest.rewardEcho),
                       style: TextStyle(
                         fontSize: 12,
                         color: done ? Colors.white24 : Colors.white70,
@@ -296,12 +299,12 @@ class _Empty extends StatelessWidget {
   const _Empty();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
         child: Text(
-          'Заданий пока нет. Отправьте наёмника вниз — первая цель придёт '
-          'вместе с первой добычей.',
-          style: TextStyle(fontSize: 13, color: Colors.white38, height: 1.4),
+          S.questsEmpty,
+          style: const TextStyle(
+              fontSize: 13, color: Colors.white38, height: 1.4),
         ),
       );
 }

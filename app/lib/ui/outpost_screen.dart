@@ -21,6 +21,7 @@ import 'mercenary_sheet.dart';
 import 'passive_tree_screen.dart';
 import 'quests_screen.dart';
 import 'run_ending_text.dart';
+import 'strings.dart';
 import 'stash_screen.dart';
 import 'tutorial.dart';
 
@@ -52,8 +53,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowIntro());
   }
 
-  /// Настройки: звук и вибрация. Два переключателя — всё, что здесь есть,
-  /// и большего игре пока не нужно.
+  /// Настройки: язык, звук, вибрация.
   Future<void> _openSettings(BuildContext context) =>
       showModalBottomSheet<void>(
         context: context,
@@ -64,17 +64,34 @@ class _OutpostScreenState extends State<OutpostScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Языки подписаны каждый на себе самом и не переводятся:
+                // игрок, открывший игру не на своём языке, ищет знакомое
+                // слово, а не его перевод на язык, которого не знает.
+                ListTile(
+                  title: Text(S.settingsLanguage),
+                  subtitle: Text(S.settingsLanguageAbout),
+                  trailing: SegmentedButton<Lang>(
+                    segments: [
+                      for (final lang in Lang.values)
+                        ButtonSegment(value: lang, label: Text(lang.title)),
+                    ],
+                    selected: {c.settings.lang},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (picked) =>
+                        c.setLanguage(picked.first),
+                  ),
+                ),
                 SwitchListTile(
                   value: c.settings.sound,
                   onChanged: c.setSound,
-                  title: const Text('Звук'),
-                  subtitle: const Text('Удары, гибель, находки'),
+                  title: Text(S.settingsSound),
+                  subtitle: Text(S.settingsSoundAbout),
                 ),
                 SwitchListTile(
                   value: c.settings.haptics,
                   onChanged: c.setHaptics,
-                  title: const Text('Вибрация'),
-                  subtitle: const Text('Отдача на действиях и на гибели'),
+                  title: Text(S.settingsHaptics),
+                  subtitle: Text(S.settingsHapticsAbout),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -90,7 +107,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Расселина'),
+        title: Text(S.gameTitle),
         // Прокрутка обязательна: четыре абзаца при крупном системном шрифте
         // не помещаются в диалог на невысоком экране, и без неё нижний
         // просто обрезается — вместе с кнопкой.
@@ -109,7 +126,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Понятно'),
+            child: Text(S.gotIt),
           ),
         ],
       ),
@@ -172,8 +189,8 @@ class _OutpostScreenState extends State<OutpostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Верстак полон: $lostShards осколков потеряно. '
-            'Улучшите Верстак осколков.',
+            S.shardsLost(lostShards),
+
           ),
         ),
       );
@@ -185,9 +202,9 @@ class _OutpostScreenState extends State<OutpostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'В сундуке не хватило места: '
-            '${plural(overflow, "вещь", "вещи", "вещей")} переплавлено '
-            'в золото. Поднимите Хранилище.',
+            S.stashOverflowed(overflow),
+
+
           ),
         ),
       );
@@ -202,15 +219,15 @@ class _OutpostScreenState extends State<OutpostScreen> {
         final profile = c.profile;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Застава'),
+            title: Text(S.outpostTitle),
             actions: [
               IconButton(
-                tooltip: 'Справка',
+                tooltip: S.helpTitle,
                 icon: const Icon(Icons.menu_book_outlined),
                 onPressed: () => openHelp(context),
               ),
               IconButton(
-                tooltip: 'Звук и вибрация',
+                tooltip: S.settingsTitle,
                 icon: Icon(
                   c.settings.sound
                       ? Icons.volume_up_outlined
@@ -248,7 +265,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                 children: [
                   _Destination(
                     icon: Icons.inventory_2_outlined,
-                    label: 'Сундук · ${profile.stash.length}',
+                    label: S.stashButton(profile.stash.length),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => StashScreen(controller: c),
@@ -257,7 +274,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                   ),
                   _Destination(
                     icon: Icons.auto_fix_high,
-                    label: 'Кузница',
+                    label: S.forgeTitle,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => ForgeScreen(controller: c),
@@ -266,7 +283,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                   ),
                   _Destination(
                     icon: Icons.flag_outlined,
-                    label: 'Задания',
+                    label: S.questsTitle,
                     // Точка зовёт туда, где появился выбор: новая цель,
                     // непотраченное Эхо, неистраченные очки.
                     marked: c.profile.quests.doneCount == 0,
@@ -278,7 +295,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                   ),
                   _Destination(
                     icon: Icons.hub_outlined,
-                    label: 'Древо Эха',
+                    label: S.echoTreeTitle,
                     marked: c.canBuyEchoNode,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -288,7 +305,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                   ),
                   _Destination(
                     icon: Icons.account_tree_outlined,
-                    label: 'Пассивки',
+                    label: S.passivesTitle,
                     marked: c.profile.passivePointsLeft > 0,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -348,14 +365,14 @@ class _Resources extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _Stat(label: 'Золото', value: money(profile.gold)),
-        _Stat(label: 'Эхо', value: '${profile.echo}'),
-        _Stat(label: 'Рекорд', value: '${profile.maxDepthEver}'),
+        _Stat(label: S.resourceGold, value: money(profile.gold)),
+        _Stat(label: S.resourceEcho, value: '${profile.echo}'),
+        _Stat(label: S.resourceRecord, value: '${profile.maxDepthEver}'),
         // Осколки — такой же ресурс, как золото и Эхо: они копятся с каждого
         // спуска и упираются в потолок Верстака. Ресурс, которого нет в шапке,
         // игрок не считает своим.
         _Stat(
-          label: 'Осколки',
+          label: S.resourceShards,
           value: '${profile.shards.length}/${profile.outpost.shardCapacity}',
         ),
       ],
@@ -445,20 +462,12 @@ class _DescentCard extends StatelessWidget {
     final start = controller.profile.startDepth;
 
     return _Panel(
-      title: 'Бездна пуста',
-      about:
-          'Наёмник уходит вниз один и идёт, пока не погибнет. Пока он там, '
-          'вы не получаете ничего: всё, что он найдёт, вернётся только с ним. '
-          'Снаряжение и умения выставляются ДО отправки и заперты до '
-          'конца контракта.'
-          '\n\n'
-          'Спуск начинается не с первого этажа: до трети вашего рекорда '
-          'спущена верёвка. Пройденное однажды не надо проходить заново — '
-          'там нечего искать и некому сопротивляться.',
+      title: S.abyssEmpty,
+      about: '${S.abyssEmptyAbout}\n\n${S.ropeAbout}',
       child: Text(
         start > 1
-            ? 'Отправьте наёмника вниз. Верёвка спущена до этажа $start.'
-            : 'Отправьте наёмника вниз.',
+            ? S.sendDownFrom(start)
+            : S.sendDown,
         style: const TextStyle(fontSize: 13, color: Colors.white70),
       ),
     );
@@ -473,11 +482,11 @@ class _DescentCard extends StatelessWidget {
     if (contract.pendingFork == null) return const SizedBox.shrink();
 
     return _Panel(
-      title: '${contract.mercenary.name} на развилке',
-      about: 'Каждый третий этаж расселина расходится надвое. Выбранный путь '
-          'держится до следующей развилки — это не один этаж, а отрезок '
-          'спуска. Пока вас нет, наёмник выбирает сам по приказу, но ждёт '
-          'не вечно — и третий путь без вас ему недоступен.',
+      title: S.mercAtFork(contract.mercenary.name),
+      about: S.forkCardAbout,
+
+
+
       child: ForkCard(controller: controller, contract: contract),
     );
   }
@@ -488,13 +497,8 @@ class _DescentCard extends StatelessWidget {
     final record = controller.profile.maxDepthEver;
 
     return _Panel(
-      title: '${contract.mercenary.name} в бездне',
-      about:
-          'Снаряжение и умения заперты до конца контракта: наёмник '
-          'уже внизу, и переодеть его нельзя. '
-          'Отзыв заканчивает спуск '
-          'там, где наёмник сейчас. Добыча и Эхо остаются при нём — штрафа '
-          'за отзыв нет.',
+      title: S.mercInAbyss(contract.mercenary.name),
+      about: S.descentCardAbout,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -502,7 +506,7 @@ class _DescentCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Этаж $depth',
+                S.floorNumber(depth),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
@@ -515,7 +519,7 @@ class _DescentCard extends StatelessWidget {
               // до спуска. Прошедшее время говорит ровно то же про ход
               // спуска и ничего не выдаёт про его конец.
               Text(
-                'в бездне ${duration(contract.elapsedAt(now))}',
+                S.inAbyssFor(duration(contract.elapsedAt(now))),
                 style: const TextStyle(fontSize: 13, color: Colors.white60),
               ),
             ],
@@ -534,16 +538,16 @@ class _DescentCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             record <= 0
-                ? 'Первый спуск'
+                ? S.firstDescent
                 : depth >= record
-                    ? 'Новый рекорд глубины'
-                    : 'Рекорд: этаж $record',
+                    ? S.newRecord
+                    : S.recordIs(record),
             style: const TextStyle(fontSize: 11, color: Colors.white38),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => _watch(context, contract),
-            child: const Text('Смотреть бой'),
+            child: Text(S.watchBattle),
           ),
           const SizedBox(height: 8),
           // Отзыв стоит рядом с «Смотреть бой», а не прячется внутри боя:
@@ -551,7 +555,7 @@ class _DescentCard extends StatelessWidget {
           // (GDD §8).
           TextButton(
             onPressed: () => _confirmRecall(context, contract),
-            child: const Text('Отозвать наёмника'),
+            child: Text(S.recallMercenary),
           ),
         ],
       ),
@@ -562,20 +566,17 @@ class _DescentCard extends StatelessWidget {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Отозвать наёмника?'),
+        title: Text(S.recallTitle),
         // Без номера этажа: спуск идёт, пока диалог открыт.
-        content: const Text(
-          'Спуск закончится там, где наёмник сейчас. Добыча и Эхо остаются '
-          'при нём — штрафа за отзыв нет.',
-        ),
+        content: Text(S.recallAbout),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Пусть идёт дальше'),
+            child: Text(S.recallLetThemGo),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Отозвать'),
+            child: Text(S.recall),
           ),
         ],
       ),
@@ -587,26 +588,27 @@ class _DescentCard extends StatelessWidget {
     final result = contract.result!;
     return _Panel(
       title: '${contract.mercenary.name} '
-          '${endingRu(result.ending, contract.mercenary.gender)}',
+          '${endingWord(result.ending, contract.mercenary.gender)}',
       accent: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Этаж ${result.maxDepth}',
+            S.floorNumber(result.maxDepth),
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
-            'Добыча ждёт: '
-            '${plural(result.haul.itemCount, "предмет", "предмета", "предметов")}, '
-            '${money(result.haul.totalGold)} золота, ${result.echo} Эха',
+            S.haulWaiting(result.haul.itemCount,
+                money(result.haul.totalGold), result.echo),
+
+
             style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () => onCollect(contract),
-            child: const Text('Открыть журнал'),
+            child: Text(S.openJournal),
           ),
         ],
       ),
@@ -642,9 +644,9 @@ class _RosterSection extends StatelessWidget {
       onDeploy: canDeploy ? () => controller.deploy(merc) : null,
       note: canDeploy
           ? null
-          : 'Все слоты спуска заняты: '
-              '${controller.profile.roster.deployed.length} из '
-              '${controller.profile.deploySlots}.',
+          : '${S.allSlotsBusy(controller.profile.roster.deployed.length, controller.profile.deploySlots)}.',
+
+
     );
   }
 
@@ -654,21 +656,21 @@ class _RosterSection extends StatelessWidget {
     final canDeploy = controller.profile.canDeploy;
 
     return _Panel(
-      title: 'Наёмники (${reserve.length})',
+      title: S.mercenariesCount(reserve.length),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (reserve.isEmpty)
-            const Text(
-              'Никого нет — наймите в Таверне.',
-              style: TextStyle(fontSize: 13, color: Colors.white70),
+            Text(
+              S.nobodyHired,
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
             )
           else
             for (final merc in reserve)
               _MercRow(
                 merc: merc,
                 abilitySlots: controller.profile.abilitySlotsFor(merc),
-                action: canDeploy ? 'Отправить' : 'Слоты заняты',
+                action: canDeploy ? S.send : S.slotsBusy,
                 onTap: canDeploy ? () => controller.deploy(merc) : null,
                 onOpen: () => _openCard(context, merc),
                 onBuild: () => _openLoadout(context, merc),
@@ -729,16 +731,17 @@ class _RiftRow extends StatelessWidget {
           // Заголовок и рекорд — разными строками, а не в один ряд: при
           // крупном системном шрифте «Разлом дня» и «рекорд: этаж 128» на
           // узком экране выдавливали друг друга за край.
-          const Text('Разлом дня',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          Text(S.dailyRift,
+              style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600)),
           if (best > 0)
-            Text('Ваш рекорд в разломах: этаж $best',
+            Text(S.riftRecord(best),
                 style: const TextStyle(fontSize: 12, color: Colors.white54)),
           const SizedBox(height: 4),
           // Модификатор назван до отправки: разлом отличается от обычного
           // спуска ровно им, и узнавать это из журнала было бы поздно.
           Text(
-            '${rift.modifier.name} — на каждом этаже, а не между развилками.',
+            S.riftModifierLine(rift.modifier.name),
             style: const TextStyle(fontSize: 12, color: Colors.white60),
           ),
           Text(
@@ -746,7 +749,7 @@ class _RiftRow extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: Colors.orangeAccent),
           ),
           Text(
-            '${rift.modifier.plus}. Эхо за спуск удваивается',
+            S.riftReward(rift.modifier.plus),
             style:
                 const TextStyle(fontSize: 12, color: Colors.lightGreenAccent),
           ),
@@ -759,8 +762,8 @@ class _RiftRow extends StatelessWidget {
             // Однорукая» — ровно та ошибка, из-за которой в проекте появился
             // `Gender`.
             child: Text(available
-                ? 'Отправить в разлом'
-                : 'Сегодня разлом уже пройден'),
+                ? S.sendIntoRift
+                : S.riftDoneToday),
           ),
         ],
       ),
@@ -769,9 +772,9 @@ class _RiftRow extends StatelessWidget {
 }
 
 /// Приписка к объяснению Таверны, когда задаток уже начал расти.
-const _hireScaleNote =
-    ' Задаток растёт с вашим рекордом: чем глубже расселина, тем дороже те, '
-    'кто в неё пойдёт. Оборванцы стоят своё всегда.';
+String get _hireScaleNote => S.hireCostAbout;
+
+
 
 class _TavernSection extends StatelessWidget {
   const _TavernSection({required this.controller});
@@ -790,9 +793,9 @@ class _TavernSection extends StatelessWidget {
       depth: controller.profile.maxDepthEver < 10
           ? 10
           : controller.profile.maxDepthEver,
-      hireLabel: cost <= 0 ? 'Взять даром' : 'Нанять за ${money(cost)}',
+      hireLabel: cost <= 0 ? S.takeForFree : S.hireFor(money(cost)),
       onHire: affordable ? () => controller.hire(merc) : null,
-      note: affordable ? null : 'Не хватает золота: нужно ${money(cost)}.',
+      note: affordable ? null : S.notEnoughGold(money(cost)),
     );
   }
 
@@ -807,15 +810,11 @@ class _TavernSection extends StatelessWidget {
         balance.Curves.hireCostScale(controller.profile.maxDepthEver) > 1.0;
 
     return _Panel(
-      title: 'Таверна',
-      about:
-          'Ранг наёмника поднимает все его характеристики и размер рюкзака. '
-          'Таверна сильнее никого не делает — она повышает шансы, что придёт '
-          'кто-то хороший.'
-          '${scaled ? _hireScaleNote : ""}',
+      title: S.tavernTitle,
+      about: '${S.tavernAbout}${scaled ? _hireScaleNote : ""}',
       trailing: TextButton(
         onPressed: controller.refreshTavern,
-        child: const Text('Обновить'),
+        child: Text(S.refresh),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -826,7 +825,7 @@ class _TavernSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
-                'Платить нечем — ${volunteer.name} пойдёт даром.',
+                S.volunteerFree(volunteer.name),
                 style: const TextStyle(fontSize: 12, color: Color(0xFF7FB069)),
               ),
             ),
@@ -834,7 +833,7 @@ class _TavernSection extends StatelessWidget {
             _MercRow(
               merc: merc,
               action: merc.id == volunteer?.id
-                  ? 'даром'
+                  ? S.forFree
                   : money(controller.profile.hireCostOf(merc)),
               onTap: controller.canAfford(controller.profile.hireCostOf(merc))
                   ? () => controller.hire(merc)
@@ -893,7 +892,7 @@ class _MercRow extends StatelessWidget {
       Text(
         '${merc.rank.forGender(merc.gender)} · '
         '${merc.trait.forGender(merc.gender)} · '
-        'рюкзак ${merc.backpackSlots}',
+        '${S.backpackShort(merc.backpackSlots)}',
         style: const TextStyle(fontSize: 12, color: Colors.white54),
       ),
       if (onBuild != null)
@@ -901,8 +900,9 @@ class _MercRow extends StatelessWidget {
           // Обе половины билда одной строкой. Раньше здесь стояло только
           // снаряжение, и про способности игрок не знал: «умений нет, как
           // менять билд — непонятно».
-          'Снаряжение ${merc.gear.filledSlots}/${merc.gear.usableSlots} · '
-          'умения ${merc.abilities.length}/$abilitySlots',
+          S.gearAndAbilities(merc.gear.filledSlots, merc.gear.usableSlots,
+              merc.abilities.length, abilitySlots),
+
           style: TextStyle(
             fontSize: 12,
             // Пустые слоты подсвечены: это не украшение, а единственное
@@ -937,7 +937,7 @@ class _MercRow extends StatelessWidget {
                     icon: const Icon(Icons.shield_outlined, size: 18),
                     // «Сборка», а не «Снаряжение»: за этой кнопкой и вещи,
                     // и способности, и приказ на развилку — весь билд.
-                    label: const Text('Сборка'),
+                    label: Text(S.buildButton),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -976,15 +976,8 @@ class _BuildingsSection extends StatelessWidget {
     final outpost = controller.profile.outpost;
 
     return _Panel(
-      title: 'Постройки',
-      about:
-          'Застава покупается золотом. Она не делает наёмника сильнее — она '
-          'облегчает жизнь вам: сколько '
-          'вещей влезет, сколько даёт переплавка лишнего, кто приходит в '
-          'Таверну.\n\nУровень открывает достигнутая ГЛУБИНА, а не '
-          'кошелёк. Иначе Застава выкупалась бы вперёд прогресса, и дальше '
-          'игра шла бы сама.\n\nНажмите на постройку, чтобы увидеть, '
-          'что даст следующий уровень.',
+      title: S.buildingsTitle,
+      about: S.buildingsAbout,
       child: Column(
         children: [
           for (final building in Building.values)
@@ -1033,7 +1026,7 @@ class _BuildingsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${building.ru} · $level из ${Building.maxLevel}',
+                    S.buildingLevel(building.title, level, Building.maxLevel),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 6),
@@ -1046,13 +1039,13 @@ class _BuildingsSection extends StatelessWidget {
                   // Главное в карточке: что изменится. Цена без этого — это
                   // предложение купить кота в мешке.
                   Text(
-                    'Сейчас: ${Outpost.effectAt(building, level)}',
+                    S.buildingNow(Outpost.effectAt(building, level)),
                     style: const TextStyle(fontSize: 13),
                   ),
                   if (!maxed) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Станет: ${Outpost.effectAt(building, level + 1)}',
+                      S.buildingNext(Outpost.effectAt(building, level + 1)),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF7FB069),
@@ -1062,14 +1055,14 @@ class _BuildingsSection extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   if (maxed)
-                    const Text(
-                      'Предел.',
-                      style: TextStyle(fontSize: 12, color: Colors.white38),
+                    Text(
+                      S.buildingMaxedFull,
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.white38),
                     )
                   else if (!open)
                     Text(
-                      'Следующий уровень откроется, когда наёмник дойдёт до '
-                      'этажа ${outpost.nextGate(building)}.',
+                      S.buildingGate(outpost.nextGate(building)!),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFFC7643F),
@@ -1083,7 +1076,7 @@ class _BuildingsSection extends StatelessWidget {
                               Navigator.of(context).pop();
                             }
                           : null,
-                      child: Text('Улучшить · ${money(cost)}'),
+                      child: Text(S.upgradeFor(money(cost))),
                     ),
                 ],
               ),
@@ -1133,9 +1126,16 @@ class _BuildingRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        building.ru,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      // Имя переносится, а не обрезается. «Верстак осколков»
+                      // не помещался в отведённые 140 точек и вылезал на 33 —
+                      // на узком экране это полоса из жёлто-чёрных штрихов
+                      // поперёк Заставы. Гибким должно быть имя, а не счётчик
+                      // уровня: счётчик короткий и обязан остаться целым.
+                      Flexible(
+                        child: Text(
+                          building.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -1150,7 +1150,7 @@ class _BuildingRow extends StatelessWidget {
                   ),
                   if (gate != null)
                     Text(
-                      'откроется с этажа $gate',
+                      S.opensFromFloor(gate!),
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFFC7643F),
@@ -1164,9 +1164,9 @@ class _BuildingRow extends StatelessWidget {
               onPressed: onUpgrade,
               child: Text(
                 maxed
-                    ? 'Предел'
+                    ? S.buildingMaxed
                     : gate != null
-                    ? 'Этаж $gate'
+                    ? S.floorNumber(gate!)
                     : money(cost),
               ),
             ),
@@ -1279,9 +1279,15 @@ class _BrandPicker extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text(
-              'Клеймо Бездны',
-              style: TextStyle(fontSize: 12, color: Colors.white38),
+            // Заголовок гибкий: «Brand of the Abyss» шире «Клейма Бездны», и
+            // на узком экране пара «подпись + кнопка справки» вылезала за
+            // край на четыре точки. Гибким должен быть текст, а не кнопка:
+            // кнопка и так минимального размера.
+            Flexible(
+              child: Text(
+                S.brandTitle,
+                style: const TextStyle(fontSize: 12, color: Colors.white38),
+              ),
             ),
             IconButton(
               visualDensity: VisualDensity.compact,
@@ -1292,7 +1298,7 @@ class _BrandPicker extends StatelessWidget {
                 size: 14,
                 color: Colors.white24,
               ),
-              onPressed: () => showAbout(context, 'Клеймо Бездны', _brandAbout),
+              onPressed: () => showAbout(context, S.brandTitle, _brandAbout),
             ),
           ],
         ),
@@ -1325,9 +1331,8 @@ class _BrandPicker extends StatelessWidget {
                   // Две разные причины, и игрок должен видеть, какая держит
                   // его: не хватает рекорда или не доказан текущий ранг.
                   next.atBrand == null
-                      ? 'следующий ранг с этажа ${next.depth}'
-                      : 'следующий ранг: этаж ${next.depth} на ранге '
-                            '${next.atBrand}',
+                      ? S.brandNextRank(next.depth)
+                      : S.brandNextRank(next.depth, next.atBrand),
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 11, color: Colors.white24),
                 ),
@@ -1337,15 +1342,17 @@ class _BrandPicker extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           rank == 0
-              ? 'Ранг 0: обычный спуск.'
-              : 'Враги +${(balance.Curves.brandMobStatsPerRank * rank * 100).round()} %, '
-                    'добыча +${(balance.Curves.brandLootPerRank * rank * 100).round()} %, '
-                    'Эхо +${(balance.Curves.brandEchoPerRank * rank * 100).round()} %.',
+              ? S.brandRankZero
+              : S.brandRankEffect(
+                  (balance.Curves.brandMobStatsPerRank * rank * 100).round(),
+                  (balance.Curves.brandLootPerRank * rank * 100).round(),
+                  (balance.Curves.brandEchoPerRank * rank * 100).round(),
+                ),
           style: const TextStyle(fontSize: 11, color: Colors.white38),
         ),
         if (profile.provenBrandRanks > 0)
           Text(
-            'Доказано рангов: ${profile.provenBrandRanks}',
+            S.brandProven(profile.provenBrandRanks),
             style: const TextStyle(fontSize: 11, color: Color(0xFF7FB069)),
           ),
       ],
@@ -1355,17 +1362,7 @@ class _BrandPicker extends StatelessWidget {
 
 /// Объяснение Клейма. Лежит рядом с виджетом, но не на экране: игрок читает
 /// его один раз, а числа смотрит каждый спуск.
-const _brandAbout =
-    'Клеймо — добровольная сложность, которую вы выставляете перед спуском. '
-    'Каждый ранг делает врагов крепче, а добычу и Эхо больше.'
-    '\n\n'
-    'Первые ранги открывает рекорд глубины. Дальше — только делом: чтобы '
-    'открыть следующий ранг, надо дойти до нужного этажа НА текущем.'
-    '\n\n'
-    'Каждый доказанный ранг даёт лишнее очко дерева пассивок сверх его '
-    'потолка. Ради этого Клеймо и нужно: когда глубина упрётся в потолок, '
-    'расти начнёт сложность — и вопрос сменится с «как глубоко ты зашёл» на '
-    '«на каком Клейме ты там держишься».';
+String get _brandAbout => S.brandAbout;
 
 class _BrandChip extends StatelessWidget {
   const _BrandChip({
@@ -1464,9 +1461,7 @@ class _QuestsClosedDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(quests.length == 1
-          ? 'Задание выполнено'
-          : 'Заданий выполнено: ${quests.length}'),
+      title: Text(S.questsClosedTitle(quests.length)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1476,17 +1471,15 @@ class _QuestsClosedDialog extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 2),
             Text(
-              'Открыто умение: '
-              '${ContentPack.current.ability(quest.rewardAbility)?.name ?? "?"}'
-              '${quest.rewardEcho > 0 ? ' · +${quest.rewardEcho} Эха' : ''}',
+              S.abilityOpened(
+                  ContentPack.current.ability(quest.rewardAbility)?.name ?? "?",
+                  quest.rewardEcho),
               style: const TextStyle(fontSize: 12, color: Colors.white70),
             ),
             const SizedBox(height: 12),
           ],
           Text(
-            quests.length == 1
-                ? 'Поставить его в слот можно в сборке наёмника.'
-                : 'Поставить их в слоты можно в сборке наёмника.',
+            S.abilitySlotHint(many: quests.length > 1),
             style: const TextStyle(fontSize: 12, color: Colors.white38),
           ),
         ],
@@ -1494,7 +1487,7 @@ class _QuestsClosedDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Хорошо'),
+          child: Text(S.fine),
         ),
       ],
     );

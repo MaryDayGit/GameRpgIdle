@@ -7,6 +7,7 @@ import 'package:rift/core/model/mercenary.dart';
 
 import '../state/game_controller.dart';
 import 'format.dart';
+import 'strings.dart';
 import 'forge_screen.dart';
 import 'gear_grid.dart';
 import 'gear_icons.dart';
@@ -62,7 +63,7 @@ class _StashScreenState extends State<StashScreen> {
         final slots = c.profile.outpost.stashSlots;
 
         return Scaffold(
-          appBar: AppBar(title: Text('Сундук · $total из $slots')),
+          appBar: AppBar(title: Text(S.stashTitle(total, slots))),
           body: Column(
             children: [
               _Filters(
@@ -71,20 +72,22 @@ class _StashScreenState extends State<StashScreen> {
                 onPick: (kind) => setState(() => _filter = kind),
               ),
               if (total >= slots)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 4),
                   child: Text(
-                    'Сундук полон: лишнее с новой добычи уйдёт в золото. '
-                    'Переплавьте ненужное или поднимите Хранилище.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFFD98F4E)),
+                    S.stashFull,
+
+                    style: const TextStyle(
+                        fontSize: 11, color: Color(0xFFD98F4E)),
                   ),
                 ),
               Expanded(
                 child: items.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
-                          'Пусто. Вещи приносят наёмники.',
-                          style: TextStyle(color: Colors.white38),
+                          S.stashEmpty,
+                          style: const TextStyle(color: Colors.white38),
                         ),
                       )
                     : ListView.separated(
@@ -139,8 +142,8 @@ class _StashScreenState extends State<StashScreen> {
           // Двоеточие вместо согласования: «надето Перчатки» —
           // несогласованная строка, а «Надето: Перчатки» верна для
           // любого типа вещи.
-          ? 'Надето: ${item.kind.ru} · ${merc.name}'
-          : 'Не встало: ${merc.name} не может это надеть'),
+          ? S.stashEquipped(item.kind.title, merc.name)
+          : S.stashNotEquipped(merc.name)),
     ));
   }
 
@@ -150,7 +153,7 @@ class _StashScreenState extends State<StashScreen> {
     if (gold == null) return;
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Переплавлено: ${item.kind.ru} · ${money(gold)}'),
+      content: Text(S.stashSalvaged(item.kind.title, money(gold))),
     ));
   }
 }
@@ -186,13 +189,13 @@ class _Filters extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
           _Chip(
-            label: 'Всё',
+            label: S.filterAll,
             selected: current == null,
             onTap: () => onPick(null),
           ),
           for (final kind in ordered)
             _Chip(
-              label: kind.ru,
+              label: kind.title,
               selected: current == kind,
               onTap: () => onPick(kind),
             ),
@@ -250,15 +253,18 @@ class _StashRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.kind.ru,
+                    item.kind.title,
                     style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600, color: color),
                   ),
                   Text(
-                    '${item.ilvl} ур. · ${item.rarity.ru} · свойств '
-                    '${Crafting.usedSlots(item)} из '
-                    '${Crafting.affixCapacity(item)}'
-                    '${item.isRelic ? " · реликт" : ""}',
+                    S.itemLine(
+                      ilvl: item.ilvl,
+                      rarity: item.rarity.title,
+                      used: Crafting.usedSlots(item),
+                      max: Crafting.affixCapacity(item),
+                      relic: item.isRelic,
+                    ),
                     style: const TextStyle(fontSize: 11, color: Colors.white54),
                   ),
                 ],
@@ -329,8 +335,8 @@ class ItemSheet extends StatelessWidget {
             for (var i = 0; i < item.affixes.length; i++) ...[
               Text(lines[i + offset], style: const TextStyle(fontSize: 14)),
               Text(
-                'качество ${(item.affixes[i].percentile * 100).round()}'
-                '${item.affixes[i].rerolls > 0 ? " · перебросов ${item.affixes[i].rerolls}" : ""}',
+                S.affixQuality((item.affixes[i].percentile * 100).round(),
+                    item.affixes[i].rerolls),
                 style: const TextStyle(fontSize: 11, color: Colors.white38),
               ),
               const SizedBox(height: 8),
@@ -348,10 +354,10 @@ class ItemSheet extends StatelessWidget {
 
             if (onEquip != null)
               if (wearers.isEmpty)
-                const Text(
-                  'Надеть некому: наёмник в бездне, и снаряжение заперто до '
-                  'его гибели.',
-                  style: TextStyle(fontSize: 12, color: Colors.white38),
+                Text(
+                  S.stashNobodyToEquip,
+
+                  style: const TextStyle(fontSize: 12, color: Colors.white38),
                 )
               else
                 Wrap(
@@ -361,8 +367,8 @@ class ItemSheet extends StatelessWidget {
                       FilledButton(
                         onPressed: () => onEquip!(merc),
                         child: Text(wearers.length == 1
-                            ? 'Надеть'
-                            : 'Надеть · ${merc.name}'),
+                            ? S.equip
+                            : S.equipOn(merc.name)),
                       ),
                   ],
                 ),
@@ -373,22 +379,21 @@ class ItemSheet extends StatelessWidget {
                 if (onForge != null)
                   OutlinedButton(
                     onPressed: onForge,
-                    child: const Text('В Кузницу'),
+                    child: Text(S.toForge),
                   ),
                 const SizedBox(width: 8),
                 if (onSalvage != null)
                   OutlinedButton(
                     onPressed: onSalvage,
-                    child: Text('Переплавить · '
-                        '${money(controller.profile.salvageValue(item))}'),
+                    child: Text(S.salvageFor(
+                        money(controller.profile.salvageValue(item)))),
                   ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Переплавка уничтожает вещь и возвращает золото. Сколько '
-              'именно — зависит от Алтаря.',
-              style: TextStyle(fontSize: 11, color: Colors.white38),
+            Text(
+              S.salvageAbout,
+              style: const TextStyle(fontSize: 11, color: Colors.white38),
             ),
           ],
         ),

@@ -13,464 +13,1074 @@
 /// удобно писать игру, а не слова, которыми в неё играют. Имена вещей (Эхо,
 /// Клеймо, Осколок, Реликт) остаются: их объясняют там, где они впервые
 /// встречаются.
+///
+/// Оба языка лежат рядом строка к строке. Так видно, что переведено, а что
+/// нет, и правка правила не расходится с его переводом: их правят в одном
+/// месте одним движением.
 library;
+
+import 'package:rift/core/model/lang.dart';
 
 class HelpSection {
   const HelpSection({
     required this.id,
-    required this.title,
-    required this.summary,
+    required Phrase title,
+    required Phrase summary,
     required this.blocks,
-  });
+  })  : _title = title,
+        _summary = summary;
 
   /// По нему на раздел ссылаются экраны: Кузница открывает справку сразу на
   /// Кузнице, а не на оглавлении.
   final String id;
 
-  final String title;
+  final Phrase _title;
+  final Phrase _summary;
+
+  String get title => _title.text;
 
   /// Одна строка под заголовком в оглавлении.
-  final String summary;
+  String get summary => _summary.text;
 
   final List<HelpBlock> blocks;
 }
 
 /// Кусок раздела: заголовок и абзацы. Заголовок может быть пустым.
 class HelpBlock {
-  const HelpBlock(this.heading, this.lines);
+  const HelpBlock(this._heading, this._lines);
 
-  final String heading;
-  final List<String> lines;
+  final Phrase _heading;
+  final List<Phrase> _lines;
+
+  String get heading => _heading.text;
+
+  List<String> get lines => [for (final line in _lines) line.text];
 }
+
+/// Пустой заголовок блока. Отдельной константой, чтобы `Phrase.same('')` не
+/// повторялся десять раз и читался как «заголовка нет», а не как недоперевод.
+const _noHeading = Phrase.same('');
 
 const helpSections = <HelpSection>[
   HelpSection(
     id: 'loop',
-    title: 'С чего всё начинается',
-    summary: 'Цикл игры: нанял, отправил, дождался, забрал, вложил',
+    title: Phrase('С чего всё начинается', 'Where it all begins'),
+    summary: Phrase(
+      'Цикл игры: нанял, отправил, дождался, забрал, вложил',
+      'The loop: hire, send, wait, collect, invest',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Вы не спускаетесь в бездну сами. Вы нанимаете тех, кто спускается.',
-        'Наёмник уходит вниз с тем, что вы ему собрали, и идёт, пока не '
-            'погибнет. Вмешаться нельзя: снаряжение и умения выставляются '
-            'ДО отправки и заперты до конца контракта.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Вы не спускаетесь в бездну сами. Вы нанимаете тех, кто спускается.',
+          'You do not go down into the abyss yourself. You hire those who do.',
+        ),
+        Phrase(
+          'Наёмник уходит вниз с тем, что вы ему собрали, и идёт, пока не '
+              'погибнет. Вмешаться нельзя: снаряжение и умения выставляются '
+              'ДО отправки и заперты до конца контракта.',
+          'The mercenary goes down with what you assembled and walks until '
+              'they die. You cannot step in: gear and abilities are set '
+              'BEFORE departure and locked until the contract ends.',
+        ),
       ]),
-      HelpBlock('Гибель — это не проигрыш', [
-        'Наёмник — это один спуск. Он погибнет, и это нормально.',
-        'Снаряжение, золото, осколки и Эхо возвращаются на Заставу. Теряется '
-            'только глубина: следующий наёмник начнёт заново — но уже с тем, '
-            'что принёс предыдущий.',
+      HelpBlock(
+          Phrase('Гибель — это не проигрыш', 'Dying is not losing'), [
+        Phrase(
+          'Наёмник — это один спуск. Он погибнет, и это нормально.',
+          'A mercenary is one descent. They will die, and that is fine.',
+        ),
+        Phrase(
+          'Снаряжение, золото, осколки и Эхо возвращаются на Заставу. '
+              'Теряется только глубина: следующий наёмник начнёт заново — но '
+              'уже с тем, что принёс предыдущий.',
+          'Gear, gold, shards and Echo come back to the Outpost. Only depth '
+              'is lost: the next mercenary starts over — but with what the '
+              'previous one brought.',
+        ),
       ]),
-      HelpBlock('Ваши вещи не теряются', [
-        'Всё, что вы надели на наёмника, уходит вниз именно так, как вы '
-            'собрали. Игра не подменяет ваш выбор на «лучшее из сундука»: '
-            'она не знает, зачем вы надели именно это кольцо, а вы знаете.',
-        'Пустые слоты наёмник дозаполнит сам из сундука — чтобы не уйти '
-            'голым. Реликты не берёт: они меняют правила боя, и это ваше '
-            'решение.',
-        'Внизу наёмник НЕ переодевается. Что вы на него надели — с тем он и '
-            'идёт до конца, даже если найдёт вещь получше: найденное он '
-            'просто несёт в рюкзаке. Ваше снаряжение возвращается целиком.',
-        'Единственное, где вещи всё же теряются, — переполненный сундук: '
-            'если места не хватило, лишнее уходит в золото, и игра об этом '
-            'скажет.',
+      HelpBlock(
+          Phrase('Ваши вещи не теряются', 'Your items are not lost'), [
+        Phrase(
+          'Всё, что вы надели на наёмника, уходит вниз именно так, как вы '
+              'собрали. Игра не подменяет ваш выбор на «лучшее из сундука»: '
+              'она не знает, зачем вы надели именно это кольцо, а вы знаете.',
+          'Everything you put on the mercenary goes down exactly as you '
+              'assembled it. The game does not swap your choice for “the best '
+              'in the stash”: it does not know why you put on that particular '
+              'ring, and you do.',
+        ),
+        Phrase(
+          'Пустые слоты наёмник дозаполнит сам из сундука — чтобы не уйти '
+              'голым. Реликты не берёт: они меняют правила боя, и это ваше '
+              'решение.',
+          'Empty slots the mercenary fills from the stash themselves — so as '
+              'not to leave bare. They do not take relics: those change the '
+              'rules of the fight, and that is your decision.',
+        ),
+        Phrase(
+          'Внизу наёмник НЕ переодевается. Что вы на него надели — с тем он и '
+              'идёт до конца, даже если найдёт вещь получше: найденное он '
+              'просто несёт в рюкзаке. Ваше снаряжение возвращается целиком.',
+          'Down below the mercenary does NOT change clothes. What you put on '
+              'them is what they carry to the end, even if they find '
+              'something better: what they find simply rides in the backpack. '
+              'Your gear comes back whole.',
+        ),
+        Phrase(
+          'Единственное, где вещи всё же теряются, — переполненный сундук: '
+              'если места не хватило, лишнее уходит в золото, и игра об этом '
+              'скажет.',
+          'The one place items really are lost is an overfull stash: if there '
+              'is no room, the surplus turns to gold, and the game says so.',
+        ),
       ]),
-      HelpBlock('Добыча ждёт, пока вы её не заберёте', [
-        'Пока наёмник внизу, вы не получаете ничего. Всё, что он найдёт, '
-            'вернётся только с ним — и только когда вы откроете журнал и '
-            'заберёте.',
-        'Спуск идёт по часам, а не по экрану: игру можно закрыть.',
+      HelpBlock(
+          Phrase('Добыча ждёт, пока вы её не заберёте',
+              'The haul waits until you collect it'), [
+        Phrase(
+          'Пока наёмник внизу, вы не получаете ничего. Всё, что он найдёт, '
+              'вернётся только с ним — и только когда вы откроете журнал и '
+              'заберёте.',
+          'While the mercenary is below you get nothing. Everything they find '
+              'comes back only with them — and only when you open the journal '
+              'and take it.',
+        ),
+        Phrase(
+          'Спуск идёт по часам, а не по экрану: игру можно закрыть.',
+          'The descent runs on the clock, not on the screen: you can close '
+              'the game.',
+        ),
       ]),
-      HelpBlock('Верёвка', [
-        'Спуск начинается не с первого этажа, а с трети вашего рекорда: до '
-            'него спущена верёвка.',
-        'Пройденное однажды не надо проходить заново — там нечего искать и '
-            'некому сопротивляться.',
+      HelpBlock(Phrase('Верёвка', 'The rope'), [
+        Phrase(
+          'Спуск начинается не с первого этажа, а с трети вашего рекорда: до '
+              'него спущена верёвка.',
+          'A descent starts not on the first floor but at a third of your '
+              'record: a rope hangs down that far.',
+        ),
+        Phrase(
+          'Пройденное однажды не надо проходить заново — там нечего искать и '
+              'некому сопротивляться.',
+          'What was walked once need not be walked again — there is nothing '
+              'left to find and nobody left to resist.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'build',
-    title: 'Сборка: снаряжение и умения',
-    summary: 'Девять слотов вещей, четыре слота умений, мана и ауры',
+    title: Phrase('Сборка: снаряжение и умения', 'The build: gear and abilities'),
+    summary: Phrase(
+      'Девять слотов вещей, четыре слота умений, мана и ауры',
+      'Nine item slots, four ability slots, mana and auras',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Сборка — единственное место, где вы принимаете решения о бое. Всё '
-            'остальное наёмник делает сам.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Сборка — единственное место, где вы принимаете решения о бое. Всё '
+              'остальное наёмник делает сам.',
+          'The build is the only place where you make decisions about the '
+              'fight. Everything else the mercenary does alone.',
+        ),
       ]),
-      HelpBlock('Две оси силы', [
-        'У каждого умения, которое наносит урон, есть ФОРМА — «Атака» или '
-            '«Чары». Форма отвечает на один вопрос: от чего это умение растёт.',
-        'АТАКИ растут от урона оружия. Его дают оружие, перчатки, кольца — и '
-            'от него же бьёт автоатака.',
-        'ЧАРЫ растут от силы чар. Её даёт левая рука и свойства «+к силе '
-            'чар»; урон оружия им не помогает вовсе.',
-        'Поэтому выбор умений — это и есть ответ на вопрос, что искать в '
-            'сундуке. Собрали сборку на Чарах — оружие с большим уроном ей '
-            'почти бесполезно, и наоборот.',
+      HelpBlock(Phrase('Две оси силы', 'Two axes of power'), [
+        Phrase(
+          'У каждого умения, которое наносит урон, есть ФОРМА — «Атака» или '
+              '«Чары». Форма отвечает на один вопрос: от чего это умение '
+              'растёт.',
+          'Every ability that deals damage has a FORM — Attack or Spell. The '
+              'form answers one question: what this ability scales from.',
+        ),
+        Phrase(
+          'АТАКИ растут от урона оружия. Его дают оружие, перчатки, кольца — '
+              'и от него же бьёт автоатака.',
+          'ATTACKS scale from weapon damage. Weapons, gloves and rings give '
+              'it — and the auto-attack strikes from it too.',
+        ),
+        Phrase(
+          'ЧАРЫ растут от силы чар. Её даёт левая рука и свойства «+к силе '
+              'чар»; урон оружия им не помогает вовсе.',
+          'SPELLS scale from spell power. The off-hand and “+spell power” '
+              'properties give it; weapon damage does not help them at all.',
+        ),
+        Phrase(
+          'Поэтому выбор умений — это и есть ответ на вопрос, что искать в '
+              'сундуке. Собрали сборку на Чарах — оружие с большим уроном ей '
+              'почти бесполезно, и наоборот.',
+          'So the choice of abilities is the answer to what to look for in '
+              'the stash. Built around Spells — a high-damage weapon is '
+              'nearly useless to it, and the other way round.',
+        ),
       ]),
-      HelpBlock('Три вида умений на четыре слота', [
-        'АКТИВНЫЕ срабатывают сами, когда готова перезарядка и хватает '
-            'маны.',
-        'ПАССИВНЫЕ работают всегда и ничего не стоят.',
-        'АУРЫ работают всегда, но резервируют долю запаса маны — пока аура '
-            'в слоте, эта часть недоступна.',
-        'Активные, пассивные и ауры делят одни и те же четыре места. В этом '
-            'и состоит выбор.',
+      HelpBlock(
+          Phrase('Три вида умений на четыре слота',
+              'Three kinds of ability for four slots'), [
+        Phrase(
+          'АКТИВНЫЕ срабатывают сами, когда готова перезарядка и хватает '
+              'маны.',
+          'ACTIVE ones fire by themselves when the cooldown is ready and '
+              'there is mana enough.',
+        ),
+        Phrase(
+          'ПАССИВНЫЕ работают всегда и ничего не стоят.',
+          'PASSIVE ones always work and cost nothing.',
+        ),
+        Phrase(
+          'АУРЫ работают всегда, но резервируют долю запаса маны — пока аура '
+              'в слоте, эта часть недоступна.',
+          'AURAS always work but reserve a share of the mana pool — while the '
+              'aura is slotted, that part is unavailable.',
+        ),
+        Phrase(
+          'Активные, пассивные и ауры делят одни и те же четыре места. В этом '
+              'и состоит выбор.',
+          'Active, passive and auras share the same four slots. That is where '
+              'the choice lies.',
+        ),
       ]),
-      HelpBlock('Мана', [
-        'Мана — общий запас на все активные умения. Перезарядка '
-            'ограничивает умение поодиночке («как часто»), мана — все вместе '
-            '(«сколько их сразу»).',
-        'Не хватило маны — умение просто ждёт, а наёмник продолжает бить '
-            'оружием. Пустая мана не ломает бой: это запас, который можно '
-            'не рассчитать, а не наказание.',
-        'Аура забирает и запас, и восстановление. Активное умение тратит '
-            'ману на секунду, аура — насовсем: две ауры уже заметно сушат '
-            'сборку, три превращают наёмника в бойца без умений.',
-        'Запас маны не растёт от глубины: цены умений тоже не растут. '
-            'Поднять его можно только вложениями — свойствами на вещах и '
-            'лучом «Разум» в дереве пассивок.',
+      HelpBlock(Phrase('Мана', 'Mana'), [
+        Phrase(
+          'Мана — общий запас на все активные умения. Перезарядка '
+              'ограничивает умение поодиночке («как часто»), мана — все '
+              'вместе («сколько их сразу»).',
+          'Mana is a shared pool for every active ability. A cooldown limits '
+              'one ability at a time (“how often”), mana limits them together '
+              '(“how many at once”).',
+        ),
+        Phrase(
+          'Не хватило маны — умение просто ждёт, а наёмник продолжает бить '
+              'оружием. Пустая мана не ломает бой: это запас, который можно '
+              'не рассчитать, а не наказание.',
+          'If mana runs short the ability simply waits and the mercenary '
+              'keeps swinging. An empty pool does not break the fight: it is '
+              'a budget you can misjudge, not a punishment.',
+        ),
+        Phrase(
+          'Аура забирает и запас, и восстановление. Активное умение тратит '
+              'ману на секунду, аура — насовсем: две ауры уже заметно сушат '
+              'сборку, три превращают наёмника в бойца без умений.',
+          'An aura takes both the pool and the regeneration. An active '
+              'ability spends mana for a second, an aura for good: two auras '
+              'already dry a build out noticeably, three turn the mercenary '
+              'into a fighter with no abilities.',
+        ),
+        Phrase(
+          'Запас маны не растёт от глубины: цены умений тоже не растут. '
+              'Поднять его можно только вложениями — свойствами на вещах и '
+              'лучом «Разум» в дереве пассивок.',
+          'The mana pool does not grow with depth: ability costs do not grow '
+              'either. It can only be raised by investment — item properties '
+              'and the Mind branch of the passive tree.',
+        ),
       ]),
-      HelpBlock('Сила сборки', [
-        'Число под сборкой — это оценка того, как глубоко наёмник дойдёт. Оно '
-            'считает вещи, оба дерева и выбранные умения вместе с их тегами.',
-        'Оценка знает, чем вы бьёте: поставьте в слоты Чары — и вещи с силой '
-            'чар начнут поднимать это число, а урон оружия перестанет.',
-        'Чего оно не считает: сопротивления, вампиризм и всё, что умение '
-            'делает помимо урона. Это мерка для сравнения вещей, а не приговор.',
+      HelpBlock(Phrase('Сила сборки', 'Build power'), [
+        Phrase(
+          'Число под сборкой — это оценка того, как глубоко наёмник дойдёт. '
+              'Оно считает вещи, оба дерева и выбранные умения вместе с их '
+              'тегами.',
+          'The number under the build estimates how deep the mercenary will '
+              'get. It counts items, both trees and the chosen abilities '
+              'along with their tags.',
+        ),
+        Phrase(
+          'Оценка знает, чем вы бьёте: поставьте в слоты Чары — и вещи с '
+              'силой чар начнут поднимать это число, а урон оружия перестанет.',
+          'The estimate knows what you strike with: slot Spells and items '
+              'with spell power start raising the number, while weapon damage '
+              'stops.',
+        ),
+        Phrase(
+          'Чего оно не считает: сопротивления, вампиризм и всё, что умение '
+              'делает помимо урона. Это мерка для сравнения вещей, а не '
+              'приговор.',
+          'What it does not count: resistances, life leech and everything an '
+              'ability does besides damage. It is a yardstick for comparing '
+              'items, not a verdict.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'tags',
-    title: 'Теги: как связаны умения и вещи',
-    summary: 'Стихия, форма, доставка, механика — и что их усиливает',
+    title: Phrase('Теги: как связаны умения и вещи',
+        'Tags: how abilities and items connect'),
+    summary: Phrase(
+      'Стихия, форма, доставка, механика — и что их усиливает',
+      'Element, form, delivery, mechanic — and what boosts them',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Под каждым умением написаны его теги. Это не украшение: тег — '
-            'единственное, за что цепляются вещи, дерево пассивок и черта '
-            'наёмника.',
-        '«+18 % к урону Огнём» усиливает ЛЮБОЕ умение с тегом «Огонь» — и не '
-            'делает ничего для умения без него.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Под каждым умением написаны его теги. Это не украшение: тег — '
+              'единственное, за что цепляются вещи, дерево пассивок и черта '
+              'наёмника.',
+          'Under every ability its tags are written. That is not decoration: '
+              'a tag is the only thing items, the passive tree and the '
+              'mercenary’s trait hook onto.',
+        ),
+        Phrase(
+          '«+18 % к урону Огнём» усиливает ЛЮБОЕ умение с тегом «Огонь» — и '
+              'не делает ничего для умения без него.',
+          '“+18% Fire damage” boosts ANY ability with the Fire tag — and does '
+              'nothing for an ability without it.',
+        ),
       ]),
-      HelpBlock('Четыре оси тегов', [
-        'СТИХИЯ — Огонь, Холод, Молния, Пустота, Физический. Она же тип '
-            'урона: у врагов бывают сопротивления, и стихия говорит, какое '
-            'из них сработает.',
-        'ФОРМА — Атака или Чары. От чего умение растёт.',
-        'ДОСТАВКА — Снаряд, Область. По скольким целям бьёт.',
-        'МЕХАНИКА — Длительность, Проклятие, Аура, Тотем, Удар, Кровь.',
-        'У одного умения теги с разных осей сразу. Поэтому «+% к урону '
-            'Снарядами» и «+% к урону Молнией» усиливают «Разряд» оба.',
+      HelpBlock(Phrase('Четыре оси тегов', 'Four axes of tags'), [
+        Phrase(
+          'СТИХИЯ — Огонь, Холод, Молния, Пустота, Физический. Она же тип '
+              'урона: у врагов бывают сопротивления, и стихия говорит, какое '
+              'из них сработает.',
+          'ELEMENT — Fire, Cold, Lightning, Void, Physical. It is also the '
+              'damage type: enemies have resistances, and the element says '
+              'which one applies.',
+        ),
+        Phrase(
+          'ФОРМА — Атака или Чары. От чего умение растёт.',
+          'FORM — Attack or Spell. What the ability scales from.',
+        ),
+        Phrase(
+          'ДОСТАВКА — Снаряд, Область. По скольким целям бьёт.',
+          'DELIVERY — Projectile, Area. How many targets it hits.',
+        ),
+        Phrase(
+          'МЕХАНИКА — Длительность, Проклятие, Аура, Тотем, Удар, Кровь.',
+          'MECHANIC — Duration, Curse, Aura, Totem, Strike, Blood.',
+        ),
+        Phrase(
+          'У одного умения теги с разных осей сразу. Поэтому «+% к урону '
+              'Снарядами» и «+% к урону Молнией» усиливают «Разряд» оба.',
+          'A single ability carries tags from several axes at once. That is '
+              'why “+% Projectile damage” and “+% Lightning damage” both boost '
+              'Spark Bolt.',
+        ),
       ]),
-      HelpBlock('Где брать множители', [
-        'ДЕРЕВО ПАССИВОК — надёжный источник: пять лучей отданы стихиям '
-            'целиком, и вы выбираете, в какой идти.',
-        'ВЕЩИ — случайный: свойство «+% к урону с тегом» выпадает с '
-            'конкретным тегом, и нужный придётся искать. Зато Кузница умеет '
-            'вынуть его в осколок и переставить на вещь получше.',
-        'ЧЕРТА НАЁМНИКА — иногда даёт стихию сразу.',
+      HelpBlock(
+          Phrase('Где брать множители', 'Where multipliers come from'), [
+        Phrase(
+          'ДЕРЕВО ПАССИВОК — надёжный источник: пять лучей отданы стихиям '
+              'целиком, и вы выбираете, в какой идти.',
+          'THE PASSIVE TREE is the reliable source: five branches are given '
+              'over to elements entirely, and you choose which to walk.',
+        ),
+        Phrase(
+          'ВЕЩИ — случайный: свойство «+% к урону с тегом» выпадает с '
+              'конкретным тегом, и нужный придётся искать. Зато Кузница умеет '
+              'вынуть его в осколок и переставить на вещь получше.',
+          'ITEMS are the random source: a “+% tagged damage” property rolls '
+              'with a specific tag, and the one you need must be hunted for. '
+              'But the Forge can pull it into a shard and move it onto a '
+              'better item.',
+        ),
+        Phrase(
+          'ЧЕРТА НАЁМНИКА — иногда даёт стихию сразу.',
+          'THE MERCENARY’S TRAIT sometimes grants an element outright.',
+        ),
       ]),
-      HelpBlock('Пропитка: мост между осями', [
-        'Умения-пропитки («Пламя на клинке» и подобные) заставляют автоатаку '
-            'бить стихией вместо физического урона.',
-        'Это единственный способ применить огненные вещи к автоатаке — а '
-            'именно ею наёмник наносит львиную долю урона. Оружейная сборка '
-            'с пропиткой пользуется стихийным лучом дерева наравне с чарами.',
-        'Обратная сторона: пропитанный удар режется сопротивлением этой '
-            'стихии. Против врага, который к ней стоек, вы бьёте слабее.',
+      HelpBlock(
+          Phrase('Пропитка: мост между осями',
+              'Infusion: a bridge between axes'), [
+        Phrase(
+          'Умения-пропитки («Пламя на клинке» и подобные) заставляют '
+              'автоатаку бить стихией вместо физического урона.',
+          'Infusion abilities (Flame on the Blade and its kin) make the '
+              'auto-attack strike with an element instead of physical damage.',
+        ),
+        Phrase(
+          'Это единственный способ применить огненные вещи к автоатаке — а '
+              'именно ею наёмник наносит львиную долю урона. Оружейная сборка '
+              'с пропиткой пользуется стихийным лучом дерева наравне с чарами.',
+          'It is the only way to apply fire items to the auto-attack — and '
+              'that is where the mercenary’s damage mostly comes from. A '
+              'weapon build with an infusion uses an elemental branch of the '
+              'tree on equal terms with spells.',
+        ),
+        Phrase(
+          'Обратная сторона: пропитанный удар режется сопротивлением этой '
+              'стихии. Против врага, который к ней стоек, вы бьёте слабее.',
+          'The other side: an infused strike is cut by resistance to that '
+              'element. Against an enemy that resists it you hit weaker.',
+        ),
       ]),
-      HelpBlock('Как это читать на экране', [
-        'В сборке под умениями есть строка «Урон по тегам». Яркий тег '
-            'работает на выбранных умениях, бледный — не встречается ни в '
-            'одном из них, и эти проценты сейчас лежат впустую.',
-        'В выборе умения теги вынесены в отбор сверху: точка у тега '
-            'означает, что множитель по нему у вас уже есть.',
-        'Кнопка «i» у любого умения открывает разбор: от какой вашей '
-            'характеристики оно растёт, сколько бьёт за удар и в секунду, из '
-            'чего сложились ваши увеличения и что делает каждый его тег. '
-            'Числа там ваши, а не примерные.',
+      HelpBlock(
+          Phrase('Как это читать на экране', 'How to read this on screen'), [
+        Phrase(
+          'В сборке под умениями есть строка «Урон по тегам». Яркий тег '
+              'работает на выбранных умениях, бледный — не встречается ни в '
+              'одном из них, и эти проценты сейчас лежат впустую.',
+          'In the build, under the abilities, there is a “Damage by tag” row. '
+              'A bright tag works on the chosen abilities; a pale one appears '
+              'in none of them, and those percentages are lying idle.',
+        ),
+        Phrase(
+          'В выборе умения теги вынесены в отбор сверху: точка у тега '
+              'означает, что множитель по нему у вас уже есть.',
+          'In the ability picker the tags are lifted into a filter at the '
+              'top: a dot on a tag means you already have a multiplier for it.',
+        ),
+        Phrase(
+          'Кнопка «i» у любого умения открывает разбор: от какой вашей '
+              'характеристики оно растёт, сколько бьёт за удар и в секунду, '
+              'из чего сложились ваши увеличения и что делает каждый его тег. '
+              'Числа там ваши, а не примерные.',
+          'The “i” button on any ability opens a breakdown: which of your '
+              'statistics it scales from, how much it hits for per strike and '
+              'per second, what your increases add up from and what each of '
+              'its tags does. The numbers there are yours, not approximate.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'items',
-    title: 'Вещи и их свойства',
-    summary: 'Что написано на вещи и что из этого важно',
+    title: Phrase('Вещи и их свойства', 'Items and their properties'),
+    summary: Phrase(
+      'Что написано на вещи и что из этого важно',
+      'What is written on an item and which of it matters',
+    ),
     blocks: [
-      HelpBlock('', [
-        'У вещи есть уровень, редкость, основа и свойства.',
-        'ОСНОВА — то, что есть у любой вещи этого типа: у доспеха броня, у '
-            'оружия урон. Она растёт вместе с уровнем вещи.',
-        'СВОЙСТВА — то, что выпало именно этой вещи. Сколько их будет, решает '
-            'редкость; какие именно — случай. Они и делают вещь вашей.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'У вещи есть уровень, редкость, основа и свойства.',
+          'An item has a level, a rarity, a base and properties.',
+        ),
+        Phrase(
+          'ОСНОВА — то, что есть у любой вещи этого типа: у доспеха броня, у '
+              'оружия урон. Она растёт вместе с уровнем вещи.',
+          'THE BASE is what every item of that type has: armor on body armor, '
+              'damage on a weapon. It grows with the item’s level.',
+        ),
+        Phrase(
+          'СВОЙСТВА — то, что выпало именно этой вещи. Сколько их будет, '
+              'решает редкость; какие именно — случай. Они и делают вещь '
+              'вашей.',
+          'PROPERTIES are what rolled on this particular item. Rarity decides '
+              'how many there will be; chance decides which. They are what '
+              'make an item yours.',
+        ),
       ]),
-      HelpBlock('Качество', [
-        'У каждого свойства есть качество от 0 до 100 — насколько удачно оно '
-            'выпало. Качество 96 значит, что лучше на этом уровне вещи почти '
-            'не бывает.',
-        'Качество важнее самого числа. Число стареет вместе с вещью — через '
-            'двадцать этажей вы найдёте такое же, но больше. Качество не '
-            'стареет: именно его и хранят осколки.',
+      HelpBlock(Phrase('Качество', 'Quality'), [
+        Phrase(
+          'У каждого свойства есть качество от 0 до 100 — насколько удачно '
+              'оно выпало. Качество 96 значит, что лучше на этом уровне вещи '
+              'почти не бывает.',
+          'Every property has a quality from 0 to 100 — how well it rolled. '
+              'Quality 96 means there is almost nothing better at this item '
+              'level.',
+        ),
+        Phrase(
+          'Качество важнее самого числа. Число стареет вместе с вещью — через '
+              'двадцать этажей вы найдёте такое же, но больше. Качество не '
+              'стареет: именно его и хранят осколки.',
+          'Quality matters more than the number. The number ages with the '
+              'item — twenty floors later you will find the same one, but '
+              'bigger. Quality does not age: that is exactly what shards keep.',
+        ),
       ]),
-      HelpBlock('Наёмник донесёт всё', [
-        'Он не выбрасывает ничего: что нашёл, то и принёс наверх. Ограничен '
-            'не рюкзак, а сундук на Заставе.',
-        'Поэтому после каждого спуска вы разбираете добычу сами — см. раздел '
-            '«Разбор добычи».',
+      HelpBlock(
+          Phrase('Наёмник донесёт всё',
+              'The mercenary carries everything back'), [
+        Phrase(
+          'Он не выбрасывает ничего: что нашёл, то и принёс наверх. Ограничен '
+              'не рюкзак, а сундук на Заставе.',
+          'They throw nothing away: what they found is what they bring up. '
+              'The limit is not the backpack but the stash at the Outpost.',
+        ),
+        Phrase(
+          'Поэтому после каждого спуска вы разбираете добычу сами — см. '
+              'раздел «Разбор добычи».',
+          'That is why after every descent you sort the haul yourself — see '
+              '“Sorting the haul”.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'loot',
-    title: 'Разбор добычи',
-    summary: 'Что оставить, что переплавить, что продать',
+    title: Phrase('Разбор добычи', 'Sorting the haul'),
+    summary: Phrase(
+      'Что оставить, что переплавить, что продать',
+      'What to keep, what to salvage, what to sell',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Наёмник приносит наверх всё найденное. Место есть только в сундуке, '
-            'и решаете вы: над каждой вещью три кнопки.',
-        'ОСТАВИТЬ — вещь едет в сундук и станет частью следующей сборки. '
-            'Мест ровно столько, сколько даёт Хранилище.',
-        'ПЕРЕПЛАВИТЬ — золото и, если вещь была редкой, осколок. Осколок '
-            'хранит качество свойства и нужен Кузнице.',
-        'ПРОДАТЬ — золота больше, осколка нет. Когда материал не нужен, а '
-            'нужны деньги.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Наёмник приносит наверх всё найденное. Место есть только в '
+              'сундуке, и решаете вы: над каждой вещью три кнопки.',
+          'The mercenary brings up everything they found. Room exists only in '
+              'the stash, and you decide: three buttons over every item.',
+        ),
+        Phrase(
+          'ОСТАВИТЬ — вещь едет в сундук и станет частью следующей сборки. '
+              'Мест ровно столько, сколько даёт Хранилище.',
+          'KEEP — the item goes to the stash and becomes part of the next '
+              'build. There are exactly as many slots as the Vault gives.',
+        ),
+        Phrase(
+          'ПЕРЕПЛАВИТЬ — золото и, если вещь была редкой, осколок. Осколок '
+              'хранит качество свойства и нужен Кузнице.',
+          'SALVAGE — gold and, if the item was rare, a shard. A shard keeps a '
+              'property’s quality and is what the Forge needs.',
+        ),
+        Phrase(
+          'ПРОДАТЬ — золота больше, осколка нет. Когда материал не нужен, а '
+              'нужны деньги.',
+          'SELL — more gold, no shard. For when you need money and not '
+              'material.',
+        ),
       ]),
-      HelpBlock('Зачем это вам', [
-        'Вещь, слабая по уровню, может быть единственной с нужным тегом. '
-            'Раньше такую выбрасывал наёмник, не зная вашей сборки, — теперь '
-            'её судьбу решаете вы.',
-        'Хранилище на Заставе растёт без потолка. Это единственная постройка '
-            'без предела: место в сундуке нужно всегда.',
+      HelpBlock(Phrase('Зачем это вам', 'Why this is yours to do'), [
+        Phrase(
+          'Вещь, слабая по уровню, может быть единственной с нужным тегом. '
+              'Раньше такую выбрасывал наёмник, не зная вашей сборки, — '
+              'теперь её судьбу решаете вы.',
+          'An item weak by level may be the only one with the tag you need. '
+              'It used to be thrown away by a mercenary who did not know your '
+              'build — now its fate is yours to decide.',
+        ),
+        Phrase(
+          'Хранилище на Заставе растёт без потолка. Это единственная '
+              'постройка без предела: место в сундуке нужно всегда.',
+          'The Vault at the Outpost grows without a ceiling. It is the only '
+              'building without a limit: stash room is always wanted.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'craft',
-    title: 'Кузница и осколки',
-    summary: 'Переброс, разбор, вставка, углубление — по шагам',
+    title: Phrase('Кузница и осколки', 'The Forge and shards'),
+    summary: Phrase(
+      'Переброс, разбор, вставка, углубление — по шагам',
+      'Reroll, break down, imprint, deepen — step by step',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Кузница нужна ради одного: то, что вы в ней сделали, НЕ стареет. '
-            'Любую вещь вы найдёте лучше через двадцать этажей, а вложенное '
-            'в осколок останется с вами навсегда.',
-        'Каждое действие сперва показывает, что получится, и только потом '
-            'берёт плату. Передумать можно всегда.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Кузница нужна ради одного: то, что вы в ней сделали, НЕ стареет. '
+              'Любую вещь вы найдёте лучше через двадцать этажей, а вложенное '
+              'в осколок останется с вами навсегда.',
+          'The Forge exists for one thing: what you make in it does NOT age. '
+              'Any item you will find better twenty floors later, but what '
+              'went into a shard stays with you forever.',
+        ),
+        Phrase(
+          'Каждое действие сперва показывает, что получится, и только потом '
+              'берёт плату. Передумать можно всегда.',
+          'Every action first shows what will come out and only then takes '
+              'payment. You can always change your mind.',
+        ),
       ]),
-      HelpBlock('Перебросить свойство', [
-        'Бросает число заново. Что выпадет — неизвестно; известно, между чем '
-            'и чем, и это написано до оплаты.',
-        'Уровень Кузницы поднимает нижнюю границу броска. Пока она ниже '
-            'нынешнего числа, переброс — лотерея: может стать хуже. Когда '
-            'Кузница поднимет её выше, хуже уже не будет никогда.',
-        'Каждый следующий переброс того же свойства дороже предыдущего.',
+      HelpBlock(Phrase('Перебросить свойство', 'Reroll a property'), [
+        Phrase(
+          'Бросает число заново. Что выпадет — неизвестно; известно, между '
+              'чем и чем, и это написано до оплаты.',
+          'Rolls the number again. What comes up is unknown; between what and '
+              'what is known, and it is written before you pay.',
+        ),
+        Phrase(
+          'Уровень Кузницы поднимает нижнюю границу броска. Пока она ниже '
+              'нынешнего числа, переброс — лотерея: может стать хуже. Когда '
+              'Кузница поднимет её выше, хуже уже не будет никогда.',
+          'The Forge’s level raises the lower bound of the roll. While it is '
+              'below the current number a reroll is a lottery: it can get '
+              'worse. Once the Forge raises it above, it never gets worse '
+              'again.',
+        ),
+        Phrase(
+          'Каждый следующий переброс того же свойства дороже предыдущего.',
+          'Each next reroll of the same property costs more than the last.',
+        ),
       ]),
-      HelpBlock('Разобрать на осколок', [
-        'Вещь исчезает целиком. От неё остаётся ОДНО свойство — то, что вы '
-            'выбрали, — в виде осколка. Остальные пропадают.',
-        'Осколок помнит не число, а качество. Поэтому он не стареет: вставьте '
-            'его в вещь поглубже, и там он даст больше, чем давал раньше.',
-        'При разборе качество теряет 10 пунктов — это плата за то, что '
-            'свойство стало переносимым.',
+      HelpBlock(
+          Phrase('Разобрать на осколок', 'Break down into a shard'), [
+        Phrase(
+          'Вещь исчезает целиком. От неё остаётся ОДНО свойство — то, что вы '
+              'выбрали, — в виде осколка. Остальные пропадают.',
+          'The item is destroyed entirely. ONE property remains — the one you '
+              'chose — as a shard. The rest are lost.',
+        ),
+        Phrase(
+          'Осколок помнит не число, а качество. Поэтому он не стареет: '
+              'вставьте его в вещь поглубже, и там он даст больше, чем давал '
+              'раньше.',
+          'A shard remembers not the number but the quality. That is why it '
+              'does not age: imprint it into a deeper item and it gives more '
+              'there than it gave before.',
+        ),
+        Phrase(
+          'При разборе качество теряет 10 пунктов — это плата за то, что '
+              'свойство стало переносимым.',
+          'Breaking down costs the quality 10 points — the price of making '
+              'the property portable.',
+        ),
       ]),
-      HelpBlock('Вставить осколок', [
-        'Кладёт осколок в свободное место на вещи. Число пересчитывается под '
-            'уровень ЭТОЙ вещи — ради этого осколки и берегут.',
-        'Свободных мест нет — придётся стереть одно из свойств. Оно '
-            'пропадёт; Верстак осколков даёт шанс его уберечь, и этот шанс '
-            'написан в подтверждении.',
-        'Двух одинаковых свойств на одной вещи не бывает.',
+      HelpBlock(Phrase('Вставить осколок', 'Imprint a shard'), [
+        Phrase(
+          'Кладёт осколок в свободное место на вещи. Число пересчитывается '
+              'под уровень ЭТОЙ вещи — ради этого осколки и берегут.',
+          'Puts the shard into a free slot on the item. The number is '
+              'recomputed for THIS item’s level — that is what shards are '
+              'hoarded for.',
+        ),
+        Phrase(
+          'Свободных мест нет — придётся стереть одно из свойств. Оно '
+              'пропадёт; Верстак осколков даёт шанс его уберечь, и этот шанс '
+              'написан в подтверждении.',
+          'If there is no free slot, one of the properties has to be erased. '
+              'It is lost; the Shard Bench gives a chance to save it, and '
+              'that chance is written in the confirmation.',
+        ),
+        Phrase(
+          'Двух одинаковых свойств на одной вещи не бывает.',
+          'No item ever carries the same property twice.',
+        ),
       ]),
-      HelpBlock('Углубить реликт', [
-        'Поднимает уровень реликта, пересчитывая всё, что от него зависит. '
-            'Особое свойство реликта не меняется — оно и не стареет.',
-        'Выше вашего рекорда глубины поднять нельзя: реликт не должен '
-            'обгонять того, кто его носит.',
+      HelpBlock(Phrase('Углубить реликт', 'Deepen a relic'), [
+        Phrase(
+          'Поднимает уровень реликта, пересчитывая всё, что от него зависит. '
+              'Особое свойство реликта не меняется — оно и не стареет.',
+          'Raises the relic’s level, recomputing everything that depends on '
+              'it. The relic’s unique effect does not change — it does not '
+              'age either.',
+        ),
+        Phrase(
+          'Выше вашего рекорда глубины поднять нельзя: реликт не должен '
+              'обгонять того, кто его носит.',
+          'It cannot be raised above your depth record: a relic must not '
+              'outrun the one who wears it.',
+        ),
       ]),
-      HelpBlock('Куда девать лишнее', [
-        'Переплавка превращает вещь в золото — сколько именно, зависит от '
-            'Алтаря. Это единственный способ освободить место в сундуке '
-            'своими руками: иначе за вас решит переполнение.',
+      HelpBlock(
+          Phrase('Куда девать лишнее', 'What to do with the surplus'), [
+        Phrase(
+          'Переплавка превращает вещь в золото — сколько именно, зависит от '
+              'Алтаря. Это единственный способ освободить место в сундуке '
+              'своими руками: иначе за вас решит переполнение.',
+          'Salvage turns an item into gold — how much depends on the Altar. '
+              'It is the only way to free stash room by your own hand: '
+              'otherwise the overflow decides for you.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'quests',
-    title: 'Задания: откуда берутся умения',
-    summary: 'Сорок четыре цели, у каждой своё умение в награду',
+    title: Phrase('Задания: откуда берутся умения',
+        'Quests: where abilities come from'),
+    summary: Phrase(
+      'Сорок четыре цели, у каждой своё умение в награду',
+      'Forty-four goals, each with its own ability as the reward',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Все умения, кроме стартовых одиннадцати, открываются ЗАДАНИЯМИ. '
-            'Одно задание — одно умение.',
-        'Заданий сорок четыре, и они разложены по цепочкам: пролог, четыре '
-            'стихии, ремесло войны, стойкость и знамёна.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Все умения, кроме стартовых одиннадцати, открываются ЗАДАНИЯМИ. '
+              'Одно задание — одно умение.',
+          'Every ability except the eleven starting ones is opened by a '
+              'QUEST. One quest, one ability.',
+        ),
+        Phrase(
+          'Заданий сорок четыре, и они разложены по цепочкам: пролог, четыре '
+              'стихии, ремесло войны, стойкость и знамёна.',
+          'There are forty-four quests, laid out in chains: the prologue, '
+              'four elements, the craft of war, fortitude and banners.',
+        ),
       ]),
-      HelpBlock('Видно следующий шаг, а не всё сразу', [
-        'В журнале показаны только те цели, до которых вы дошли по цепочке. '
-            'Остальные откроются дальше — иначе это был бы не список целей, а '
-            'простыня из сорока четырёх строк.',
-        'Если вы выполнили условие раньше, чем цель открылась, она закроется '
-            'в тот же миг, когда откроется. Заслуженное не пропадает.',
+      HelpBlock(
+          Phrase('Видно следующий шаг, а не всё сразу',
+              'You see the next step, not everything at once'), [
+        Phrase(
+          'В журнале показаны только те цели, до которых вы дошли по цепочке. '
+              'Остальные откроются дальше — иначе это был бы не список целей, '
+              'а простыня из сорока четырёх строк.',
+          'The journal shows only the goals you have reached along the chain. '
+              'The rest open later — otherwise it would not be a list of '
+              'goals but a wall of forty-four lines.',
+        ),
+        Phrase(
+          'Если вы выполнили условие раньше, чем цель открылась, она '
+              'закроется в тот же миг, когда откроется. Заслуженное не '
+              'пропадает.',
+          'If you met the condition before the goal opened, it closes the '
+              'very moment it opens. What is earned is not lost.',
+        ),
       ]),
-      HelpBlock('Три вида целей', [
-        'НАКОПИТЕЛЬНЫЕ — рекорд глубины, число контрактов, уровень постройки, '
-            'узлы древа, очки дерева, осколки, реликты. У них есть полоска: '
-            'видно, сколько осталось.',
-        'ПРО ОДИН СПУСК — «нанесите половину урона Молнией», «пройдите спуск '
-            'со сборкой, где два умения с тегом Огонь». Полоски у них нет: '
-            'такая цель либо выполнена спуском, либо нет.',
-        'ПРО СОБЫТИЕ — уложить конкретного босса. Дойти до него и уложить его '
-            '— разные вещи.',
+      HelpBlock(Phrase('Три вида целей', 'Three kinds of goal'), [
+        Phrase(
+          'НАКОПИТЕЛЬНЫЕ — рекорд глубины, число контрактов, уровень '
+              'постройки, узлы древа, очки дерева, осколки, реликты. У них '
+              'есть полоска: видно, сколько осталось.',
+          'CUMULATIVE — depth record, number of contracts, building level, '
+              'tree nodes, tree points, shards, relics. They have a bar: you '
+              'can see how much is left.',
+        ),
+        Phrase(
+          'ПРО ОДИН СПУСК — «нанесите половину урона Молнией», «пройдите '
+              'спуск со сборкой, где два умения с тегом Огонь». Полоски у них '
+              'нет: такая цель либо выполнена спуском, либо нет.',
+          'ABOUT ONE DESCENT — “deal half your damage as Lightning”, “finish '
+              'a descent with two Fire-tagged abilities”. They have no bar: '
+              'such a goal is either met by a descent or not.',
+        ),
+        Phrase(
+          'ПРО СОБЫТИЕ — уложить конкретного босса. Дойти до него и уложить '
+              'его — разные вещи.',
+          'ABOUT AN EVENT — bring down a particular boss. Reaching one and '
+              'felling it are different things.',
+        ),
       ]),
-      HelpBlock('Почему цели про урон стихией', [
-        'Это единственный вид цели, который спрашивает про БИЛД, а не про '
-            'глубину. Выполнить его можно только собрав сборку вокруг стихии '
-            '— и по дороге станет понятно, как теги, вещи и дерево связаны '
-            'между собой.',
-        'Стартовый набор всегда содержит умение той стихии, которую просит '
-            'первое звено цепи: цепь не требует того, что сама же и выдаёт.',
-        'Ста процентов одной стихией не просят никогда: автоатака бьёт своим '
-            'типом урона, и сборки без неё в игре нет.',
+      HelpBlock(
+          Phrase('Почему цели про урон стихией',
+              'Why there are goals about elemental damage'), [
+        Phrase(
+          'Это единственный вид цели, который спрашивает про БИЛД, а не про '
+              'глубину. Выполнить его можно только собрав сборку вокруг '
+              'стихии — и по дороге станет понятно, как теги, вещи и дерево '
+              'связаны между собой.',
+          'It is the only kind of goal that asks about the BUILD rather than '
+              'about depth. It can only be met by building around an element '
+              '— and along the way it becomes clear how tags, items and the '
+              'tree connect.',
+        ),
+        Phrase(
+          'Стартовый набор всегда содержит умение той стихии, которую просит '
+              'первое звено цепи: цепь не требует того, что сама же и выдаёт.',
+          'The starting set always contains an ability of the element the '
+              'first link of the chain asks for: a chain does not demand what '
+              'it itself hands out.',
+        ),
+        Phrase(
+          'Ста процентов одной стихией не просят никогда: автоатака бьёт '
+              'своим типом урона, и сборки без неё в игре нет.',
+          'A hundred percent of one element is never asked for: the '
+              'auto-attack strikes with its own damage type, and there is no '
+              'build in the game without it.',
+        ),
       ]),
-      HelpBlock('Награда приходит с добычей', [
-        'Задания проверяются в тот момент, когда вы забираете добычу. Спуск '
-            'посчитан заранее, но пока вы не вернулись за ним — он вам не '
-            'принадлежит, и награда за него тоже.',
-        'Сверх умения задание даёт немного Эха. Немного намеренно: награда '
-            'задания — новое умение, а не валюта.',
+      HelpBlock(
+          Phrase('Награда приходит с добычей',
+              'The reward arrives with the haul'), [
+        Phrase(
+          'Задания проверяются в тот момент, когда вы забираете добычу. Спуск '
+              'посчитан заранее, но пока вы не вернулись за ним — он вам не '
+              'принадлежит, и награда за него тоже.',
+          'Quests are checked the moment you collect the haul. The descent is '
+              'computed in advance, but until you come back for it, it is not '
+              'yours — and neither is its reward.',
+        ),
+        Phrase(
+          'Сверх умения задание даёт немного Эха. Немного намеренно: награда '
+              'задания — новое умение, а не валюта.',
+          'Beyond the ability a quest gives a little Echo. A little on '
+              'purpose: a quest’s reward is a new ability, not currency.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'trees',
-    title: 'Два дерева',
-    summary: 'Древо Эха и дерево пассивок: чем они отличаются',
+    title: Phrase('Два дерева', 'Two trees'),
+    summary: Phrase(
+      'Древо Эха и дерево пассивок: чем они отличаются',
+      'The Echo tree and the passive tree: how they differ',
+    ),
     blocks: [
-      HelpBlock('Древо Эха', [
-        'Покупается Эхом — валютой, которая приходит с каждой смертью и '
-            'больше ниоткуда.',
-        'Меняет ПРАВИЛА спуска: добавляет место под умение и под свойство '
-            'вещи, даёт '
-            'стартовую глубину, спасает осколок при полном Верстаке.',
-        'Умения оно НЕ открывает — это делают задания. Древо отвечает за то, '
-            'по каким правилам идёт спуск, задания — за то, чем вы его '
-            'проходите.',
-        'Ветка открывается по порядку: вложенное в урон не досталось '
-            'выживанию.',
+      HelpBlock(Phrase('Древо Эха', 'The Echo tree'), [
+        Phrase(
+          'Покупается Эхом — валютой, которая приходит с каждой смертью и '
+              'больше ниоткуда.',
+          'Bought with Echo — a currency that comes with every death and from '
+              'nowhere else.',
+        ),
+        Phrase(
+          'Меняет ПРАВИЛА спуска: добавляет место под умение и под свойство '
+              'вещи, даёт стартовую глубину, спасает осколок при полном '
+              'Верстаке.',
+          'It changes the RULES of a descent: adds a slot for an ability and '
+              'for an item property, grants starting depth, saves a shard '
+              'when the Bench is full.',
+        ),
+        Phrase(
+          'Умения оно НЕ открывает — это делают задания. Древо отвечает за '
+              'то, по каким правилам идёт спуск, задания — за то, чем вы его '
+              'проходите.',
+          'It does NOT open abilities — quests do that. The tree answers for '
+              'the rules a descent runs by, quests for what you walk it with.',
+        ),
+        Phrase(
+          'Ветка открывается по порядку: вложенное в урон не досталось '
+              'выживанию.',
+          'A branch opens in order: what went into damage did not go into '
+              'survival.',
+        ),
       ]),
-      HelpBlock('Дерево пассивок', [
-        'Очки даёт достигнутая ГЛУБИНА, а не потраченная валюта: очко '
-            'подтверждает, что вы там были.',
-        'Действует на всех наёмников сразу — наёмник это ран, а дерево '
-            'переживает любое их число.',
-        'Узел берётся, только если рядом уже взят другой. Дорога до дальнего '
-            'луча стоит очков, и в этом весь выбор.',
+      HelpBlock(Phrase('Дерево пассивок', 'The passive tree'), [
+        Phrase(
+          'Очки даёт достигнутая ГЛУБИНА, а не потраченная валюта: очко '
+              'подтверждает, что вы там были.',
+          'Points come from DEPTH reached, not from currency spent: a point '
+              'is proof you were there.',
+        ),
+        Phrase(
+          'Действует на всех наёмников сразу — наёмник это ран, а дерево '
+              'переживает любое их число.',
+          'It applies to every mercenary at once — a mercenary is one '
+              'descent, and the tree outlives any number of them.',
+        ),
+        Phrase(
+          'Узел берётся, только если рядом уже взят другой. Дорога до '
+              'дальнего луча стоит очков, и в этом весь выбор.',
+          'A node can be taken only if a neighbour is already taken. The road '
+              'to a far branch costs points, and that is the whole choice.',
+        ),
       ]),
-      HelpBlock('Три вида узлов', [
-        'ДОРОГА — мелкая прибавка. Её берут, чтобы пройти дальше.',
-        'КРУПНЫЙ узел — то, ради чего в луч идут. Без платы. Один в каждом '
-            'луче меняет ПРАВИЛО, а не число: «убийство лечит», «по '
-            'замедленным крит всегда», «часть брони считается сопротивлением».',
-        'КЛЮЧЕВОЙ узел — размен: большой плюс и настоящая плата другим '
-            'другой характеристикой. По одному на луч, тринадцать на всё '
-            'дерево.',
-        'Снять можно только конец дороги. Полный сброс бесплатен: ошибка в '
-            'сборке не должна стоить вам аккаунта.',
+      HelpBlock(Phrase('Три вида узлов', 'Three kinds of node'), [
+        Phrase(
+          'ДОРОГА — мелкая прибавка. Её берут, чтобы пройти дальше.',
+          'THE ROAD — a small bonus. It is taken to get further.',
+        ),
+        Phrase(
+          'КРУПНЫЙ узел — то, ради чего в луч идут. Без платы. Один в каждом '
+              'луче меняет ПРАВИЛО, а не число: «убийство лечит», «по '
+              'замедленным крит всегда», «часть брони считается '
+              'сопротивлением».',
+          'A NOTABLE node is what a branch is walked for. No price. One in '
+              'each branch changes a RULE rather than a number: “a kill '
+              'heals”, “strikes on slowed targets always crit”, “part of your '
+              'armor counts as resistance”.',
+        ),
+        Phrase(
+          'КЛЮЧЕВОЙ узел — размен: большой плюс и настоящая плата другой '
+              'характеристикой. По одному на луч, тринадцать на всё дерево.',
+          'A KEYSTONE is a trade: a large plus and a real price paid by '
+              'another statistic. One per branch, thirteen in the whole tree.',
+        ),
+        Phrase(
+          'Снять можно только конец дороги. Полный сброс бесплатен: ошибка в '
+              'сборке не должна стоить вам аккаунта.',
+          'Only the end of a road can be undone. A full reset is free: a '
+              'mistake in a build must not cost you your account.',
+        ),
       ]),
-      HelpBlock('Общие лучи и стихийные', [
-        'Восемь лучей двигают общие числа: здоровье, броню, урон, крит, '
-            'скорость, ману, добычу, вампиризм. Они работают всегда.',
-        'Пять лучей отданы стихиям и чарам: их узлы усиливают только то, что '
-            'несёт нужный тег. Поэтому проценты в них крупнее — узкий узел '
-            'обязан давать больше широкого, иначе его незачем брать.',
-        'Стихийный луч окупается двумя способами: сборкой на Чарах этой '
-            'стихии или пропиткой оружия в неё. Во втором случае усиливается '
-            'и автоатака, и он выгоднее.',
+      HelpBlock(
+          Phrase('Общие лучи и стихийные',
+              'General branches and elemental ones'), [
+        Phrase(
+          'Восемь лучей двигают общие числа: здоровье, броню, урон, крит, '
+              'скорость, ману, добычу, вампиризм. Они работают всегда.',
+          'Eight branches move general numbers: health, armor, damage, crit, '
+              'speed, mana, loot, life leech. They always work.',
+        ),
+        Phrase(
+          'Пять лучей отданы стихиям и чарам: их узлы усиливают только то, '
+              'что несёт нужный тег. Поэтому проценты в них крупнее — узкий '
+              'узел обязан давать больше широкого, иначе его незачем брать.',
+          'Five branches are given to the elements and to spells: their nodes '
+              'boost only what carries the right tag. That is why their '
+              'percentages are larger — a narrow node must give more than a '
+              'wide one, or there is no reason to take it.',
+        ),
+        Phrase(
+          'Стихийный луч окупается двумя способами: сборкой на Чарах этой '
+              'стихии или пропиткой оружия в неё. Во втором случае '
+              'усиливается и автоатака, и он выгоднее.',
+          'An elemental branch pays off two ways: a Spell build of that '
+              'element, or infusing your weapon with it. The second also '
+              'boosts the auto-attack, and is the better trade.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'outpost',
-    title: 'Застава и экономика',
-    summary: 'Постройки, задаток наёмника, куда уходит золото',
+    title: Phrase('Застава и экономика', 'The Outpost and the economy'),
+    summary: Phrase(
+      'Постройки, задаток наёмника, куда уходит золото',
+      'Buildings, the mercenary’s retainer, where the gold goes',
+    ),
     blocks: [
-      HelpBlock('Постройки', [
-        'Застава покупается золотом и даёт экономику и удобство: сколько '
-            'вещей влезет, сколько даёт переплавка лишнего, кто приходит '
-            'в Таверну, насколько наёмник отдыхает между этажами.',
-        'Уровень открывает достигнутая ГЛУБИНА, а не кошелёк. Иначе Застава '
-            'выкупалась бы вперёд прогресса, и дальше игра шла бы сама.',
+      HelpBlock(Phrase('Постройки', 'Buildings'), [
+        Phrase(
+          'Застава покупается золотом и даёт экономику и удобство: сколько '
+              'вещей влезет, сколько даёт переплавка лишнего, кто приходит '
+              'в Таверну, насколько наёмник отдыхает между этажами.',
+          'The Outpost is bought with gold and gives economy and convenience: '
+              'how many items fit, what salvage returns, who walks into the '
+              'Tavern, how much the mercenary rests between floors.',
+        ),
+        Phrase(
+          'Уровень открывает достигнутая ГЛУБИНА, а не кошелёк. Иначе '
+              'Застава выкупалась бы вперёд прогресса, и дальше игра шла бы '
+              'сама.',
+          'A level is unlocked by DEPTH reached, not by your purse. Otherwise '
+              'the Outpost would be bought out ahead of progress, and the '
+              'game would play itself from there.',
+        ),
       ]),
-      HelpBlock('Таверна', [
-        'Ранг наёмника — это множитель всех его характеристик и размер '
-            'рюкзака. Таверна не делает наёмника сильнее: она повышает шансы, '
-            'что придёт хороший.',
-        'Задаток растёт вместе с вашим рекордом: чем глубже расселина, тем '
-            'дороже те, кто в неё пойдёт. Оборванцы стоят своё всегда.',
-        'Если наёмников нет и платить нечем, Таверна отдаёт добровольца '
-            'даром. В расселину всегда есть кому пойти от отчаяния.',
+      HelpBlock(Phrase('Таверна', 'The Tavern'), [
+        Phrase(
+          'Ранг наёмника — это множитель всех его характеристик и размер '
+              'рюкзака. Таверна не делает наёмника сильнее: она повышает '
+              'шансы, что придёт хороший.',
+          'A mercenary’s rank is a multiplier on all their statistics and the '
+              'size of their backpack. The Tavern makes no mercenary '
+              'stronger: it raises the odds that a good one walks in.',
+        ),
+        Phrase(
+          'Задаток растёт вместе с вашим рекордом: чем глубже расселина, тем '
+              'дороже те, кто в неё пойдёт. Оборванцы стоят своё всегда.',
+          'The retainer grows with your record: the deeper the rift, the '
+              'dearer those who will go into it. The Ragged always cost their '
+              'own price.',
+        ),
+        Phrase(
+          'Если наёмников нет и платить нечем, Таверна отдаёт добровольца '
+              'даром. В расселину всегда есть кому пойти от отчаяния.',
+          'If there are no mercenaries and nothing to pay with, the Tavern '
+              'hands over a volunteer for free. There is always someone '
+              'desperate enough to walk into the rift.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'brand',
-    title: 'Клеймо Бездны',
-    summary: 'Добровольная сложность и лестница эндгейма',
+    title: Phrase('Клеймо Бездны', 'Brand of the Abyss'),
+    summary: Phrase(
+      'Добровольная сложность и лестница эндгейма',
+      'Voluntary difficulty and the endgame ladder',
+    ),
     blocks: [
-      HelpBlock('', [
-        'Клеймо выставляется перед спуском. Каждый ранг делает врагов крепче, '
-            'а добычу и Эхо — больше.',
-        'Первые ранги открывает рекорд глубины. Дальше — только делом: чтобы '
-            'открыть следующий ранг, надо дойти до нужного этажа НА текущем.',
-        'Каждый доказанный ранг даёт лишнее очко дерева пассивок сверх его '
-            'потолка.',
+      HelpBlock(_noHeading, [
+        Phrase(
+          'Клеймо выставляется перед спуском. Каждый ранг делает врагов '
+              'крепче, а добычу и Эхо — больше.',
+          'The Brand is set before a descent. Every rank makes enemies '
+              'tougher and the haul and the Echo larger.',
+        ),
+        Phrase(
+          'Первые ранги открывает рекорд глубины. Дальше — только делом: '
+              'чтобы открыть следующий ранг, надо дойти до нужного этажа НА '
+              'текущем.',
+          'The first ranks are opened by your depth record. After that only '
+              'by deed: to open the next rank you must reach the required '
+              'floor ON the current one.',
+        ),
+        Phrase(
+          'Каждый доказанный ранг даёт лишнее очко дерева пассивок сверх его '
+              'потолка.',
+          'Every proven rank grants one extra passive tree point above its '
+              'cap.',
+        ),
       ]),
-      HelpBlock('Зачем это нужно', [
-        'Рано или поздно Застава достроена, деревья выкуплены, и глубина '
-            'встаёт. Клеймо — то, что растёт дальше: вопрос меняется с «как '
-            'глубоко ты зашёл» на «на каком Клейме ты держишь свою глубину».',
+      HelpBlock(Phrase('Зачем это нужно', 'What it is for'), [
+        Phrase(
+          'Рано или поздно Застава достроена, деревья выкуплены, и глубина '
+              'встаёт. Клеймо — то, что растёт дальше: вопрос меняется с «как '
+              'глубоко ты зашёл» на «на каком Клейме ты держишь свою глубину».',
+          'Sooner or later the Outpost is finished, the trees are bought out '
+              'and depth stalls. The Brand is what grows after that: the '
+              'question changes from “how deep did you go” to “at what Brand '
+              'do you hold your depth”.',
+        ),
       ]),
     ],
   ),
   HelpSection(
     id: 'descent',
-    title: 'Спуск: этажи, развилки, стена',
-    summary: 'Как устроен спуск и почему наёмник всё-таки гибнет',
+    title: Phrase('Спуск: этажи, развилки, стена',
+        'The descent: floors, forks, the wall'),
+    summary: Phrase(
+      'Как устроен спуск и почему наёмник всё-таки гибнет',
+      'How a descent works and why the mercenary dies anyway',
+    ),
     blocks: [
-      HelpBlock('Этаж', [
-        'Этаж — это три волны врагов и сундук. Каждый пятый этаж — босс.',
-        'Между этажами наёмник переводит дух: это занимает время и '
-            'возвращает часть здоровья и маны.',
+      HelpBlock(Phrase('Этаж', 'A floor'), [
+        Phrase(
+          'Этаж — это три волны врагов и сундук. Каждый пятый этаж — босс.',
+          'A floor is three waves of enemies and a chest. Every fifth floor '
+              'holds a boss.',
+        ),
+        Phrase(
+          'Между этажами наёмник переводит дух: это занимает время и '
+              'возвращает часть здоровья и маны.',
+          'Between floors the mercenary catches their breath: that takes time '
+              'and returns part of their health and mana.',
+        ),
       ]),
-      HelpBlock('Развилки', [
-        'Каждые несколько этажей путь раздваивается, и у каждой ветки свой '
-            'модификатор — «врагов вдвое больше», «нет регенерации», «−30 к '
-            'сопротивлению».',
-        'На развилке наёмник ОСТАНАВЛИВАЕТСЯ и ждёт вашего решения. Не '
-            'дождавшись — идёт дальше по приказу, который вы выставили в '
-            'сборке, и больше на этом спуске не встаёт нигде.',
-        'Тому, кто здесь, открыт третий путь: награды обоих путей и ни одной '
-            'платы. Платой служит само присутствие — приказ такой путь '
-            'выбрать не может.',
-        'Модификатор держится до следующей развилки, а не один этаж.',
+      HelpBlock(Phrase('Развилки', 'Forks'), [
+        Phrase(
+          'Каждые несколько этажей путь раздваивается, и у каждой ветки свой '
+              'модификатор — «врагов вдвое больше», «нет регенерации», «−30 к '
+              'сопротивлению».',
+          'Every few floors the path splits in two, and each branch has its '
+              'own modifier — “twice the enemies”, “no regeneration”, “−30 '
+              'resistance”.',
+        ),
+        Phrase(
+          'На развилке наёмник ОСТАНАВЛИВАЕТСЯ и ждёт вашего решения. Не '
+              'дождавшись — идёт дальше по приказу, который вы выставили в '
+              'сборке, и больше на этом спуске не встаёт нигде.',
+          'At a fork the mercenary STOPS and waits for your decision. If it '
+              'does not come, they walk on by the standing order you set in '
+              'the build — and never stop again for the rest of that descent.',
+        ),
+        Phrase(
+          'Тому, кто здесь, открыт третий путь: награды обоих путей и ни '
+              'одной платы. Платой служит само присутствие — приказ такой '
+              'путь выбрать не может.',
+          'To whoever is here a third path is open: the rewards of both paths '
+              'and no price at all. Presence itself is the price — a standing '
+              'order cannot choose that path.',
+        ),
+        Phrase(
+          'Модификатор держится до следующей развилки, а не один этаж.',
+          'A modifier holds until the next fork, not for a single floor.',
+        ),
       ]),
-      HelpBlock('Разлом дня', [
-        'Раз в сутки открыт особый спуск. Модификатор дня действует на каждом '
-            'этаже, а не между развилками, и он один для всех игроков: '
-            'сегодняшний разлом нельзя перекатить, закрыв игру.',
-        'Эхо за такой спуск удваивается, а глубина в разломах ведёт '
-            'отдельную запись — сравнивать её с обычным рекордом значило бы '
-            'сравнивать разные игры.',
-        'Сутки тратятся в момент отправки. Развилки внутри разлома работают '
-            'как обычно, и выбранный путь складывается с модификатором дня.',
+      HelpBlock(Phrase('Разлом дня', 'Rift of the Day'), [
+        Phrase(
+          'Раз в сутки открыт особый спуск. Модификатор дня действует на '
+              'каждом этаже, а не между развилками, и он один для всех '
+              'игроков: сегодняшний разлом нельзя перекатить, закрыв игру.',
+          'Once a day a special descent is open. The day’s modifier applies '
+              'on every floor rather than between forks, and it is the same '
+              'for every player: today’s rift cannot be rerolled by closing '
+              'the game.',
+        ),
+        Phrase(
+          'Эхо за такой спуск удваивается, а глубина в разломах ведёт '
+              'отдельную запись — сравнивать её с обычным рекордом значило бы '
+              'сравнивать разные игры.',
+          'Echo for such a descent is doubled, and rift depth keeps its own '
+              'record — comparing it with the ordinary one would mean '
+              'comparing different games.',
+        ),
+        Phrase(
+          'Сутки тратятся в момент отправки. Развилки внутри разлома работают '
+              'как обычно, и выбранный путь складывается с модификатором дня.',
+          'The day is spent at the moment of departure. Forks inside a rift '
+              'work as usual, and the chosen path stacks with the day’s '
+              'modifier.',
+        ),
       ]),
-      HelpBlock('Стена', [
-        'Враги усиливаются быстрее, чем растёт снаряжение. Это не ошибка '
-            'баланса, а устройство игры: у каждой сборки есть глубина, дальше '
-            'которой она не идёт.',
-        'Удвоение силы сборки добавляет около сорока этажей. Именно поэтому '
-            'смерть — не проигрыш, а способ измерить, насколько вы выросли.',
+      HelpBlock(Phrase('Стена', 'The wall'), [
+        Phrase(
+          'Враги усиливаются быстрее, чем растёт снаряжение. Это не ошибка '
+              'баланса, а устройство игры: у каждой сборки есть глубина, '
+              'дальше которой она не идёт.',
+          'Enemies grow stronger faster than gear does. That is not a balance '
+              'error but how the game is built: every build has a depth '
+              'beyond which it does not go.',
+        ),
+        Phrase(
+          'Удвоение силы сборки добавляет около сорока этажей. Именно поэтому '
+              'смерть — не проигрыш, а способ измерить, насколько вы выросли.',
+          'Doubling a build’s power adds about forty floors. That is exactly '
+              'why death is not a loss but a way to measure how far you have '
+              'grown.',
+        ),
       ]),
     ],
   ),

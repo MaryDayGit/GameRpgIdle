@@ -41,7 +41,7 @@ void main() {
 
       for (final floor in driver.result.floors) {
         expect(predicted[floor.depth], floor.modifierId,
-            reason: 'этаж ${floor.depth}, политика ${policy.ru}');
+            reason: 'этаж ${floor.depth}, политика ${policy.title}');
       }
     }
   });

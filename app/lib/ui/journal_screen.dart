@@ -10,6 +10,7 @@ import 'package:rift/core/sim/descent.dart';
 import 'package:rift/core/sim/fork.dart';
 
 import 'format.dart';
+import 'strings.dart';
 
 /// Журнал отсутствия (GDD §9.3).
 ///
@@ -37,17 +38,17 @@ class JournalScreen extends StatelessWidget {
     final haul = result.haul;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Спуск: ${merc.name}')),
+      appBar: AppBar(title: Text(S.journalTitle(merc.name))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _Outcome(contract: contract, result: result),
           const SizedBox(height: 24),
 
-          _SectionTitle('Находки · ${haul.itemCount} из ${haul.capacity}'),
+          _SectionTitle(S.journalFinds(haul.itemCount, haul.capacity)),
           if (haul.items.isEmpty)
-            const Text('Наёмник не донёс ничего нового.',
-                style: TextStyle(fontSize: 13, color: Colors.white54))
+            Text(S.journalNothingNew,
+                style: const TextStyle(fontSize: 13, color: Colors.white54))
           else
             for (final item in haul.items) _ShowcaseItem(item: item),
 
@@ -55,16 +56,14 @@ class JournalScreen extends StatelessWidget {
           if (haul.salvagedCount > 0) ...[
             const SizedBox(height: 8),
             Text(
-              '${haul.salvagedCount} не влезло в рюкзак → '
-              '${money(haul.salvagedGold)} золота'
-              '${haul.shards.isEmpty ? "" : " и "
-                  "${plural(haul.shards.length, "осколок", "осколка", "осколков")}"}',
+              S.journalOverflow(haul.salvagedCount, money(haul.salvagedGold),
+                  haul.shards.length),
               style: const TextStyle(fontSize: 12, color: Colors.white38),
             ),
           ],
 
           const SizedBox(height: 24),
-          const _SectionTitle('Что было по дороге'),
+          _SectionTitle(S.journalOnTheWay),
           for (final event in _events(result, merc.gender))
             _EventRow(event: event),
         ],
@@ -74,8 +73,8 @@ class JournalScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: FilledButton(
             onPressed: onCollect,
-            child: Text('Забрать всё · ${money(haul.totalGold)} золота, '
-                '${result.echo} Эха'),
+            child: Text(S.journalCollect(money(haul.totalGold), result.echo)),
+
           ),
         ),
       ),
@@ -99,36 +98,31 @@ class _Outcome extends StatelessWidget {
     // из той же оперы.
     final she = contract.mercenary.gender == Gender.feminine;
     final tail = switch (result.ending) {
-      RunEnding.death => result.killedBy == null
-          ? '${she ? "Погибла" : "Погиб"} на этаже ${result.maxDepth + 1}.'
-          : '${she ? "Погибла" : "Погиб"} на этаже ${result.maxDepth + 1}: '
-              '${result.killedBy}.',
-      RunEnding.stalled => '${she ? "Упёрлась" : "Упёрся"} в стену на этаже '
-          '${result.maxDepth + 1} — волна не убивается.',
-      RunEnding.timeCap => she ? 'Отозвана по времени.' : 'Отозван по времени.',
-      RunEnding.floorCap =>
-        she ? 'Дошла до предела.' : 'Дошёл до предела.',
+      RunEnding.death => S.journalOutcomeDeath(
+          she: she, floor: result.maxDepth + 1, killedBy: result.killedBy),
+      RunEnding.stalled =>
+        S.journalOutcomeStalled(she: she, floor: result.maxDepth + 1),
+      RunEnding.timeCap => S.journalOutcomeTimeCap(she: she),
+      RunEnding.floorCap => S.journalOutcomeFloorCap(she: she),
       // Журнал открытого спуска: наёмник ещё идёт, и последняя строка — не
       // итог, а место, где он сейчас.
-      RunEnding.atFork =>
-        'Стоит на развилке у этажа ${result.maxDepth + 1}.',
-      RunEnding.recalled => '${she ? "Отозвана" : "Отозван"} с этажа '
-          '${result.maxDepth + 1}, не закончив его. '
-          '${she ? "Жива, добыча при ней." : "Жив, добыча при нём."}',
+      RunEnding.atFork => S.journalOutcomeAtFork(result.maxDepth + 1),
+      RunEnding.recalled =>
+        S.journalOutcomeRecalled(she: she, floor: result.maxDepth + 1),
     };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Этажи $from → ${result.maxDepth}  (+$gained)',
+          S.journalFloors(from, result.maxDepth, gained),
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 6),
         Text(
-          '${contract.mercenary.rank.forGender(contract.mercenary.gender)} · '
-          '${contract.mercenary.trait.forGender(contract.mercenary.gender)} · '
-          'в бездне ${clock(result.totalSeconds)}',
+          "${contract.mercenary.rank.forGender(contract.mercenary.gender)} · "
+          "${contract.mercenary.trait.forGender(contract.mercenary.gender)} · "
+          "${S.journalInAbyss(clock(result.totalSeconds))}",
           style: const TextStyle(fontSize: 12, color: Colors.white54),
         ),
         const SizedBox(height: 10),
@@ -181,9 +175,9 @@ class _ShowcaseItem extends StatelessWidget {
                         fontSize: 13, fontWeight: FontWeight.w600)),
               ),
               if (item.isRelic)
-                const _Badge(text: 'реликт', color: Color(0xFFC7643F)),
+                _Badge(text: S.relicMark, color: const Color(0xFFC7643F)),
               if (trigger != null)
-                const _Badge(text: 'триггер', color: Color(0xFF4F8FC7)),
+                _Badge(text: S.triggerMark, color: const Color(0xFF4F8FC7)),
             ],
           ),
           for (final line in ItemText.lines(item))
@@ -291,7 +285,9 @@ List<_Event> _events(RunResult result, Gender gender) {
         // дня, который действует с первого этажа. Назвать его развилкой
         // значило бы сослать игрока искать выбор, которого он не делал.
         final label =
-            ForkChooser.isForkFloor(floor.depth) ? 'Развилка' : 'Разлом';
+            ForkChooser.isForkFloor(floor.depth)
+                ? S.journalFork
+                : S.journalRift;
         // У смелого пути платы нет вовсе, и «но платы нет» звучало бы как
         // оговорка там, где это и есть награда за присутствие.
         events.add(_Event(
@@ -299,7 +295,7 @@ List<_Event> _events(RunResult result, Gender gender) {
             def.penalties.isEmpty
                 ? '$label: ${def.name} — ${def.plus}'
                 : '$label: ${def.name} — ${def.plus}, '
-                    'но ${_lowerFirst(def.minus)}'));
+                    '${S.journalButCost(_lowerFirst(def.minus))}'));
       }
     }
 
@@ -307,9 +303,10 @@ List<_Event> _events(RunResult result, Gender gender) {
     if (boss != null && floor.survived) {
       events.add(_Event(
         floor.depth,
-        boss.gender == Gender.feminine
-            ? '${boss.name} повержена'
-            : '${boss.name} повержен',
+        S.journalBossDown(boss.name,
+            she: boss.gender == Gender.feminine),
+
+
       ));
     }
 
@@ -318,8 +315,10 @@ List<_Event> _events(RunResult result, Gender gender) {
       // как ошибка — ровно та же причина, что и у строки исхода.
       events.add(_Event(
         floor.depth,
-        'Чуть не ${gender == Gender.feminine ? "погибла" : "погиб"} — '
-        'оставалось ${percent(floor.lowestHpFraction)} здоровья',
+        S.journalNearlyDied(
+            she: gender == Gender.feminine,
+            left: percent(floor.lowestHpFraction)),
+
         warning: true,
       ));
     }
@@ -330,16 +329,14 @@ List<_Event> _events(RunResult result, Gender gender) {
         floor.survived) {
       slowdownReported = true;
       events.add(_Event(floor.depth,
-          'Этажи пошли вдвое медленнее — стена близко', warning: true));
+          S.journalSlowing, warning: true));
     }
   }
 
   if (result.ending == RunEnding.death) {
     events.add(_Event(
       result.maxDepth + 1,
-      result.killedBy == null
-          ? 'Здесь всё и кончилось'
-          : 'Здесь всё и кончилось: ${result.killedBy}',
+      S.journalEndedHere(result.killedBy),
       warning: true,
     ));
   }

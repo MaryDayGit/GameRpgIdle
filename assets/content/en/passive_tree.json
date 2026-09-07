@@ -1,0 +1,1206 @@
+{
+  "version": 1,
+  "_comment": "Сгенерировано `dart run tool/make_passive_tree.dart` вместе с деревом — правьте английские формы в генераторе, а не здесь.",
+  "entries": {
+    "abyss_1_0": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_2_0": {
+      "name": "Evil Eye",
+      "text": "+13% Curse damage"
+    },
+    "abyss_2_1": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_3_0": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_3_1": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_4_0": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_4_1": {
+      "name": "The Chasm",
+      "text": "+34% Void damage"
+    },
+    "abyss_4_2": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_5_0": {
+      "name": "Evil Eye",
+      "text": "+13% Curse damage"
+    },
+    "abyss_5_1": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_5_2": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_6_0": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_6_1": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_6_2": {
+      "name": "Evil Eye",
+      "text": "+13% Curse damage"
+    },
+    "abyss_7_0": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_7_1": {
+      "name": "Silent Call",
+      "text": "+26% Totem damage"
+    },
+    "abyss_7_2": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_8_0": {
+      "name": "Evil Eye",
+      "text": "+13% Curse damage"
+    },
+    "abyss_8_1": {
+      "name": "Whisper",
+      "text": "+15% Void damage"
+    },
+    "abyss_8_2": {
+      "name": "Detachment",
+      "text": "+7 void resistance"
+    },
+    "abyss_9_0": {
+      "name": "Seal of Withering",
+      "text": "You hit cursed targets 30% harder"
+    },
+    "abyss_9_1": {
+      "name": "Hungry Dark",
+      "text": "+45% Void damage"
+    },
+    "abyss_9_2": {
+      "name": "Empty Vessel",
+      "text": "+130% Void damage, but −45 maximum mana"
+    },
+    "arcane_1_0": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_2_0": {
+      "name": "Whispered Lines",
+      "text": "+10 maximum mana"
+    },
+    "arcane_2_1": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_3_0": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_3_1": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_4_0": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_4_1": {
+      "name": "Formula",
+      "text": "+7 spell power"
+    },
+    "arcane_4_2": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_5_0": {
+      "name": "Whispered Lines",
+      "text": "+10 maximum mana"
+    },
+    "arcane_5_1": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_5_2": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_6_0": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_6_1": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_6_2": {
+      "name": "Whispered Lines",
+      "text": "+10 maximum mana"
+    },
+    "arcane_7_0": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_7_1": {
+      "name": "Codex of Spells",
+      "text": "+30% Spell damage"
+    },
+    "arcane_7_2": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_8_0": {
+      "name": "Whispered Lines",
+      "text": "+10 maximum mana"
+    },
+    "arcane_8_1": {
+      "name": "Incantation",
+      "text": "+15% Spell damage"
+    },
+    "arcane_8_2": {
+      "name": "Lore",
+      "text": "+3 spell power"
+    },
+    "arcane_9_0": {
+      "name": "Mind as Vessel",
+      "text": "+1 spell power per 8 maximum mana"
+    },
+    "arcane_9_1": {
+      "name": "High Art",
+      "text": "+11 spell power"
+    },
+    "arcane_9_2": {
+      "name": "Renouncing Steel",
+      "text": "+145% Spell damage, but −50% attack speed"
+    },
+    "ember_1_0": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_2_0": {
+      "name": "Smouldering Trail",
+      "text": "+13% damage over time"
+    },
+    "ember_2_1": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_3_0": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_3_1": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_4_0": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_4_1": {
+      "name": "Bonfire",
+      "text": "+34% Fire damage"
+    },
+    "ember_4_2": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_5_0": {
+      "name": "Smouldering Trail",
+      "text": "+13% damage over time"
+    },
+    "ember_5_1": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_5_2": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_6_0": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_6_1": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_6_2": {
+      "name": "Smouldering Trail",
+      "text": "+13% damage over time"
+    },
+    "ember_7_0": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_7_1": {
+      "name": "Crucible",
+      "text": "+26% Spell damage"
+    },
+    "ember_7_2": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_8_0": {
+      "name": "Smouldering Trail",
+      "text": "+13% damage over time"
+    },
+    "ember_8_1": {
+      "name": "Ember",
+      "text": "+15% Fire damage"
+    },
+    "ember_8_2": {
+      "name": "Swelter",
+      "text": "+7 fire resistance"
+    },
+    "ember_9_0": {
+      "name": "Smouldering Coal",
+      "text": "Damage over time is 35% stronger"
+    },
+    "ember_9_1": {
+      "name": "Conflagration",
+      "text": "+45% Fire damage"
+    },
+    "ember_9_2": {
+      "name": "Scorched Earth",
+      "text": "+130% Fire damage, but −35% maximum HP"
+    },
+    "fang_1_0": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_2_0": {
+      "name": "Grip",
+      "text": "+7% Strike damage"
+    },
+    "fang_2_1": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_3_0": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_3_1": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_4_0": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_4_1": {
+      "name": "Predator",
+      "text": "+20% damage"
+    },
+    "fang_4_2": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_5_0": {
+      "name": "Grip",
+      "text": "+7% Strike damage"
+    },
+    "fang_5_1": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_5_2": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_6_0": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_6_1": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_6_2": {
+      "name": "Grip",
+      "text": "+7% Strike damage"
+    },
+    "fang_7_0": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_7_1": {
+      "name": "Fury",
+      "text": "+10% attack speed"
+    },
+    "fang_7_2": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_8_0": {
+      "name": "Grip",
+      "text": "+7% Strike damage"
+    },
+    "fang_8_1": {
+      "name": "Fang",
+      "text": "+8% damage"
+    },
+    "fang_8_2": {
+      "name": "Whetstone",
+      "text": "+14 weapon damage"
+    },
+    "fang_9_0": {
+      "name": "Desperation",
+      "text": "Below half health you hit 25% harder"
+    },
+    "fang_9_1": {
+      "name": "Ferocity",
+      "text": "+32% Physical damage"
+    },
+    "fang_9_2": {
+      "name": "Recklessness",
+      "text": "+55% damage, but −35% armor"
+    },
+    "flesh_1_0": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_2_0": {
+      "name": "Steady Breath",
+      "text": "+1.5 HP regeneration per second"
+    },
+    "flesh_2_1": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_3_0": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_3_1": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_4_0": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_4_1": {
+      "name": "Second Heart",
+      "text": "+20% maximum HP"
+    },
+    "flesh_4_2": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_5_0": {
+      "name": "Steady Breath",
+      "text": "+1.5 HP regeneration per second"
+    },
+    "flesh_5_1": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_5_2": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_6_0": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_6_1": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_6_2": {
+      "name": "Steady Breath",
+      "text": "+1.5 HP regeneration per second"
+    },
+    "flesh_7_0": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_7_1": {
+      "name": "Strong Bones",
+      "text": "+120 maximum HP"
+    },
+    "flesh_7_2": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_8_0": {
+      "name": "Steady Breath",
+      "text": "+1.5 HP regeneration per second"
+    },
+    "flesh_8_1": {
+      "name": "Vein",
+      "text": "+8% maximum HP"
+    },
+    "flesh_8_2": {
+      "name": "Thick Hide",
+      "text": "+40 maximum HP"
+    },
+    "flesh_9_0": {
+      "name": "Second Wind",
+      "text": "A kill restores 2% of maximum HP"
+    },
+    "flesh_9_1": {
+      "name": "Vitality",
+      "text": "+26% maximum HP"
+    },
+    "flesh_9_2": {
+      "name": "Blood for Power",
+      "text": "+45% damage, but −30% maximum HP"
+    },
+    "frost_1_0": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_2_0": {
+      "name": "Ice Chips",
+      "text": "+13% Projectile damage"
+    },
+    "frost_2_1": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_3_0": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_3_1": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_4_0": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_4_1": {
+      "name": "Crust",
+      "text": "+34% Cold damage"
+    },
+    "frost_4_2": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_5_0": {
+      "name": "Ice Chips",
+      "text": "+13% Projectile damage"
+    },
+    "frost_5_1": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_5_2": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_6_0": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_6_1": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_6_2": {
+      "name": "Ice Chips",
+      "text": "+13% Projectile damage"
+    },
+    "frost_7_0": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_7_1": {
+      "name": "Ice Carapace",
+      "text": "+14% armor"
+    },
+    "frost_7_2": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_8_0": {
+      "name": "Ice Chips",
+      "text": "+13% Projectile damage"
+    },
+    "frost_8_1": {
+      "name": "Rime",
+      "text": "+15% Cold damage"
+    },
+    "frost_8_2": {
+      "name": "Bitter Cold",
+      "text": "+7 cold resistance"
+    },
+    "frost_9_0": {
+      "name": "Chilling Grip",
+      "text": "Your hits slow the target by 20%"
+    },
+    "frost_9_1": {
+      "name": "Permafrost",
+      "text": "+45% Cold damage"
+    },
+    "frost_9_2": {
+      "name": "Heart of Ice",
+      "text": "+130% Cold damage, but −30% attack speed"
+    },
+    "hunt_1_0": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_2_0": {
+      "name": "Instinct",
+      "text": "+4% loot quality"
+    },
+    "hunt_2_1": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_3_0": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_3_1": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_4_0": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_4_1": {
+      "name": "Nose for Gold",
+      "text": "+20% gold found"
+    },
+    "hunt_4_2": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_5_0": {
+      "name": "Instinct",
+      "text": "+4% loot quality"
+    },
+    "hunt_5_1": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_5_2": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_6_0": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_6_1": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_6_2": {
+      "name": "Instinct",
+      "text": "+4% loot quality"
+    },
+    "hunt_7_0": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_7_1": {
+      "name": "Connoisseur",
+      "text": "+15% loot quality"
+    },
+    "hunt_7_2": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_8_0": {
+      "name": "Instinct",
+      "text": "+4% loot quality"
+    },
+    "hunt_8_1": {
+      "name": "Trained Eye",
+      "text": "+5% loot quantity"
+    },
+    "hunt_8_2": {
+      "name": "Purse",
+      "text": "+12% gold found"
+    },
+    "hunt_9_0": {
+      "name": "Heavy Tread",
+      "text": "4% of maximum HP counts as armor"
+    },
+    "hunt_9_1": {
+      "name": "Provider",
+      "text": "+18% loot quantity"
+    },
+    "hunt_9_2": {
+      "name": "Marauder",
+      "text": "+40% loot quantity, but −25% maximum HP"
+    },
+    "leech_1_0": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_2_0": {
+      "name": "Bloodflow",
+      "text": "+1.2 HP regeneration per second"
+    },
+    "leech_2_1": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_3_0": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_3_1": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_4_0": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_4_1": {
+      "name": "Bloodsucker",
+      "text": "+2% life leech"
+    },
+    "leech_4_2": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_5_0": {
+      "name": "Bloodflow",
+      "text": "+1.2 HP regeneration per second"
+    },
+    "leech_5_1": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_5_2": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_6_0": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_6_1": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_6_2": {
+      "name": "Bloodflow",
+      "text": "+1.2 HP regeneration per second"
+    },
+    "leech_7_0": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_7_1": {
+      "name": "Satiation",
+      "text": "+2.5% life leech"
+    },
+    "leech_7_2": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_8_0": {
+      "name": "Bloodflow",
+      "text": "+1.2 HP regeneration per second"
+    },
+    "leech_8_1": {
+      "name": "Leech",
+      "text": "+0.8% life leech"
+    },
+    "leech_8_2": {
+      "name": "Thirst",
+      "text": "+7% Blood damage"
+    },
+    "leech_9_0": {
+      "name": "Blood on the Blade",
+      "text": "A critical strike restores 1% of maximum HP"
+    },
+    "leech_9_1": {
+      "name": "Insatiable Blood",
+      "text": "+3% life leech"
+    },
+    "leech_9_2": {
+      "name": "Insatiability",
+      "text": "+6% life leech, but −30% maximum HP"
+    },
+    "mind_1_0": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_2_0": {
+      "name": "Meditation",
+      "text": "+18 maximum mana"
+    },
+    "mind_2_1": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_3_0": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_3_1": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_4_0": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_4_1": {
+      "name": "Clear Mind",
+      "text": "+1 mana regeneration per second"
+    },
+    "mind_4_2": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_5_0": {
+      "name": "Meditation",
+      "text": "+18 maximum mana"
+    },
+    "mind_5_1": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_5_2": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_6_0": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_6_1": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_6_2": {
+      "name": "Meditation",
+      "text": "+18 maximum mana"
+    },
+    "mind_7_0": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_7_1": {
+      "name": "Deep Vessel",
+      "text": "+45 maximum mana"
+    },
+    "mind_7_2": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_8_0": {
+      "name": "Meditation",
+      "text": "+18 maximum mana"
+    },
+    "mind_8_1": {
+      "name": "Concentration",
+      "text": "+12 maximum mana"
+    },
+    "mind_8_2": {
+      "name": "Clarity",
+      "text": "+0.5 mana regeneration per second"
+    },
+    "mind_9_0": {
+      "name": "Force of Mind",
+      "text": "+1% damage per 20 maximum mana"
+    },
+    "mind_9_1": {
+      "name": "Stream of Thought",
+      "text": "+1.5 mana regeneration per second"
+    },
+    "mind_9_2": {
+      "name": "Profligacy",
+      "text": "−35% cooldown time, but −60 maximum mana"
+    },
+    "root": {
+      "name": "The Mercenary",
+      "text": "Where the path begins"
+    },
+    "spark_1_0": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_2_0": {
+      "name": "Gaze",
+      "text": "+1.5% critical strike chance"
+    },
+    "spark_2_1": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_3_0": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_3_1": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_4_0": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_4_1": {
+      "name": "Keen Eye",
+      "text": "+5% critical strike chance"
+    },
+    "spark_4_2": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_5_0": {
+      "name": "Gaze",
+      "text": "+1.5% critical strike chance"
+    },
+    "spark_5_1": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_5_2": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_6_0": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_6_1": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_6_2": {
+      "name": "Gaze",
+      "text": "+1.5% critical strike chance"
+    },
+    "spark_7_0": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_7_1": {
+      "name": "Composure",
+      "text": "+45% critical strike damage"
+    },
+    "spark_7_2": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_8_0": {
+      "name": "Gaze",
+      "text": "+1.5% critical strike chance"
+    },
+    "spark_8_1": {
+      "name": "Spark",
+      "text": "+2% critical strike chance"
+    },
+    "spark_8_2": {
+      "name": "Precision",
+      "text": "+15% critical strike damage"
+    },
+    "spark_9_0": {
+      "name": "Hunter of the Slow",
+      "text": "Strikes against slowed targets always crit"
+    },
+    "spark_9_1": {
+      "name": "Lethal Calculation",
+      "text": "+6% critical strike chance"
+    },
+    "spark_9_2": {
+      "name": "Bloodlust",
+      "text": "+90% critical strike damage, but −30% attack speed"
+    },
+    "stone_1_0": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_2_0": {
+      "name": "Steadfast",
+      "text": "+8 void resistance"
+    },
+    "stone_2_1": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_3_0": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_3_1": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_4_0": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_4_1": {
+      "name": "Bedrock",
+      "text": "+24% armor"
+    },
+    "stone_4_2": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_5_0": {
+      "name": "Steadfast",
+      "text": "+8 void resistance"
+    },
+    "stone_5_1": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_5_2": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_6_0": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_6_1": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_6_2": {
+      "name": "Steadfast",
+      "text": "+8 void resistance"
+    },
+    "stone_7_0": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_7_1": {
+      "name": "Bastion",
+      "text": "+12% maximum HP"
+    },
+    "stone_7_2": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_8_0": {
+      "name": "Steadfast",
+      "text": "+8 void resistance"
+    },
+    "stone_8_1": {
+      "name": "Carapace",
+      "text": "+10% armor"
+    },
+    "stone_8_2": {
+      "name": "Plating",
+      "text": "+35 armor"
+    },
+    "stone_9_0": {
+      "name": "Stone Faith",
+      "text": "8% of armor counts as resistance to all elements"
+    },
+    "stone_9_1": {
+      "name": "The Cliff",
+      "text": "+30% armor"
+    },
+    "stone_9_2": {
+      "name": "Stoneskin",
+      "text": "+70% armor, but −25% damage"
+    },
+    "storm_1_0": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_2_0": {
+      "name": "Rumble",
+      "text": "+13% Area damage"
+    },
+    "storm_2_1": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_3_0": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_3_1": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_4_0": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_4_1": {
+      "name": "Thunderclap",
+      "text": "+34% Lightning damage"
+    },
+    "storm_4_2": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_5_0": {
+      "name": "Rumble",
+      "text": "+13% Area damage"
+    },
+    "storm_5_1": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_5_2": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_6_0": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_6_1": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_6_2": {
+      "name": "Rumble",
+      "text": "+13% Area damage"
+    },
+    "storm_7_0": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_7_1": {
+      "name": "Wind Before the Storm",
+      "text": "−12% cooldown time"
+    },
+    "storm_7_2": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_8_0": {
+      "name": "Rumble",
+      "text": "+13% Area damage"
+    },
+    "storm_8_1": {
+      "name": "Static",
+      "text": "+15% Lightning damage"
+    },
+    "storm_8_2": {
+      "name": "Grounding",
+      "text": "+7 lightning resistance"
+    },
+    "storm_9_0": {
+      "name": "Arc Jump",
+      "text": "Lightning damage strikes a second target for 35% of the amount dealt"
+    },
+    "storm_9_1": {
+      "name": "Stormbringer",
+      "text": "+45% Lightning damage"
+    },
+    "storm_9_2": {
+      "name": "Storm Petrel",
+      "text": "+130% Lightning damage, but −40% armor"
+    },
+    "wind_1_0": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_2_0": {
+      "name": "Rhythm",
+      "text": "+7% Attack damage"
+    },
+    "wind_2_1": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_3_0": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_3_1": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_4_0": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_4_1": {
+      "name": "Whirl",
+      "text": "+13% attack speed"
+    },
+    "wind_4_2": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_5_0": {
+      "name": "Rhythm",
+      "text": "+7% Attack damage"
+    },
+    "wind_5_1": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_5_2": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_6_0": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_6_1": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_6_2": {
+      "name": "Rhythm",
+      "text": "+7% Attack damage"
+    },
+    "wind_7_0": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_7_1": {
+      "name": "Draught",
+      "text": "−15% cooldown time"
+    },
+    "wind_7_2": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_8_0": {
+      "name": "Rhythm",
+      "text": "+7% Attack damage"
+    },
+    "wind_8_1": {
+      "name": "Gust",
+      "text": "+5% attack speed"
+    },
+    "wind_8_2": {
+      "name": "Lightness",
+      "text": "−4% cooldown time"
+    },
+    "wind_9_0": {
+      "name": "First Strike",
+      "text": "The first hit on a new wave is 60% stronger"
+    },
+    "wind_9_1": {
+      "name": "Tempest",
+      "text": "+16% attack speed"
+    },
+    "wind_9_2": {
+      "name": "Broken Rhythm",
+      "text": "+35% attack speed, but −30% critical strike multiplier"
+    }
+  }
+}

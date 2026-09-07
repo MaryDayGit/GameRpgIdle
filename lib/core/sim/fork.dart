@@ -1,6 +1,7 @@
 import '../balance/tuning.dart';
 import '../content/content_pack.dart';
 import '../content/floor_modifier_def.dart';
+import '../model/lang.dart';
 import 'rng.dart';
 
 /// Политика выбора пути, когда игрока нет в приложении (GDD §2.6).
@@ -10,20 +11,23 @@ import 'rng.dart';
 /// это награда за присутствие, а не наказание за отсутствие.
 enum ForkPolicy {
   /// Добыча важнее безопасности.
-  loot('Искать добычу'),
+  loot(Phrase('Искать добычу', 'Look for loot')),
 
   /// Безопасность важнее добычи.
-  safety('Идти глубже'),
+  safety(Phrase('Идти глубже', 'Push deeper')),
 
   /// Эхо важнее всего.
-  echo('Охотиться на чудовищ'),
+  echo(Phrase('Охотиться на чудовищ', 'Hunt monsters')),
 
   /// Как повезёт.
-  random('Как повезёт');
+  random(Phrase('Как повезёт', 'Leave it to chance'));
 
-  const ForkPolicy(this.ru);
+  const ForkPolicy(this._title);
 
-  final String ru;
+  final Phrase _title;
+
+  /// Приказ словами — так он подписан в карточке наёмника.
+  String get title => _title.text;
 }
 
 /// Развилка: два пути, третий «за присутствие» и выбранный.
@@ -178,7 +182,7 @@ class ForkChooser {
     return FloorModifierDef(
       id: '${first.id}${FloorModifierDef.boldMark}${second.id}',
       name: combined.name,
-      minus: 'Платы нет',
+      minus: const Phrase('Платы нет', 'No price').text,
       plus: '${first.plus}. ${second.plus}${_boldReward()}',
       effects: effects,
     );
@@ -190,13 +194,22 @@ class ForkChooser {
   static String _boldReward() {
     final parts = <String>[
       if (Tuning.boldForkEchoBonus > 0)
-        '+${(Tuning.boldForkEchoBonus * 100).round()} % Эха с каждого этажа',
+        Lang.current == Lang.ru
+            ? '+${(Tuning.boldForkEchoBonus * 100).round()} % Эха с каждого этажа'
+            : '+${(Tuning.boldForkEchoBonus * 100).round()}% Echo from every floor',
       if (Tuning.boldForkLootBonus > 0)
-        '+${(Tuning.boldForkLootBonus * 100).round()} % добычи',
+        Lang.current == Lang.ru
+            ? '+${(Tuning.boldForkLootBonus * 100).round()} % добычи'
+            : '+${(Tuning.boldForkLootBonus * 100).round()}% loot',
       if (Tuning.boldForkRarityBonus > 0)
-        '+${Tuning.boldForkRarityBonus} к рангу редкости сундука',
+        Lang.current == Lang.ru
+            ? '+${Tuning.boldForkRarityBonus} к рангу редкости сундука'
+            : '+${Tuning.boldForkRarityBonus} to chest rarity rank',
     ];
-    return parts.isEmpty ? '' : '. И сверх того: ${parts.join(' и ')}';
+    if (parts.isEmpty) return '';
+    return Lang.current == Lang.ru
+        ? '. И сверх того: ${parts.join(' и ')}'
+        : '. And on top of that: ${parts.join(' and ')}';
   }
 
   static FloorModifierDef _choose(

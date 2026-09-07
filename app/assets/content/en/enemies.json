@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "_comment": "Перевод enemies.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "arc_leech": {
+      "name": "Arc Leech",
+      "role": "Silencer"
+    },
+    "ash_eater": {
+      "name": "Ash Eater",
+      "role": "Fire"
+    },
+    "ash_lord": {
+      "name": "Lord of Ash"
+    },
+    "blood_leech": {
+      "name": "Blood Leech",
+      "role": "Scaler"
+    },
+    "bonebreaker": {
+      "name": "Bonebreaker",
+      "role": "Tank-damage"
+    },
+    "cinderling": {
+      "name": "Cinderling",
+      "role": "Suicide"
+    },
+    "forge_smith": {
+      "name": "Ashen Smith",
+      "role": "Armor"
+    },
+    "frost_maw": {
+      "name": "Frost Maw",
+      "role": "Scaler"
+    },
+    "frost_patriarch": {
+      "name": "The Frost Patriarch"
+    },
+    "frost_warden": {
+      "name": "Frost Warden",
+      "role": "Armor"
+    },
+    "grave_swarm": {
+      "name": "Grave Swarm",
+      "role": "Fodder"
+    },
+    "mana_eater": {
+      "name": "Witherer",
+      "role": "Silencer"
+    },
+    "rift_shade": {
+      "name": "Riven Shade",
+      "role": "Reflector"
+    },
+    "rime_horror": {
+      "name": "Rime Horror",
+      "role": "Debuffer"
+    },
+    "rot_howler": {
+      "name": "Rot Howler",
+      "role": "Healer"
+    },
+    "scavenger": {
+      "name": "Scavenger",
+      "role": "Fodder"
+    },
+    "sparkling": {
+      "name": "Sparkling",
+      "role": "Fodder"
+    },
+    "stone_fist": {
+      "name": "Stone Fist",
+      "role": "Armor"
+    },
+    "storm_sovereign": {
+      "name": "The Storm Sovereign"
+    },
+    "storm_warden": {
+      "name": "Storm Warden",
+      "role": "Reflector"
+    },
+    "void_devourer": {
+      "name": "The Void Devourer"
+    },
+    "void_reaper": {
+      "name": "Void Reaper",
+      "role": "Debuffer"
+    },
+    "void_whisperer": {
+      "name": "Void Whisperer",
+      "role": "Debuffer"
+    }
+  }
+}

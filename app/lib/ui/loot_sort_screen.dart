@@ -7,6 +7,7 @@ import 'package:rift/core/model/item.dart';
 
 import '../state/game_controller.dart';
 import 'format.dart';
+import 'strings.dart';
 import 'help_screen.dart';
 
 /// Разбор добычи: что из принесённого достойно места в сундуке.
@@ -55,10 +56,10 @@ class _LootSortScreenState extends State<LootSortScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Разбор добычи'),
+            title: Text(S.lootSortTitle),
             actions: [
               IconButton(
-                tooltip: 'Как это работает',
+                tooltip: S.howItWorks,
                 icon: const Icon(Icons.menu_book_outlined),
                 onPressed: () => openHelp(context, section: 'loot'),
               ),
@@ -75,14 +76,14 @@ class _LootSortScreenState extends State<LootSortScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
                       _Chip(
-                        label: 'Всё',
+                        label: S.filterAll,
                         selected: filter == null,
                         onTap: () => setState(() => _filter = null),
                       ),
                       for (final kind in GearKind.values)
                         if (kinds.contains(kind))
                           _Chip(
-                            label: kind.ru,
+                            label: kind.title,
                             selected: filter == kind,
                             onTap: () => setState(() => _filter = kind),
                           ),
@@ -120,13 +121,13 @@ class _LootSortScreenState extends State<LootSortScreen> {
               child: loot.isEmpty
                   ? FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Готово'),
+                      child: Text(S.done),
                     )
                   : OutlinedButton(
                       onPressed: () => setState(c.autoSortLoot),
                       child: Text(
-                        'Разобрать остальное за меня · '
-                        '${plural(loot.length, "вещь", "вещи", "вещей")}',
+                        S.lootSortRest(loot.length),
+
                       ),
                     ),
             ),
@@ -153,16 +154,16 @@ class _Summary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Наёмник донёс ${plural(pending, "вещь", "вещи", "вещей")}. '
-            '${tight ? "Сундук полон" : "В сундуке свободно $room"}.',
+            S.lootBrought(pending, room, tight: tight),
+
             style: const TextStyle(fontSize: 13),
           ),
           const SizedBox(height: 2),
           Text(
             tight
-                ? 'Освободите место в сундуке или решите судьбу вещей здесь.'
-                : 'Переплавка даёт золото и осколок, продажа — только золото, '
-                    'но больше.',
+                ? S.lootSortTight
+                : S.lootSortAbout,
+
             style: TextStyle(
               fontSize: 12,
               color: tight ? Colors.orangeAccent : Colors.white38,
@@ -243,9 +244,9 @@ class _LootRow extends StatelessWidget {
                 ),
               ),
               if (item.isRelic)
-                const _Tag(text: 'реликт', color: Color(0xFFC7643F)),
+                _Tag(text: S.relicMark, color: const Color(0xFFC7643F)),
               if (trigger != null)
-                const _Tag(text: 'триггер', color: Color(0xFF4F7FA8)),
+                _Tag(text: S.triggerMark, color: const Color(0xFF4F7FA8)),
             ],
           ),
           const SizedBox(height: 2),
@@ -260,14 +261,14 @@ class _LootRow extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   onPressed: canKeep ? onKeep : null,
-                  child: const Text('Оставить'),
+                  child: Text(S.keep),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
                   onPressed: onMelt,
-                  child: Text('Переплавить\n${money(salvage)}',
+                  child: Text(S.salvageFull(money(salvage)),
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12)),
                 ),
@@ -277,7 +278,7 @@ class _LootRow extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onSell,
                   child: Text(
-                    'Продать\n${money(salvage * Tuning.sellBonus)}',
+                    S.sellFor(money(salvage * Tuning.sellBonus)),
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 12),
                   ),

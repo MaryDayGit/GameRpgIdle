@@ -1,3 +1,4 @@
+import '../model/lang.dart';
 import '../model/tags.dart';
 import 'json_node.dart';
 
@@ -39,18 +40,35 @@ class TextTemplate {
 
         // Форма «к урону Огнём», а не название «Огонь»: строка собирается
         // вокруг тега, и падеж принадлежит ему, а не шаблону.
-        if (name == 'tag') return tag?.ruDamage ?? match.group(0)!;
+        if (name == 'tag') return tag?.damage ?? match.group(0)!;
 
         final value = values[name];
         if (value == null) return match.group(0)!;
 
         return switch (format) {
-          '%' => '${_number(value * 100)} %',
+          '%' => percent(value),
           'x' => '×${_number(value)}',
-          's' => '${_number(value)} с',
+          's' => seconds(value),
           _ => _number(value),
         };
       });
+
+  /// Доля как проценты: 0.08 → «8 %» или «8%».
+  ///
+  /// Пробел перед знаком — это правило языка, а не вкус: русская типографика
+  /// требует пробела, английская набирает вплотную. Публичный метод, потому
+  /// что проценты печатают не только шаблоны — их печатает и
+  /// [Outpost.effectAt], и экраны, и все обязаны делать это одинаково.
+  static String percent(double fraction) => switch (Lang.current) {
+        Lang.ru => '${_number(fraction * 100)} %',
+        Lang.en => '${_number(fraction * 100)}%',
+      };
+
+  /// Секунды: «4 с» или «4s».
+  static String seconds(double value) => switch (Lang.current) {
+        Lang.ru => '${_number(value)} с',
+        Lang.en => '${_number(value)}s',
+      };
 
   /// Числа в описаниях: без хвостовых нулей, но и без потери долей.
   /// «+0.15 восстановления» и «+30 к HP» должны читаться одинаково спокойно.

@@ -7,6 +7,7 @@ import 'package:rift/core/model/mercenary.dart';
 import 'format.dart';
 import 'gear_grid.dart';
 import 'mercenary_stats.dart';
+import 'strings.dart';
 
 /// Карточка наёмника перед решением.
 ///
@@ -97,7 +98,7 @@ class _MercBody extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               '${merc.rank.forGender(merc.gender)} · '
-              'рюкзак ${merc.backpackSlots} предметов',
+              '${S.backpackOf(merc.backpackSlots)}',
               style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
             const SizedBox(height: 16),
@@ -105,34 +106,34 @@ class _MercBody extends StatelessWidget {
             Row(
               children: [
                 _Stat(
-                    'Сила сборки',
+                    S.buildPower,
                     money(BuildPower.of(stats, depth,
                         loadout: BuildPower.loadoutOf(merc.abilities)))),
                 _Stat('HP', money(stats.maxHp)),
-                _Stat('Урон', money(stats.attackDamage)),
-                _Stat('Броня', money(stats.armor)),
+                _Stat(S.statDamage, money(stats.attackDamage)),
+                _Stat(S.statArmor, money(stats.armor)),
               ],
             ),
             const SizedBox(height: 16),
 
-            _Line('Черта', merc.trait.forGender(merc.gender)),
+            _Line(S.mercTrait, merc.trait.forGender(merc.gender)),
             Text(
               merc.trait.description,
               style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
             const SizedBox(height: 10),
-            _Line('Умения',
-                '${merc.abilities.length} из $abilitySlots'),
+            _Line(S.mercAbilities,
+                S.outOf(merc.abilities.length, abilitySlots)),
             Text(
               abilities.isEmpty
-                  ? 'Слоты пусты'
+                  ? S.mercSlotsEmpty
                   : merc.abilities
                       .map((id) => ContentPack.current.ability(id)?.name ?? id)
                       .join(', '),
               style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
-            _Line('Снаряжение',
-                '${merc.gear.filledSlots} из ${merc.gear.usableSlots} слотов'),
+            _Line(S.mercGear,
+                S.gearSlotsFilled(merc.gear.filledSlots, merc.gear.usableSlots)),
             const SizedBox(height: 8),
             GearGrid(equipment: merc.gear, compact: true),
 
@@ -156,7 +157,7 @@ class _MercBody extends StatelessWidget {
                 depth: depth,
               ),
               icon: const Icon(Icons.bar_chart_outlined, size: 18),
-              label: const Text('Характеристики целиком'),
+              label: Text(S.statsInFull),
             ),
             const SizedBox(height: 8),
             if (onBuild != null)
@@ -166,7 +167,7 @@ class _MercBody extends StatelessWidget {
                   onBuild!();
                 },
                 icon: const Icon(Icons.shield_outlined, size: 18),
-                label: const Text('Сборка: снаряжение и умения'),
+                label: Text(S.openBuild),
               ),
             if (onHire != null) ...[
               const SizedBox(height: 8),
@@ -175,7 +176,7 @@ class _MercBody extends StatelessWidget {
                   Navigator.of(context).pop();
                   onHire!();
                 },
-                child: Text(hireLabel ?? 'Нанять'),
+                child: Text(hireLabel ?? S.hire),
               ),
             ],
             if (onDeploy != null) ...[
@@ -185,7 +186,7 @@ class _MercBody extends StatelessWidget {
                   Navigator.of(context).pop();
                   onDeploy!();
                 },
-                child: const Text('Отправить в бездну'),
+                child: Text(S.sendIntoAbyss),
               ),
             ],
           ],

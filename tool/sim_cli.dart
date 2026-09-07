@@ -227,7 +227,7 @@ void _compareForks(_Options o) {
     depths.sort();
 
     _row([
-      policy.ru,
+      policy.title,
       '${_p(depths, 0.50)}',
       (echo / o.runs).toStringAsFixed(0),
       haulItems == 0 ? '—' : (haulIlvl / haulItems).toStringAsFixed(1),
@@ -508,7 +508,7 @@ void _measurePower(_Options o) {
   for (final rank in MercRank.values) {
     if (rank == merc.rank) continue;
     final d = medianDepth(rank: rank);
-    _row(['ранг ${rank.ru}', '$d', '${d - asIs}']);
+    _row(['ранг ${rank.title}', '$d', '${d - asIs}']);
   }
 
   print('');
@@ -1169,7 +1169,7 @@ void _runCampaign(_Options o) {
   _rule(3);
   for (final b in Building.values) {
     _row([
-      b.ru,
+      b.title,
       '${player.outpost.levelOf(b)}/${Building.maxLevel}',
       b.description,
     ]);

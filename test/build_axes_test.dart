@@ -359,11 +359,11 @@ void main() {
 
       for (final element in Tag.elements) {
         expect(abilityTags, contains(element),
-            reason: 'нет ни одной способности со стихией ${element.ru}');
+            reason: 'нет ни одной способности со стихией ${element.title}');
         expect(affixTags, contains(element),
-            reason: 'стихию ${element.ru} нечем усилить с вещей');
+            reason: 'стихию ${element.title} нечем усилить с вещей');
         expect(treeTags, contains(element),
-            reason: 'в дереве нет ни одного узла на ${element.ru}');
+            reason: 'в дереве нет ни одного узла на ${element.title}');
       }
     });
 
@@ -378,7 +378,7 @@ void main() {
 
       for (final def in ContentPack.current.statAffixes) {
         for (final tag in def.family) {
-          expect(live, contains(tag), reason: '${def.id}: ${tag.ru}');
+          expect(live, contains(tag), reason: '${def.id}: ${tag.title}');
         }
       }
     });
@@ -392,13 +392,13 @@ void main() {
           for (final def in ContentPack.current.abilities)
             if (def.tags.contains(element)) def,
         ];
-        expect(kit.length, greaterThanOrEqualTo(4), reason: element.ru);
+        expect(kit.length, greaterThanOrEqualTo(4), reason: element.title);
 
         // Разные ВИДЫ, а не разные множители: способность, отличающаяся от
         // соседней только числом, билда не строит.
         expect({for (final def in kit) def.kind}.length,
             greaterThanOrEqualTo(3),
-            reason: '${element.ru}: одни и те же механики с разными числами');
+            reason: '${element.title}: одни и те же механики с разными числами');
       }
     });
 

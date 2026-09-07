@@ -1,5 +1,6 @@
 import '../content/ability_def.dart';
 import '../content/floor_modifier_def.dart';
+import '../model/lang.dart';
 import '../model/stat_block.dart';
 
 /// Во что обойдётся путь ИМЕННО ЭТОЙ сборке.
@@ -52,26 +53,42 @@ class ForkCost {
     // Сопротивления: терять нечего тому, у кого их нет. Порог не нулевой —
     // пять пунктов сопротивления это шум, а не защита.
     for (final (effect, current, name) in [
-      (FloorEffect.resistFire, stats.resistFire, 'огню'),
-      (FloorEffect.resistCold, stats.resistCold, 'холоду'),
-      (FloorEffect.resistVoid, stats.resistVoid, 'пустоте'),
+      (FloorEffect.resistFire, stats.resistFire, Phrase('огню', 'fire')),
+      (FloorEffect.resistCold, stats.resistCold, Phrase('холоду', 'cold')),
+      (FloorEffect.resistVoid, stats.resistVoid, Phrase('пустоте', 'void')),
     ]) {
       if (modifier.value(effect) >= 0.0) continue;
-      check(current > 5.0, 'сопротивления $name у вас и так нет');
+      check(
+          current > 5.0,
+          Lang.current == Lang.ru
+              ? 'сопротивления $name у вас и так нет'
+              : 'you have no $name resistance to lose');
     }
 
     if (modifier.disablesRegen) {
-      check(stats.hpRegen > 0.5, 'восстановления HP у вас и так нет');
+      check(
+          stats.hpRegen > 0.5,
+          const Phrase('восстановления HP у вас и так нет',
+                  'you have no HP regeneration to lose')
+              .text);
     }
 
     if (modifier.disablesAuras) {
       final has = loadout.any((d) =>
           d.isAura || d.kind == AbilityKind.summonTotem);
-      check(has, 'аур и тотемов у вас нет');
+      check(
+          has,
+          const Phrase('аур и тотемов у вас нет',
+                  'you have no auras or totems')
+              .text);
     }
 
     if (modifier.value(FloorEffect.cooldownReduction) < 0.0) {
-      check(loadout.any((d) => d.isActive), 'активных умений у вас нет');
+      check(
+          loadout.any((d) => d.isActive),
+          const Phrase('активных умений у вас нет',
+                  'you have no active abilities')
+              .text);
     }
 
     // Плата, которую нечем отменить: она бьёт по любой сборке.

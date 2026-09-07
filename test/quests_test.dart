@@ -302,7 +302,7 @@ void main() {
         });
 
         expect(inStarters || fromEarlier, isTrue,
-            reason: '${quest.id}: нечем нанести урон «${type.ru}»');
+            reason: '${quest.id}: нечем нанести урон «${type.title}»');
       }
     });
 

@@ -71,10 +71,10 @@ void _auditEnemies() {
   print('Кто чем бьёт:');
   for (final type in DamageType.values) {
     final users = [for (final e in all) if (e.damageType == type) e.name];
-    print('  ${type.ru.padRight(12)} ${users.length.toString().padLeft(2)}  '
+    print('  ${type.title.padRight(12)} ${users.length.toString().padLeft(2)}  '
         '${users.take(4).join(', ')}${users.length > 4 ? ', …' : ''}');
     if (users.isEmpty) {
-      dead.add('${type.ru}: этой стихией не бьёт никто — '
+      dead.add('${type.title}: этой стихией не бьёт никто — '
           'сопротивление ей проверять нечем');
     }
   }
@@ -1134,7 +1134,7 @@ _Bench _benchFor(AbilityDef def) {
       'resistVoid': DamageType.voidType,
     }[auraStat];
     if (byElement != null) {
-      return _Bench('выживание под ${byElement.ru.toLowerCase()}',
+      return _Bench('выживание под ${byElement.title.toLowerCase()}',
           enemyDamage: [byElement], lethal: true);
     }
     // Вампиризму нужно, чтобы было что умножать: у героя без вампиризма
@@ -1205,7 +1205,7 @@ void _auditTags() {
     final damaging = abilities.where(_dealsDamage).length;
 
     _row([
-      tag.ru,
+      tag.title,
       _axisOf(tag),
       '${abilities.length}',
       '$damaging',
@@ -1223,13 +1223,13 @@ void _auditTags() {
         !affixTags.contains(tag)) {
       _gapTags.add(tag);
     }
-    if (abilities.isEmpty) gaps.add('${tag.ru}: нет ни одной способности');
+    if (abilities.isEmpty) gaps.add('${tag.title}: нет ни одной способности');
     if (needsDamage && damaging == 0 && abilities.isNotEmpty) {
-      gaps.add('${tag.ru}: есть способности, но ни одна не наносит урон — '
+      gaps.add('${tag.title}: есть способности, но ни одна не наносит урон — '
           'множитель «+% к урону» некому применить');
     }
     if (!affixTags.contains(tag)) {
-      gaps.add('${tag.ru}: ни один аффикс не даёт множителя с этим тегом');
+      gaps.add('${tag.title}: ни один аффикс не даёт множителя с этим тегом');
     }
   }
 

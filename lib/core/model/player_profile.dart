@@ -3,6 +3,7 @@ import '../content/ability_def.dart';
 import '../content/content_pack.dart';
 import '../content/floor_modifier_def.dart';
 import '../balance/tuning.dart';
+import 'lang.dart';
 import 'relic_effect.dart';
 import '../sim/crafting.dart';
 import '../sim/daily_rift.dart';
@@ -540,15 +541,19 @@ class PlayerProfile {
     final current = loadout ?? m.abilities;
 
     if (rules.passivesOnly && def.isActive) {
-      final relic = _relicName(m, RelicEffect.passivesOnly) ?? 'Реликт';
-      return '$relic: активные умения недоступны';
+      final relic = _relicName(m, RelicEffect.passivesOnly) ?? _relicWord;
+      return Lang.current == Lang.ru
+          ? '$relic: активные умения недоступны'
+          : '$relic: active abilities are unavailable';
     }
     if (rules.singleActive && def.isActive) {
       final hasOther = current.any((id) =>
           id != def.id && (ContentPack.current.ability(id)?.isActive ?? false));
       if (hasOther) {
-        final relic = _relicName(m, RelicEffect.singleActive) ?? 'Реликт';
-        return '$relic: активное умение может быть только одно';
+        final relic = _relicName(m, RelicEffect.singleActive) ?? _relicWord;
+        return Lang.current == Lang.ru
+            ? '$relic: активное умение может быть только одно'
+            : '$relic: only one active ability is allowed';
       }
     }
     return null;
@@ -559,15 +564,25 @@ class PlayerProfile {
     final rules = m.gear.relicRules;
     if (rules.passivesOnly) {
       final n = rules.passivesPerSlot;
-      return '${_relicName(m, RelicEffect.passivesOnly) ?? "Реликт"}: '
-          'только пассивные умения, зато слотов $n на каждый обычный.';
+      final relic = _relicName(m, RelicEffect.passivesOnly) ?? _relicWord;
+      return Lang.current == Lang.ru
+          ? '$relic: только пассивные умения, зато слотов $n на каждый обычный.'
+          : '$relic: passive abilities only, but $n slots for each normal one.';
+
     }
     if (rules.singleActive) {
-      return '${_relicName(m, RelicEffect.singleActive) ?? "Реликт"}: '
-          'активное умение может быть только одно.';
+      final relic = _relicName(m, RelicEffect.singleActive) ?? _relicWord;
+      return Lang.current == Lang.ru
+          ? '$relic: активное умение может быть только одно.'
+          : '$relic: only one active ability is allowed.';
+
     }
     return null;
   }
+
+  /// Запасное слово, когда имя реликта неизвестно: контент мог поменяться,
+  /// а запрет — остаться.
+  static String get _relicWord => const Phrase("Реликт", "A relic").text;
 
   /// Имя надетого реликта с таким эффектом — чтобы запрет назывался тем, что
   /// его наложило, а не безличным «нельзя».

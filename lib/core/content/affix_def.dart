@@ -85,7 +85,7 @@ class StatAffixDef {
     checkTemplate(node, 'ru', node.str('ru', or: ''), {'value'});
     if (stat != StatKey.tagDamage &&
         TextTemplate.namesIn(node.str('ru', or: '')).contains('tag')) {
-      node.issues.add('${node.path}.ru',
+      node.issues.add('${node.path}.title',
           'тег в описании есть, а семейства тегов у аффикса нет');
     }
 

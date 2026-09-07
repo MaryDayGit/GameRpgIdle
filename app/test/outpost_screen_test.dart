@@ -501,11 +501,11 @@ void main() {
     for (final building in Building.values) {
       // Список строит только видимое, поэтому строку надо сперва показать:
       // иначе «описания нет» доказывалось бы тем, что нет и самой постройки.
-      await tester.scrollUntilVisible(find.text(building.ru), 200,
+      await tester.scrollUntilVisible(find.text(building.title), 200,
           scrollable: find.byType(Scrollable).first);
-      expect(find.text(building.ru), findsOneWidget);
+      expect(find.text(building.title), findsOneWidget);
       expect(find.text(building.description), findsNothing,
-          reason: '${building.ru}: описание не должно жить на главном экране');
+          reason: '${building.title}: описание не должно жить на главном экране');
     }
   });
 
@@ -514,11 +514,11 @@ void main() {
     // Цена без «станет вот так» — это предложение купить кота в мешке.
     await pumpScreen(tester);
 
-    await tester.scrollUntilVisible(find.text(Building.vault.ru), 200,
+    await tester.scrollUntilVisible(find.text(Building.vault.title), 200,
         scrollable: find.byType(Scrollable).first);
-    await tester.ensureVisible(find.text(Building.vault.ru));
+    await tester.ensureVisible(find.text(Building.vault.title));
     await tester.pump();
-    await tester.tap(find.text(Building.vault.ru));
+    await tester.tap(find.text(Building.vault.title));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -541,11 +541,11 @@ void main() {
     await pumpScreen(tester);
     // Скроллящихся списков на экране больше одного (полоса рангов Клейма),
     // поэтому список указан явно.
-    await tester.scrollUntilVisible(find.text(Building.altar.ru), 200,
+    await tester.scrollUntilVisible(find.text(Building.altar.title), 200,
         scrollable: find.byType(Scrollable).first);
-    await tester.ensureVisible(find.text(Building.altar.ru));
+    await tester.ensureVisible(find.text(Building.altar.title));
     await tester.pump();
-    await tester.tap(find.text(Building.altar.ru));
+    await tester.tap(find.text(Building.altar.title));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 

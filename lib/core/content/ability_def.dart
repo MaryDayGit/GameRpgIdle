@@ -368,7 +368,7 @@ void _checkTags(JsonNode node, AbilityKind kind, AbilityType type,
   final duplicates = <Tag>{};
   for (final tag in tags) {
     if (!duplicates.add(tag)) {
-      node.issues.add('${node.path}.tags', 'тег «${tag.ru}» указан дважды');
+      node.issues.add('${node.path}.tags', 'тег «${tag.title}» указан дважды');
     }
   }
 
@@ -393,14 +393,14 @@ void _checkTags(JsonNode node, AbilityKind kind, AbilityType type,
     // вещи не нашло бы, что усиливать.
     if (!tags.contains(damageType.tag)) {
       node.issues.add('${node.path}.tags',
-          'урон типа «${damageType.ru}» без тега «${damageType.tag.ru}»: '
+          'урон типа «${damageType.title}» без тега «${damageType.tag.title}»: '
           'аффиксам этой стихии нечего усиливать');
     }
     for (final tag in tags) {
       if (!Tag.elements.contains(tag)) continue;
       if (tag != damageType.tag) {
         node.issues.add('${node.path}.tags',
-            'тег стихии «${tag.ru}» при уроне типа «${damageType.ru}»: '
+            'тег стихии «${tag.title}» при уроне типа «${damageType.title}»: '
             'сопротивление режет по типу, и тег обязан его называть');
       }
     }

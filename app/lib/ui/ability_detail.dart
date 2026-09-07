@@ -6,6 +6,7 @@ import 'package:rift/core/model/stat_block.dart';
 import 'package:rift/core/model/tags.dart';
 
 import 'format.dart';
+import 'strings.dart';
 
 /// Подробная карточка способности.
 ///
@@ -102,47 +103,45 @@ class AbilityDetailSheet extends StatelessWidget {
 
       rows.addAll([
         _row(
-          def.isSpell ? 'Сила чар' : 'Урон оружия',
+          def.isSpell ? S.statSpellPower : S.statWeaponDamage,
           money(source),
           def.isSpell
-              ? 'Ваша характеристика. Урон оружия этому умению не помогает '
-                  'вовсе.'
-              : 'Ваша характеристика. Сила чар этому умению не помогает '
-                  'вовсе.',
+              ? S.abYourStatWeaponOnly
+              : S.abYourStatSpellOnly,
         ),
-        _row('Множитель умения', '×${_num(multiplier)}',
-            'Число самого умения, оно не меняется.'),
-        _row('Основа удара', money(base), null, strong: true),
-        _row('Ваши увеличения', '+${(increased * 100).round()} %',
+        _row(S.abMultiplier, '×${_num(multiplier)}',
+            S.abMultiplierAbout),
+        _row(S.abHitBase, money(base), null, strong: true),
+        _row(S.abIncreases, '+${(increased * 100).round()} %',
             _increasedBreakdown()),
-        _row('Урон за удар', money(hit), null, strong: true),
+        _row(S.abDamagePerHit, money(hit), null, strong: true),
       ]);
 
       final targets = def.params.integer('targets', 1);
       if (targets > 1) {
-        rows.add(_row('Целей за раз', targets >= 99 ? 'вся волна' : '$targets',
-            'Урон считается каждой цели отдельно.'));
+        rows.add(_row(
+            S.abTargetsAtOnce, targets >= 99 ? S.abWholeWave : '$targets',
+            S.abTargetsAbout));
       }
 
       if (def.kind == AbilityKind.execute) {
         final bonus = def.params.dbl('bonusBelow');
         final threshold = def.params.dbl('threshold');
         rows.add(_row(
-          'По раненой цели',
+          S.abVsWounded,
           money(hit * (1.0 + bonus)),
-          'Ниже ${(threshold * 100).round()} % здоровья цели. Умение '
-              'сама выбирает самого раненого врага.',
+          S.abVsWoundedAbout((threshold * 100).round()),
         ));
       }
       if (def.kind == AbilityKind.chainDamage) {
         final falloff = def.params.dbl('falloff');
-        rows.add(_row('Затухание цепи', '−${(falloff * 100).round()} %',
-            'Каждая следующая цель получает на столько меньше предыдущей.'));
+        rows.add(_row(S.abChainFalloff, '−${(falloff * 100).round()} %',
+            S.abChainFalloffAbout));
       }
       if (def.params.dbl('bonusVsSlowed') > 0.0) {
         final bonus = def.params.dbl('bonusVsSlowed');
-        rows.add(_row('По замедленным', money(hit * (1.0 + bonus)),
-            'Замедление даёт «Ледяной покров» и узел «Стылая хватка».'));
+        rows.add(_row(S.abVsSlowed, money(hit * (1.0 + bonus)),
+            S.abVsSlowedAbout));
       }
     }
 
@@ -158,134 +157,144 @@ class AbilityDetailSheet extends StatelessWidget {
       if (multiplier <= 0.0) {
         rows.addAll([
           _row(
-            def.isSpell ? 'Сила чар' : 'Урон оружия',
+            def.isSpell ? S.statSpellPower : S.statWeaponDamage,
             money(def.isSpell ? stats.spellPower : stats.attackDamage),
             def.isSpell
-                ? 'Ваша характеристика. Урон оружия этому умению '
-                    'не помогает.'
-                : 'Ваша характеристика. Сила чар этому умению не помогает.',
+                ? S.abYourStatWeaponShort
+
+                : S.abYourStatSpellShort,
           ),
-          _row('Ваши увеличения', '+${(increased * 100).round()} %',
+          _row(S.abIncreases, '+${(increased * 100).round()} %',
               _increasedBreakdown()),
         ]);
       }
       rows.addAll([
-        _row('Длительный урон', '${money(dps)} в секунду',
-            'Доля вашего урона в секунду: ${(fraction * 100).round()} %.'),
-        _row('Держится', '${_num(duration)} с', null),
-        _row('Всего за наложение', money(dps * duration), null, strong: true),
+        _row(S.abDot, S.perSecond(money(dps)),
+            S.abDotAbout((fraction * 100).round())),
+        _row(S.abHolds, TextTemplate.seconds(duration), null),
+        _row(S.abTotalPerCast, money(dps * duration), null, strong: true),
       ]);
     }
 
     if (def.kind == AbilityKind.summonTotem) {
       final interval = def.params.dbl('interval');
       final duration = def.params.dbl('duration');
-      rows.add(_row('Бьёт раз в', '${_num(interval)} с',
-          'Тотем стоит ${_num(duration)} с и бьёт, пока вы заняты другим. '
-              'Повторное применение обновляет тот же тотем, а не ставит '
-              'второй.'));
+      rows.add(_row(S.abStrikesEvery, TextTemplate.seconds(interval),
+          S.abTotemAbout(_num(duration))));
+
+
     }
 
     if (def.kind == AbilityKind.heal) {
       final fraction = def.params.dbl('fractionOfMaxHp');
-      rows.add(_row('Восстанавливает', money(stats.maxHp * fraction),
-          '${(fraction * 100).round()} % вашего максимума HP. '
-              'На полном здоровье не тратится.'));
+      rows.add(_row(S.abRestores, money(stats.maxHp * fraction),
+          S.abHealAbout((fraction * 100).round())));
+
     }
 
     if (def.kind == AbilityKind.infusion) {
       rows.add(_row(
-        'Автоатака бьёт',
-        def.damageType.ru,
-        'Вместо физического урона. Теги автоатаки становятся '
-            '«Атака · Удар · ${def.damageType.tag.ru}» — и всё, что усиливает '
-            'эту стихию, начинает работать на автоатаке.',
+        S.abAutoAttackDeals,
+        def.damageType.title,
+        S.abInfusionAbout(def.damageType.tag.title),
       ));
       final more = def.params.dbl('moreDamage');
       if (more > 0.0) {
-        rows.add(_row('И бьёт сильнее', '+${(more * 100).round()} %',
-            'Множитель к урону автоатаки.'));
+        rows.add(_row(S.abAndHarder, '+${(more * 100).round()} %',
+            S.abAndHarderAbout));
       }
     }
 
     if (def.kind == AbilityKind.auraStat) {
-      rows.add(_row('Даёт постоянно', _statLine(),
-          'Работает всё время, пока аура в слоте.'));
+      rows.add(_row(S.abGivesAlways, _statLine(),
+          S.abGivesAlwaysAbout));
     }
 
     if (def.kind == AbilityKind.buff) {
-      rows.add(_row('Даёт на ${_num(def.params.dbl('duration'))} с',
+      rows.add(_row(S.abGivesFor(_num(def.params.dbl('duration'))),
           _statLine(), null));
     }
 
     if (def.kind == AbilityKind.repeatAttack) {
-      rows.add(_row('Шанс ударить дважды',
+      rows.add(_row(S.abDoubleHitChance,
           '${(def.params.dbl('chance') * 100).round()} %',
-          'Второй удар бесплатный и не трогает перезарядки.'));
+          S.abDoubleHitAbout));
     }
     if (def.kind == AbilityKind.repeatSpell) {
-      rows.add(_row('Шанс сработать дважды',
+      rows.add(_row(S.abDoubleCastChance,
           '${(def.params.dbl('chance') * 100).round()} %',
-          'Работает только на умениях с тегом «Чары». Повтор бесплатный.'));
+          S.abDoubleCastAbout));
     }
     if (def.kind == AbilityKind.thorns) {
-      rows.add(_row('Возвращает ударившему',
+      rows.add(_row(S.abReturnsToAttacker,
           '${(def.params.dbl('fractionReturned') * 100).round()} %',
-          'Долю полученного урона. Считается от того, что до вас дошло: '
-              'броня и сопротивления уменьшают и его.'));
+          S.abReturnsAbout));
+
     }
     if (def.kind == AbilityKind.lowLifeGuard) {
-      rows.add(_row('Ниже ${(def.params.dbl('threshold') * 100).round()} % HP',
-          '−${(def.params.dbl('lessDamageTaken') * 100).round()} % урона',
-          'Множитель к получаемому урону, а не к броне.'));
+      rows.add(_row(
+          S.abBelowThresholdDamage(
+              (def.params.dbl('threshold') * 100).round(),
+              (def.params.dbl('lessDamageTaken') * 100).round()),
+          '',
+
+          S.abLessDamageAbout));
     }
     if (def.kind == AbilityKind.conditionalLeech) {
-      rows.add(_row('Ниже ${(def.params.dbl('threshold') * 100).round()} % HP',
-          'вампиризм ×${_num(def.params.dbl('leechMultiplier'))}',
-          'Множитель к вампиризму, который у вас уже есть. Без вампиризма '
-              'умножать нечего.'));
+      rows.add(_row(
+          S.abBelowThresholdLeech(
+              (def.params.dbl('threshold') * 100).round(),
+              _num(def.params.dbl('leechMultiplier'))),
+          '',
+          S.abLeechMultiAbout));
     }
     if (def.kind == AbilityKind.statTradeoff) {
-      rows.add(_row('Размен', _tradeoffLine(),
-          'Считается один раз при сборке, а не в бою.'));
+      rows.add(_row(S.abTradeoff, _tradeoffLine(),
+          S.abTradeoffAbout));
     }
     if (def.kind == AbilityKind.auraSlow) {
-      rows.add(_row('Замедляет атакующих',
+      rows.add(_row(S.abSlowsAttackers,
           '−${(def.params.dbl('slow') * 100).round()} %',
-          'Скорость их атак. Замедленные цели — условие для «Морозного шипа» '
-              'и узла «Охотник на медленных».'));
+          S.abSlowsAbout));
+
     }
     if (def.kind == AbilityKind.corpseExplosion) {
-      rows.add(_row('Взрыв трупа',
-          '${(def.params.dbl('fractionOfMaxHp') * 100).round()} % HP убитого',
-          'Только по проклятым целям. От ваших характеристик урон взрыва '
-              'не зависит — зато теги на него действуют.'));
+      rows.add(_row(
+          S.abCorpseBurst(
+              (def.params.dbl('fractionOfMaxHp') * 100).round()),
+          '',
+
+          S.abCorpseBurstAbout));
+
     }
     if (def.kind == AbilityKind.curse) {
-      rows.add(_row('Цель получает больше урона',
+      rows.add(_row(S.abTargetTakesMore,
           '+${(def.params.dbl('damageTakenIncrease') * 100).round()} %',
-          'От любого источника, ${_num(def.params.dbl('duration'))} с. '
-              'Проклятие — условие для «Печати бездны» и узла '
-              '«Печать увядания».'));
+          S.abBrandAbout(_num(def.params.dbl('duration')))));
+
+
     }
     if (def.kind == AbilityKind.critApplyDot) {
-      rows.add(_row('Срабатывает от крита', 'ваш шанс — '
-          '${(stats.critChance * 100).toStringAsFixed(1)} %',
-          'Без шанса крита умение не работает вовсе.'));
+      rows.add(_row(
+          S.abOnCrit(
+              '${(stats.critChance * 100).toStringAsFixed(1)} %'),
+          '',
+
+          S.abOnCritAbout));
     }
 
     // Итог в секунду — только там, где он честно считается.
     final perSecond = _damagePerSecond(increased);
     if (perSecond != null) {
       rows.add(const SizedBox(height: 4));
-      rows.add(_row('Итого в секунду', money(perSecond),
-          'С учётом перезарядки и числа целей. Мана и живучесть цели тут '
-              'не учтены.',
+      rows.add(_row(S.abPerSecondTotal, money(perSecond),
+          S.abPerSecondAbout,
+
           strong: true));
     }
 
     if (rows.isEmpty) return const [];
-    return [_header('От чего растёт'), ...rows, const SizedBox(height: 20)];
+    return [_header(S.abScalesFrom), ...rows, const SizedBox(height: 20)];
   }
 
   /// Урон в секунду, если его можно посчитать без вранья.
@@ -317,19 +326,19 @@ class AbilityDetailSheet extends StatelessWidget {
     if (!_dealsDamage) return const [];
 
     return [
-      _header('Тип урона'),
-      _row(def.damageType.ru, '', _resistNote()),
+      _header(S.abDamageType),
+      _row(def.damageType.title, '', _resistNote()),
       const SizedBox(height: 20),
     ];
   }
 
   String _resistNote() => switch (def.damageType) {
         DamageType.physical =>
-          'Уменьшается бронёй цели. Броня врагов растёт с глубиной, поэтому '
-              'физический урон труднее всего тащить вниз.',
-        _ => 'Уменьшается сопротивлением «${def.damageType.ru}» у цели, и '
-            'бронёй тоже. У чудовищ сопротивление своей стихии обычно '
-            'высокое — бить их той же стихией невыгодно.',
+          S.abPhysicalAbout,
+
+        _ => S.abElementalAbout(def.damageType.title),
+
+
       };
 
   bool get _dealsDamage =>
@@ -345,34 +354,38 @@ class AbilityDetailSheet extends StatelessWidget {
     final rows = <Widget>[];
 
     if (def.isActive) {
-      rows.add(_row('Перезарядка', '${_num(_effectiveCooldown())} с',
+      rows.add(_row(
+          S.abCooldown, TextTemplate.seconds(_effectiveCooldown()),
           stats.cooldownReduction > 0.0
-              ? 'Базовая ${_num(def.cooldown)} с, ваше сокращение '
-                  '−${(stats.cooldownReduction * 100).round()} %.'
-              : 'Сокращается свойством «−% ко времени перезарядки» и лучом '
-                  '«Порыв».'));
-      rows.add(_row('Стоит маны', money(def.manaCost),
-          'Ваш запас ${money(stats.maxMana)}, восстановление '
-              '${_num(stats.manaRegen)} в секунду. Не хватило — умение '
-              'ждёт, наёмник продолжает бить оружием.'));
+              ? S.abCooldownBreakdown(_num(def.cooldown),
+                  '−${(stats.cooldownReduction * 100).round()} %')
+
+              : S.abCooldownAbout));
+
+      rows.add(_row(S.abManaCost, money(def.manaCost),
+          S.abManaCostAbout(money(stats.maxMana), _num(stats.manaRegen))));
+
+
       final drain = _effectiveCooldown() > 0.0
           ? def.manaCost / _effectiveCooldown()
           : 0.0;
-      rows.add(_row('Расход', '${_num(drain)} маны в секунду',
-          'Столько это умение съедает из общего запаса, если срабатывает '
-              'без перерыва.'));
+      rows.add(_row(S.abDrain, S.abManaPerSecond(_num(drain)),
+          S.abDrainAbout));
+
     } else if (def.isAura) {
-      rows.add(_row('Резервирует', '${(def.manaReserve * 100).round()} % маны',
-          'Забирает и запас, и восстановление — насовсем, пока аура в слоте. '
-              'Из ${money(stats.maxMana)} останется '
-              '${money(stats.maxMana * (1.0 - def.manaReserve))}.'));
+      rows.add(_row(
+          S.abReserves, S.abReservesPercent((def.manaReserve * 100).round()),
+          S.abReservesAbout(money(stats.maxMana),
+              money(stats.maxMana * (1.0 - def.manaReserve)))));
+
+
     } else {
-      rows.add(_row('Стоит', 'одно место',
-          'Пассивное умение работает всегда и маны не тратит. Его цена — '
-              'место, которое не досталось активному.'));
+      rows.add(_row(S.abCostsWord, S.abOneSlot,
+          S.abPassiveAbout));
+
     }
 
-    return [_header('Цена'), ...rows, const SizedBox(height: 20)];
+    return [_header(S.abPrice), ...rows, const SizedBox(height: 20)];
   }
 
   // --- Теги ------------------------------------------------------------------
@@ -381,12 +394,13 @@ class AbilityDetailSheet extends StatelessWidget {
     if (def.tags.isEmpty) return const [];
 
     return [
-      _header('Теги'),
-      const Text(
-        'Тег — единственное, за что цепляются вещи, дерево пассивок и черта '
-        'наёмника. Множитель по тегу, которого у умения нет, на него не '
-        'действует.',
-        style: TextStyle(fontSize: 12, color: Colors.white38, height: 1.35),
+      _header(S.abTags),
+      Text(
+        S.abTagsAbout,
+
+
+        style: const TextStyle(
+            fontSize: 12, color: Colors.white38, height: 1.35),
       ),
       const SizedBox(height: 10),
       for (final tag in def.tags) _tagRow(tag),
@@ -406,7 +420,7 @@ class AbilityDetailSheet extends StatelessWidget {
           // ровно название тега — то, ради чего строку и читают.
           Expanded(
             flex: 4,
-            child: Text(tag.ru,
+            child: Text(tag.title,
                 style: const TextStyle(fontSize: 13, height: 1.3)),
           ),
           const SizedBox(width: 6),
@@ -442,19 +456,19 @@ class AbilityDetailSheet extends StatelessWidget {
         Tag.lightning ||
         Tag.voidTag ||
         Tag.physical =>
-          'Стихия. Ищите «+% к урону ${tag.ru}» на вещах и луч этой стихии '
-              'в дереве.',
-        Tag.attack => 'Растёт от урона оружия. Его же несёт автоатака.',
-        Tag.spell => 'Растёт от силы чар. Урон оружия не помогает.',
-        Tag.projectile => 'Летит в цель. Аффиксы на снаряды усиливают.',
-        Tag.area => 'Задевает нескольких. Аффиксы на область усиливают.',
-        Tag.duration => 'Урон идёт со временем, а не сразу.',
-        Tag.curse => 'Вешает проклятие. Его ждут «Печать бездны» и '
-            '«Печать увядания».',
-        Tag.aura => 'Работает постоянно за резерв маны.',
-        Tag.totem => 'Бьёт сам, пока наёмник занят другим.',
-        Tag.strike => 'Удар оружием. Его же несёт автоатака.',
-        Tag.blood => 'Кровь: вампиризм, кровотечение, добивание.',
+          S.abTagElement(tag.title),
+
+        Tag.attack => S.abTagAttack,
+        Tag.spell => S.abTagSpell,
+        Tag.projectile => S.abTagProjectile,
+        Tag.area => S.abTagArea,
+        Tag.duration => S.abTagDuration,
+        Tag.curse => S.abTagCurse,
+
+        Tag.aura => S.abTagAura,
+        Tag.totem => S.abTagTotem,
+        Tag.strike => S.abTagStrike,
+        Tag.blood => S.abTagBlood,
       };
 
   // --- Вспомогательное -------------------------------------------------------
@@ -472,17 +486,17 @@ class AbilityDetailSheet extends StatelessWidget {
   String _increasedBreakdown() {
     final parts = <String>[];
     if (stats.increasedDamage > 0.0) {
-      parts.add('общее +${(stats.increasedDamage * 100).round()} %');
+      parts.add(S.abIncreaseGeneral((stats.increasedDamage * 100).round()));
     }
     for (final tag in def.tags) {
       final v = stats.tagDamage[tag] ?? 0.0;
-      if (v > 0.0) parts.add('${tag.ru} +${(v * 100).round()} %');
+      if (v > 0.0) parts.add('${tag.title} +${(v * 100).round()} %');
     }
     if (parts.isEmpty) {
-      return 'Увеличений нет. Их дают свойства вещей, дерево пассивок и '
-          'черта наёмника.';
+      return S.abNoIncreases;
+
     }
-    return 'Складывается: ${parts.join(', ')}.';
+    return S.abIncreasesFrom(parts.join(', '));
   }
 
   String _statLine() {
@@ -492,7 +506,7 @@ class AbilityDetailSheet extends StatelessWidget {
     return key == null
         ? '$name $value'
         : '${key.percent ? '+${(value * 100).round()} %' : '+${_num(value)}'} '
-            '${key.ru}';
+            '${key.title}';
   }
 
   String _tradeoffLine() {
@@ -500,14 +514,15 @@ class AbilityDetailSheet extends StatelessWidget {
     final speed = def.params.dbl('attackSpeedPct');
     String part(double v, String what) =>
         '${v >= 0 ? '+' : '−'}${(v.abs() * 100).round()} % $what';
-    return '${part(armor, 'брони')}, ${part(speed, 'скорости атаки')}';
+    return '${part(armor, S.statArmor.toLowerCase())}, '
+        '${part(speed, S.statAttackSpeed.toLowerCase())}';
   }
 
   static String _kindLine(AbilityDef def) => def.isActive
-      ? 'Активное — срабатывает само, когда готово и хватает маны'
+      ? S.abKindActive
       : def.isAura
-          ? 'Аура — работает всегда, держит часть маны занятой'
-          : 'Пассивное — работает всегда и ничего не стоит';
+          ? S.abKindAura
+          : S.abKindPassive;
 
   static Map<String, double> _params(AbilityDef def) => {
         for (final entry in def.params.raw.entries)
@@ -582,36 +597,52 @@ class AbilityDetailSheet extends StatelessWidget {
 
 /// Название стата по имени из контента.
 ///
-/// Отдельно от `StatKey.ru`, потому что там формулировки для строки аффикса
+/// Отдельно от `StatKey.title`, потому что там формулировки для строки аффикса
 /// («% к урону»), а здесь нужен именительный падеж после числа.
 class StatKeyText {
-  const StatKeyText(this.ru, {this.percent = false});
+  const StatKeyText(this._label, {this.percent = false});
 
-  final String ru;
+  final Phrase _label;
   final bool percent;
 
+  String get title => _label.text;
+
   static StatKeyText? byName(String name) => switch (name) {
-        'increasedDamage' => const StatKeyText('к урону', percent: true),
-        'increasedAttackSpeed' =>
-          const StatKeyText('к скорости атаки', percent: true),
-        'armorPct' => const StatKeyText('к броне', percent: true),
-        'maxHpPct' => const StatKeyText('к максимуму HP', percent: true),
-        'leech' => const StatKeyText('вампиризма', percent: true),
-        'critChance' =>
-          const StatKeyText('к шансу критического удара', percent: true),
-        'critMulti' =>
-          const StatKeyText('к множителю крита', percent: true),
-        'cooldownReduction' =>
-          const StatKeyText('ко времени перезарядки', percent: true),
-        'hpRegen' => const StatKeyText('восстановления HP в секунду'),
-        'manaRegen' => const StatKeyText('восстановления маны в секунду'),
-        'attackDamage' => const StatKeyText('к урону оружия'),
-        'spellPower' => const StatKeyText('к силе чар'),
+        'increasedDamage' =>
+          const StatKeyText(Phrase('к урону', 'increased damage'),
+              percent: true),
+        'increasedAttackSpeed' => const StatKeyText(
+            Phrase('к скорости атаки', 'increased attack speed'),
+            percent: true),
+        'armorPct' =>
+          const StatKeyText(Phrase('к броне', 'armor'), percent: true),
+        'maxHpPct' => const StatKeyText(
+            Phrase('к максимуму HP', 'maximum HP'),
+            percent: true),
+        'leech' =>
+          const StatKeyText(Phrase('вампиризма', 'life leech'), percent: true),
+        'critChance' => const StatKeyText(
+            Phrase('к шансу критического удара', 'critical strike chance'),
+            percent: true),
+        'critMulti' => const StatKeyText(
+            Phrase('к множителю крита', 'critical strike multiplier'),
+            percent: true),
+        'cooldownReduction' => const StatKeyText(
+            Phrase('ко времени перезарядки', 'cooldown reduction'),
+            percent: true),
+        'hpRegen' => const StatKeyText(
+            Phrase('восстановления HP в секунду', 'HP regeneration per second')),
+        'manaRegen' => const StatKeyText(Phrase(
+            'восстановления маны в секунду', 'mana regeneration per second')),
+        'attackDamage' =>
+          const StatKeyText(Phrase('к урону оружия', 'weapon damage')),
+        'spellPower' => const StatKeyText(Phrase('к силе чар', 'spell power')),
         'resistFire' ||
         'resistCold' ||
         'resistLightning' ||
         'resistVoid' =>
-          const StatKeyText('ко всем сопротивлениям'),
+          const StatKeyText(
+              Phrase('ко всем сопротивлениям', 'to all resistances')),
         _ => null,
       };
 }

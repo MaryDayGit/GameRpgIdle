@@ -5,6 +5,9 @@
 /// разных игр.
 library;
 
+import 'package:rift/core/content/text_template.dart';
+import 'package:rift/core/model/lang.dart';
+
 /// Крупные числа: 1.2k, 3.4M. Экспоненциальная экономика иначе не читается —
 /// на сотом этаже золото измеряется миллионами.
 String money(double value) {
@@ -31,11 +34,22 @@ String precise(double value) {
 /// Длительность до минут. Секунды показываются только когда их меньше минуты:
 /// «осталось 7 м 12 с» читается хуже, чем «осталось 7 минут».
 String duration(Duration d) {
-  if (d.inSeconds < 60) return '${d.inSeconds} с';
-  if (d.inMinutes < 60) return '${d.inMinutes} мин';
+  if (d.inSeconds < 60) {
+    return Lang.current == Lang.ru ? '${d.inSeconds} с' : '${d.inSeconds}s';
+  }
+  if (d.inMinutes < 60) {
+    return Lang.current == Lang.ru
+        ? '${d.inMinutes} мин'
+        : '${d.inMinutes} min';
+  }
   final hours = d.inHours;
   final minutes = d.inMinutes % 60;
-  return minutes == 0 ? '$hours ч' : '$hours ч $minutes мин';
+  if (minutes == 0) {
+    return Lang.current == Lang.ru ? '$hours ч' : '${hours}h';
+  }
+  return Lang.current == Lang.ru
+      ? '$hours ч $minutes мин'
+      : '${hours}h $minutes min';
 }
 
 /// Время боя — с секундами: там они значат разницу.
@@ -46,13 +60,49 @@ String clock(double seconds) {
   return '$m:${s.toString().padLeft(2, '0')}';
 }
 
-String percent(double fraction) => '${(fraction * 100).round()} %';
+/// Проценты. Пробел перед знаком ставит язык, а не вкус, — и то же правило
+/// действует в ядре ([TextTemplate.percent]), чтобы «8 %» на экране и «8 %»
+/// в описании аффикса набирались одинаково.
+String percent(double fraction) =>
+    TextTemplate.percent(fraction.isFinite ? fraction : 0.0);
 
-/// Русское согласование числительного: 1 осколок, 2 осколка, 5 осколков.
+/// Согласование числительного: 1 осколок, 2 осколка, 5 осколков.
 ///
 /// Нужно не ради красоты: строки вида «3 осколков» и «6 этажа» встречаются
 /// в игре на каждом экране, и читаются они как недоделка.
-String plural(int n, String one, String few, String many) {
+///
+/// У русского три формы, у английского две, и это не «две из трёх», а другое
+/// правило: русская форма выбирается по последней цифре, английская — по
+/// равенству единице. Поэтому формы передаются отдельными наборами, а не
+/// переиспользуются.
+///
+/// [en] — английское единственное число; множественное по умолчанию
+/// получается прибавлением `s`, что верно для почти всех слов игры (floor,
+/// item, shard). Неправильные формы задаются через [enMany].
+///
+/// Пока [en] не передан, английский показывает русское слово. Это тот же
+/// откат, что и у накладок контента: перевод доезжает по частям, и экран, до
+/// которого он ещё не дошёл, работает, а не падает.
+/// Английское числительное: единственное число ровно на единице, иначе `s`.
+///
+/// Отдельно от [plural], а не флагом внутри него: там, где строка уже собрана
+/// в ветке `Lang.en`, русские формы передавать нечего, и звать общий [plural]
+/// с тремя пустыми строками значило бы писать заглушки ради сигнатуры.
+String pluralEn(int n, String one, [String? many]) =>
+    n.abs() == 1 ? '$n $one' : '$n ${many ?? '${one}s'}';
+
+String plural(
+  int n,
+  String one,
+  String few,
+  String many, {
+  String? en,
+  String? enMany,
+}) {
+  if (Lang.current == Lang.en && en != null) {
+    return n.abs() == 1 ? '$n $en' : '$n ${enMany ?? '${en}s'}';
+  }
+
   final mod100 = n.abs() % 100;
   if (mod100 >= 11 && mod100 <= 14) return '$n $many';
 

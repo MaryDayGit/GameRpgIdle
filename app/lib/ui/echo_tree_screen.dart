@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rift/core/content/echo_tree_def.dart';
 
 import '../state/game_controller.dart';
-import 'format.dart';
+import 'strings.dart';
 
 /// Древо Эха (GDD §8.3).
 ///
@@ -30,7 +30,7 @@ class _EchoTreeScreenState extends State<EchoTreeScreen> {
         final tree = c.profile.tree;
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Древо Эха')),
+          appBar: AppBar(title: Text(S.echoTreeTitle)),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
@@ -42,21 +42,19 @@ class _EchoTreeScreenState extends State<EchoTreeScreen> {
                 runSpacing: 2,
                 crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
-                  Text('Эхо ${c.profile.echo}',
+                  Text(S.echoAmount(c.profile.echo),
                       style: Theme.of(context).textTheme.titleMedium),
                   Text(
                     tree.complete
-                        ? 'Древо пройдено'
-                        : 'следующий узел — ${tree.nextNodeCost.round()}',
+                        ? S.echoTreeComplete
+                        : S.echoNextNode(tree.nextNodeCost.round()),
                     style: const TextStyle(fontSize: 12, color: Colors.white54),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
-                'Куплено ${plural(tree.nodesBought, "узел", "узла", "узлов")} '
-                'из ${tree.totalNodes}. Цена растёт от числа купленных, '
-                'поэтому дешёвой ветки нет.',
+                S.echoTreeAbout(tree.nodesBought, tree.totalNodes),
                 style: const TextStyle(fontSize: 12, color: Colors.white38),
               ),
               const SizedBox(height: 20),

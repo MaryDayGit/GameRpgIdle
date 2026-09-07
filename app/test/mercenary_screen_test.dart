@@ -246,7 +246,7 @@ void main() {
         reason: 'рычаг, которого не видно, игрок не выберет');
     expect(merc.forkPolicy, ForkPolicy.loot);
 
-    await tester.tap(find.text(ForkPolicy.safety.ru));
+    await tester.tap(find.text(ForkPolicy.safety.title));
     await tester.pump();
     expect(merc.forkPolicy, ForkPolicy.safety);
 
@@ -254,15 +254,15 @@ void main() {
     // спуск уже посчитан, и приказ задним числом переписал бы случившийся ран.
     controller.deploy(merc);
     await tester.pump();
-    await tester.tap(find.text(ForkPolicy.echo.ru));
+    await tester.tap(find.text(ForkPolicy.echo.title));
     await tester.pump();
     expect(merc.forkPolicy, ForkPolicy.safety);
   });
 
   testWidgets('отправка уносит приказ в контракт', (tester) async {
     await pump(tester);
-    await scrollTo(tester, find.text(ForkPolicy.echo.ru));
-    await tester.tap(find.text(ForkPolicy.echo.ru));
+    await scrollTo(tester, find.text(ForkPolicy.echo.title));
+    await tester.tap(find.text(ForkPolicy.echo.title));
     await tester.pump();
 
     expect(merc.forkPolicy, ForkPolicy.echo, reason: 'нажатие не сработало');

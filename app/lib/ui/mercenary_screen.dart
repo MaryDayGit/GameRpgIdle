@@ -18,6 +18,7 @@ import '../state/game_controller.dart';
 import 'ability_detail.dart';
 import 'mercenary_stats.dart';
 import 'format.dart';
+import 'strings.dart';
 import 'gear_grid.dart';
 import 'help_screen.dart';
 
@@ -63,7 +64,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => _SlotSheet(
-        title: kind.ru,
+        title: kind.title,
         worn: worn,
         options: options,
         gainOf: _gain,
@@ -147,7 +148,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               // другое: хватит ли брони, чем его убило в прошлый раз, куда
               // ушла мана.
               IconButton(
-                tooltip: 'Характеристики',
+                tooltip: S.statsShort,
                 icon: const Icon(Icons.bar_chart_outlined),
                 onPressed: () => MercenaryStatsSheet.show(
                   context,
@@ -157,7 +158,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'Как это работает',
+                tooltip: S.howItWorks,
                 icon: const Icon(Icons.menu_book_outlined),
                 onPressed: () => openHelp(context, section: 'build'),
               ),
@@ -168,7 +169,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
             children: [
               Text(
                 '${m.rank.forGender(m.gender)} · ${m.trait.forGender(m.gender)} · '
-                'рюкзак ${m.backpackSlots}',
+                '${S.backpackShort(m.backpackSlots)}',
                 style: const TextStyle(fontSize: 12, color: Colors.white54),
               ),
               const SizedBox(height: 4),
@@ -200,25 +201,26 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Нажмите, чтобы посмотреть сопротивления, ману и остальное',
-                style: TextStyle(fontSize: 11, color: Colors.white38),
+              Text(
+                S.statsTapHint,
+                style: const TextStyle(fontSize: 11, color: Colors.white38),
               ),
               const SizedBox(height: 8),
               if (!editable)
-                const Text(
-                  'Наёмник в бездне — сборка заперта до конца контракта.',
-                  style: TextStyle(fontSize: 12, color: Colors.orangeAccent),
+                Text(
+                  S.buildLocked,
+                  style: const TextStyle(
+                      fontSize: 12, color: Colors.orangeAccent),
                 ),
               const SizedBox(height: 16),
 
-              const _Header('Снаряжение'),
+              _Header(S.mercGear),
               Text(
                 editable
-                    ? 'Нажмите на слот, чтобы надеть предмет из сундука '
-                        '(${c.profile.stash.length}). Что наденете — то и '
-                        'уйдёт вниз; пустые слоты наёмник заполнит сам.'
-                    : 'Наёмник ушёл с этим набором.',
+                    ? S.gearSlotHint(c.profile.stash.length)
+
+
+                    : S.gearLockedNote,
                 style: const TextStyle(fontSize: 12, color: Colors.white38),
               ),
               const SizedBox(height: 8),
@@ -228,7 +230,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               ),
               const SizedBox(height: 20),
 
-              const _Header('Умения'),
+              _Header(S.mercAbilities),
               // Правило реликта — строкой над списком, а не сюрпризом при
               // нажатии: игрок должен понимать ограничение до того, как
               // упрётся в него.
@@ -259,7 +261,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               _TagPower(stats: stats, loadout: m.abilities),
 
               const SizedBox(height: 20),
-              const _Header('Приказ на развилку'),
+              _Header(S.forkOrderTitle),
               _ForkOrder(
                 policy: m.forkPolicy,
                 onPick: editable
@@ -268,7 +270,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               ),
 
               const SizedBox(height: 20),
-              const _Header('Что надето'),
+              _Header(S.whatIsWorn),
               for (var slot = 0; slot < Equipment.slotCount; slot++)
                 _GearRow(
                   slot: slot,
@@ -324,11 +326,11 @@ class _StatsRow extends StatelessWidget {
 
     return Row(
       children: [
-        cell('Сила сборки', money(power)),
+        cell(S.buildPower, money(power)),
         cell('HP', money(hp)),
-        cell('Урон', money(damage)),
-        cell('Чары', money(spellPower)),
-        cell('Броня', money(armor)),
+        cell(S.statDamage, money(damage)),
+        cell(S.statSpell, money(spellPower)),
+        cell(S.statArmor, money(armor)),
       ],
     );
   }
@@ -381,7 +383,7 @@ class _AbilityRow extends StatelessWidget {
       dense: true,
       contentPadding: EdgeInsets.zero,
       leading: _SlotBadge(label: '${index + 1}'),
-      title: Text(ability?.name ?? 'Пустой слот',
+      title: Text(ability?.name ?? S.emptySlot,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: ability == null ? Colors.white38 : null,
@@ -406,7 +408,7 @@ class _AbilityRow extends StatelessWidget {
           ? (onTap == null ? null : const Icon(Icons.chevron_right, size: 18))
           : IconButton(
               icon: const Icon(Icons.info_outline, size: 18),
-              tooltip: 'Подробно',
+              tooltip: S.inDetail,
               visualDensity: VisualDensity.compact,
               onPressed: () => AbilityDetailSheet.show(context,
                   def: ability, stats: stats),
@@ -451,21 +453,25 @@ class _ManaBudget extends StatelessWidget {
         children: [
           Text(
             reserved <= 0.0
-                ? 'Мана ${stats.maxMana.toStringAsFixed(0)} · '
-                    'восстановление ${stats.manaRegen.toStringAsFixed(1)}/с · '
-                    'расход ${drain.toStringAsFixed(1)}/с'
-                : 'Мана ${stats.maxMana.toStringAsFixed(0)} '
-                    'из ${full.toStringAsFixed(0)} '
-                    '(ауры держат ${(reserved * 100).round()} %) · '
-                    'восстановление ${stats.manaRegen.toStringAsFixed(1)}/с · '
-                    'расход ${drain.toStringAsFixed(1)}/с',
+                ? S.manaLine(
+                    pool: stats.maxMana.toStringAsFixed(0),
+                    regen: stats.manaRegen.toStringAsFixed(1),
+                    drain: drain.toStringAsFixed(1))
+
+
+                : S.manaLine(
+                    pool: stats.maxMana.toStringAsFixed(0),
+                    regen: stats.manaRegen.toStringAsFixed(1),
+                    drain: drain.toStringAsFixed(1),
+                    full: full.toStringAsFixed(0),
+                    reservedPercent: (reserved * 100).round()),
             style: const TextStyle(fontSize: 12, color: Colors.white54),
           ),
           Text(
             ok
-                ? 'Маны хватает: умения не будут простаивать.'
-                : 'Расход выше восстановления — в долгом бою умения '
-                    'начнут простаивать. Запас маны держит первые секунды.',
+                ? S.manaEnough
+                : S.manaShort,
+
             style: TextStyle(
               fontSize: 11,
               color: ok ? const Color(0xFF7FB069) : const Color(0xFFD98F4E),
@@ -482,13 +488,14 @@ String _abilityLine(AbilityDef def) {
   // способности, «как часто» и «сколько их сразу», и выбирать приходится по
   // обоим сразу.
   final kind = def.isActive
-      ? 'Активное · ${def.cooldown.toStringAsFixed(0)} с · '
-          '${def.manaCost.toStringAsFixed(0)} маны'
+      ? S.abilityActive(def.cooldown.toStringAsFixed(0),
+          def.manaCost.toStringAsFixed(0))
+
       : def.isAura
           // Резерв — главная цена ауры, и он обязан стоять там же, где у
           // активки стоит цена каста: игрок сравнивает их в одном месте.
-          ? 'Аура · держит ${(def.manaReserve * 100).round()} % маны'
-          : 'Пассивное';
+          ? S.abilityAura((def.manaReserve * 100).round())
+          : S.abilityPassive;
   final text = TextTemplate.render(def.text, _params(def));
   return '$kind\n$text';
 }
@@ -531,7 +538,7 @@ class TagChips extends StatelessWidget {
               ),
             ),
             child: Text(
-              tag.ru,
+              tag.title,
               style: TextStyle(
                 fontSize: 10,
                 letterSpacing: 0.2,
@@ -579,11 +586,11 @@ class _TagPower extends StatelessWidget {
     ]..sort((a, b) => b.value.compareTo(a.value));
 
     if (entries.isEmpty) {
-      return const Text(
-        'Множителей по тегам пока нет. Они приходят с вещей, из дерева '
-        'пассивок и от черты наёмника — и работают только на умениях с этим '
-        'тегом.',
-        style: TextStyle(fontSize: 12, color: Colors.white38),
+      return Text(
+        S.noTagMultipliers,
+
+
+        style: const TextStyle(fontSize: 12, color: Colors.white38),
       );
     }
 
@@ -601,7 +608,7 @@ class _TagPower extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Header('Урон по тегам'),
+        _Header(S.tagDamageTitle),
         const SizedBox(height: 6),
         Wrap(
           spacing: 6,
@@ -616,7 +623,7 @@ class _TagPower extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${e.key.ru} +${(e.value * 100).round()} %',
+                  '${e.key.title} +${(e.value * 100).round()} %',
                   style: TextStyle(
                     fontSize: 12,
                     color: used.contains(e.key)
@@ -629,10 +636,10 @@ class _TagPower extends StatelessWidget {
         ),
         if (entries.any((e) => !used.contains(e.key))) ...[
           const SizedBox(height: 6),
-          const Text(
-            'Бледные теги не встречаются ни в одном выбранном умении — '
-            'эти проценты сейчас ничего не дают.',
-            style: TextStyle(fontSize: 11, color: Colors.white30),
+          Text(
+            S.paleTagsNote,
+
+            style: const TextStyle(fontSize: 11, color: Colors.white30),
           ),
         ],
       ],
@@ -666,13 +673,13 @@ class _GearRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: _SlotBadge(label: kind.ru.substring(0, 1)),
+      leading: _SlotBadge(label: kind.title.substring(0, 1)),
       title: Text(
-        blocked ? '${kind.ru} — занята двуручным' : kind.ru,
+        blocked ? S.slotTakenByTwoHander(kind.title) : kind.title,
         style: const TextStyle(fontSize: 12, color: Colors.white54),
       ),
       subtitle: worn == null
-          ? Text(blocked ? '—' : 'Пусто',
+          ? Text(blocked ? '—' : S.empty,
               style: const TextStyle(fontSize: 13, color: Colors.white38))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -754,15 +761,15 @@ class _SlotSheet extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                   if (onUnequip != null)
-                    TextButton(onPressed: onUnequip, child: const Text('Снять')),
+                    TextButton(onPressed: onUnequip, child: Text(S.drop)),
                 ],
               ),
             ),
             if (options.isEmpty)
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, 24),
-                child: Text('В сундуке нет ничего для этого слота.',
-                    style: TextStyle(fontSize: 13, color: Colors.white54)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Text(S.nothingForSlot,
+                    style: const TextStyle(fontSize: 13, color: Colors.white54)),
               )
             else
               Flexible(
@@ -921,13 +928,13 @@ class _AbilitySheetState extends State<_AbilitySheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Умение',
+                    child: Text(S.abilityWord,
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                   if (widget.current != null)
                     TextButton(
                       onPressed: () => widget.onPick(null),
-                      child: const Text('Очистить'),
+                      child: Text(S.clear),
                     ),
                 ],
               ),
@@ -939,14 +946,14 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   _FilterChip(
-                    label: 'Все',
+                    label: S.filterEvery,
                     selected: _filter == null,
                     color: Colors.white70,
                     onTap: () => setState(() => _filter = null),
                   ),
                   for (final tag in tags)
                     _FilterChip(
-                      label: tag.ru,
+                      label: tag.title,
                       selected: _filter == tag,
                       color: tagColor(tag),
                       // Точка у тега, в который игрок уже вложился: отбор
@@ -960,12 +967,12 @@ class _AbilitySheetState extends State<_AbilitySheet> {
             const SizedBox(height: 4),
             Flexible(
               child: shown.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(24),
+                  ? Padding(
+                      padding: const EdgeInsets.all(24),
                       child: Text(
-                        'С этим тегом открытых умений пока нет. '
-                        'Остальные открывает древо Эха.',
-                        style: TextStyle(fontSize: 12, color: Colors.white38),
+                        S.noAbilitiesWithTag,
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.white38),
                       ),
                     )
                   : ListView.builder(
@@ -1004,7 +1011,7 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                                       IconButton(
                                         icon: const Icon(Icons.info_outline,
                                             size: 16),
-                                        tooltip: 'Подробно',
+                                        tooltip: S.inDetail,
                                         visualDensity: VisualDensity.compact,
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.only(left: 8),
@@ -1124,10 +1131,16 @@ class _ForkOrder extends StatelessWidget {
   /// Формулировки сверены с замером `sim_cli --forks`, а не придуманы:
   /// обещание «больше добычи», которого нет в цифрах, — это ложь игроку.
   static const _meaning = {
-    ForkPolicy.loot: 'Редких предметов и осколков больше, глубина и Эхо ниже',
-    ForkPolicy.safety: 'Глубже, больше Эха и золота — но добыча беднее',
-    ForkPolicy.echo: 'Гонится за Эхом боссов; где Эха нет — берёт добычу',
-    ForkPolicy.random: 'Как повезёт',
+    ForkPolicy.loot: Phrase(
+        'Редких предметов и осколков больше, глубина и Эхо ниже',
+        'More rare items and shards, less depth and Echo'),
+    ForkPolicy.safety: Phrase(
+        'Глубже, больше Эха и золота — но добыча беднее',
+        'Deeper, more Echo and gold — but a poorer haul'),
+    ForkPolicy.echo: Phrase(
+        'Гонится за Эхом боссов; где Эха нет — берёт добычу',
+        'Chases boss Echo; where there is none, takes the loot'),
+    ForkPolicy.random: Phrase('Как повезёт', 'Whatever luck brings'),
   };
 
   @override
@@ -1157,10 +1170,10 @@ class _ForkOrder extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(option.ru,
+                          Text(option.title,
                               style: const TextStyle(fontSize: 13)),
                           Text(
-                            _meaning[option] ?? '',
+                            _meaning[option]?.text ?? '',
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.white38),
                           ),

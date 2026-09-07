@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "_comment": "Перевод relics.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
+  "entries": {
+    "ash_covenant": {
+      "name": "Ashen Covenant",
+      "text": "Burning can crit and stacks up to five times. Direct Fire damage −50%."
+    },
+    "blood_oath_ring": {
+      "name": "Blood Oath",
+      "text": "Only leech heals you — no rest, no regeneration. Life leech ×3."
+    },
+    "boots_of_descent": {
+      "name": "Boots of the Descent",
+      "text": "One wave fewer per floor. Gold and items of common and uncommon rarity are not picked up."
+    },
+    "charm_of_silence": {
+      "name": "Charm of Silence",
+      "text": "Every ability slot holds two passive abilities. Active abilities are unavailable."
+    },
+    "counter_of_moments": {
+      "name": "Counter of Moments",
+      "text": "All counted effects trigger twice as often. Critical strikes are unavailable."
+    },
+    "crown_of_obsession": {
+      "name": "Crown of Obsession",
+      "text": "Only one active ability is available. Its cooldown is −70% and it strikes the whole wave."
+    },
+    "ember_conduit": {
+      "name": "Ember Conduit",
+      "text": "All damage becomes Fire, +30%. Fire resistance −50."
+    },
+    "endless_censer": {
+      "name": "Endless Censer",
+      "text": "Abilities cost no mana. Cooldowns take twice as long."
+    },
+    "first_blood_gauntlet": {
+      "name": "Gauntlet of First Blood",
+      "text": "The first hit on a wave is three times stronger. Every hit after it is −25%."
+    },
+    "glass_crown": {
+      "name": "Glass Crown",
+      "text": "+70% to all damage. Maximum HP −55%."
+    },
+    "hide_of_prisms": {
+      "name": "Hide of Prisms",
+      "text": "Armor does not work at all. +45 to all resistances."
+    },
+    "horn_of_the_hunt": {
+      "name": "Horn of the Hunt",
+      "text": "Bosses give twice as much. Every other enemy has +35% HP."
+    },
+    "mask_of_certainty": {
+      "name": "Mask of Certainty",
+      "text": "Every hit is a critical strike. Base damage −45%."
+    },
+    "reaper_edge": {
+      "name": "Reaper's Edge",
+      "text": "An enemy below 18% health dies instantly. Damage −30%."
+    },
+    "rime_conduit": {
+      "name": "Rime Conduit",
+      "text": "All damage becomes Cold, +30%. Cold resistance −50."
+    },
+    "rope_of_the_deep": {
+      "name": "Rope of the Deep",
+      "text": "The descent starts 10 floors deeper. Maximum HP −30%."
+    },
+    "scarred_pact": {
+      "name": "Scarred Pact",
+      "text": "Every hit you take grants +5% damage until the end of the wave, up to eight times."
+    },
+    "seal_of_haste": {
+      "name": "Seal of Haste",
+      "text": "Cooldowns are half as long. Mana costs twice as much."
+    },
+    "seal_of_thousand_eyes": {
+      "name": "Seal of a Thousand Eyes",
+      "text": "Curses last until the end of the floor and carry over to new waves. Damage to uncursed enemies −60%."
+    },
+    "skin_of_despair": {
+      "name": "Skin of Despair",
+      "text": "Maximum HP −65%. Effects conditioned on being below X% HP are always active. Life leech doubled."
+    },
+    "split_counterweight": {
+      "name": "Split Counterweight",
+      "text": "Two-handed weapons can be held in one hand. Maximum HP −40%."
+    },
+    "storm_conduit": {
+      "name": "Storm Conduit",
+      "text": "All damage becomes Lightning, +30%. Lightning resistance −50."
+    },
+    "tireless_boots": {
+      "name": "Tireless Boots",
+      "text": "The mercenary does not rest between floors. One wave fewer per floor."
+    },
+    "twin_rings": {
+      "name": "Twin Rings",
+      "text": "Both rings give double. The amulet does not work."
+    },
+    "void_conduit": {
+      "name": "Void Conduit",
+      "text": "All damage becomes Void, +30%. Void resistance −50."
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rift/core/model/grammar.dart';
 import 'package:rift/core/model/mercenary.dart';
+
+import '../ui/strings.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -57,7 +59,7 @@ class LocalDeathNotifier implements DeathNotifier {
   LocalDeathNotifier(this._plugin);
 
   static const _channelId = 'rift_descent';
-  static const _channelName = 'Спуски';
+  static String get _channelName => S.notificationChannel;
 
   final FlutterLocalNotificationsPlugin _plugin;
 
@@ -75,11 +77,13 @@ class LocalDeathNotifier implements DeathNotifier {
     return LocalDeathNotifier(plugin).._ready = true;
   }
 
-  /// Разрешение спрашивается НЕ на первом запуске.
+  /// Разрешение спрашивается на первом запуске.
   ///
-  /// На первом запуске игрок ещё не понимает, зачем игре уведомления, и
-  /// отказывает. После первой гибели вопрос осмысленный: «сообщить, когда
-  /// наёмник погибнет?» — и это честнее (`docs/02-TECH.md` §3).
+  /// Раньше — после первой гибели: вопрос там осмысленнее, игрок уже понял,
+  /// что наёмник уходит надолго. Но платил за это первый спуск. Наёмник
+  /// встаёт на развилке через минуты после отправки, разрешения к этому
+  /// моменту ещё нет, и система выбрасывает ровно то уведомление, ради
+  /// которого игру и закрывают (`docs/02-TECH.md` §3).
   @override
   Future<bool> ensurePermission() async {
     if (!_ready) return false;
@@ -109,18 +113,20 @@ class LocalDeathNotifier implements DeathNotifier {
 
     await _plugin.zonedSchedule(
       id: id,
-      title: atFork ? '$mercName ждёт решения' : '$mercName не вернётся',
+      title: atFork
+          ? S.notifyForkTitle(mercName)
+          : S.notifyDeathTitle(mercName),
       body: atFork
-          ? '${she ? "Остановилась" : "Остановился"} на развилке у этажа '
-              '$depth. Выберите путь, пока ${she ? "она" : "он"} ждёт.'
-          : '${she ? "Погибла" : "Погиб"} на этаже $depth. '
-              'Добыча ждёт на Заставе.',
+          ? S.notifyForkBody(she: she, depth: depth)
+
+          : S.notifyDeathBody(she: she, depth: depth),
+
       scheduledDate: when,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
-          channelDescription: 'Сообщения о судьбе наёмников в бездне',
+          channelDescription: S.notificationChannelAbout,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),

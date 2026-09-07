@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'help_content.dart';
+import 'strings.dart';
 
 /// Справка: оглавление и разделы.
 ///
@@ -27,7 +28,7 @@ class HelpScreen extends StatelessWidget {
     if (section != null) return _SectionScreen(section: section);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Справка')),
+      appBar: AppBar(title: Text(S.helpTitle)),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 32),
         itemCount: helpSections.length,

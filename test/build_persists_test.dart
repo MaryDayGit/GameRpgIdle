@@ -160,7 +160,7 @@ void main() {
       // наёмнике, он её не снимал.
       for (final item in sent) {
         expect(profile.stash, contains(item),
-            reason: '${item.kind.ru} ${item.ilvl} ур. не вернулся');
+            reason: '${item.kind.title} ${item.ilvl} ур. не вернулся');
       }
     });
 
