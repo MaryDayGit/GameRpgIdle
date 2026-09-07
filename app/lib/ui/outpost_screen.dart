@@ -603,25 +603,36 @@ class _DescentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Обе половины гибкие, и это не перестраховка. Слева растёт номер
+          // этажа, справа — время: «Этаж 128» и «в бездне 3 ч 40 мин» вместе
+          // не помещаются в 360 точек, а idle-игру именно так и открывают —
+          // через несколько часов после отправки. Жёсткая строка вылезала за
+          // край ровно в тот момент, ради которого игру и открыли.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                S.floorNumber(depth),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  S.floorNumber(depth),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               // Сколько наёмник УЖЕ внизу, а не сколько ему осталось.
               //
               // Ран посчитан целиком в момент отправки, поэтому «осталось
               // 11 мин» — это не оценка, а дата смерти: игрок знал исход
               // до спуска. Прошедшее время говорит ровно то же про ход
               // спуска и ничего не выдаёт про его конец.
-              Text(
-                S.inAbyssFor(duration(contract.elapsedAt(now))),
-                style: const TextStyle(fontSize: 13, color: Colors.white60),
+              Flexible(
+                child: Text(
+                  S.inAbyssFor(duration(contract.elapsedAt(now))),
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(fontSize: 13, color: Colors.white60),
+                ),
               ),
             ],
           ),

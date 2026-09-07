@@ -19,6 +19,7 @@ import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/data/settings_store.dart';
 import 'package:rift_app/state/game_controller.dart';
+import 'package:rift_app/trailer/demo_profile.dart';
 import 'package:rift_app/ui/ability_detail.dart';
 import 'package:rift_app/ui/battle_screen.dart';
 import 'package:rift_app/ui/echo_tree_screen.dart';
@@ -529,5 +530,70 @@ void main() {
     expectNoOverflow(tester, 'Обучение');
     expect(find.text('Понятно'), findsOneWidget,
         reason: 'кнопка обязана остаться на экране, а не уехать за край');
+  });
+
+  testWidgets('карточка спуска держится, когда наёмник внизу уже часы',
+      (tester) async {
+    // Остальные тесты этого файла живут на ПОСТОЯННЫХ часах, и спуск у них
+    // всегда только что начался: «Этаж 3» и «в бездне 1 мин». Настоящая
+    // idle-игра открывается иначе — игрок оставил наёмника на развилке,
+    // вернулся через три часа, и в одной строке сошлись трёхзначный этаж
+    // слева и «в бездне 3 ч 40 мин» справа. Вместе они шире узкого телефона.
+    //
+    // Нашлось это не глазами: строка вылезала на записи трейлера, где часы
+    // игры гонятся в девятьсот раз быстрее и такое состояние наступает за
+    // секунды.
+    var now = DateTime.utc(2026, 8, 1);
+    final lived = DemoProfile.build();
+    final waiting = GameController(
+      content: bundles[Lang.ru]!,
+      store: SaveStore(dir),
+      profile: lived,
+      clock: () => now,
+      seed: 7,
+      initialSettings: AppSettings(tutorialDone: true),
+    );
+    addTearDown(waiting.dispose);
+
+    final contract = waiting.deploy(lived.roster.reserve.first)!;
+
+    // Дойти до ГЛУБОКОЙ развилки: номер этажа растёт по симуляции, а время в
+    // карточке идёт по стене. Порознь ни то ни другое строку не ломает.
+    var guard = 0;
+    while (guard++ < 30) {
+      now = contract.segmentEndsAtUtc!.add(const Duration(milliseconds: 500));
+      waiting.tick();
+      if (!contract.atFork) break;
+      if (contract.currentFloorAt(now) >= 15) break;
+      waiting.chooseFork(contract, 0);
+    }
+
+    // ...и уйти оттуда на трое суток. Наёмник ждёт ответа, ожидание
+    // вычитается из спуска, а часы на стене идут.
+    now = now.add(const Duration(hours: 3, minutes: 40));
+    waiting.chooseFork(contract, 0);
+    waiting.tick();
+
+    await show(tester, OutpostScreen(controller: waiting), textScale: 1.3);
+
+    // Карточка лежит ниже сгиба, а список ленивый: непостроенный виджет не
+    // переполняется никогда, и тест без прокрутки проверял бы пустоту.
+    // Тянуть надо от НИЖНЕГО края — в середине списка лежит горизонтальная
+    // лента кнопок, и она перехватывает жест на себя.
+    final list = find.byType(ListView).first;
+    for (var i = 0; i < 25 && find.textContaining('Этаж').evaluate().isEmpty; i++) {
+      final box = tester.getRect(list);
+      await tester.dragFrom(
+        Offset(box.center.dx, box.bottom - 24),
+        const Offset(0, -160),
+      );
+      await tester.pump();
+    }
+
+    expect(find.textContaining('Этаж'), findsWidgets,
+        reason: 'карточки спуска нет на экране — проверять нечего');
+    expectNoOverflow(tester,
+        'Карточка спуска на этаже ${contract.currentFloorAt(now)} '
+        'через ${contract.elapsedAt(now).inMinutes} мин');
   });
 }
