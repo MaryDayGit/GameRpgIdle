@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/trailer/demo_profile.dart';
 import 'package:rift_app/trailer/trailer_app.dart';
+import 'package:rift_app/trailer/trailer_camera.dart';
 import 'package:rift_app/ui/echo_tree_screen.dart';
 import 'package:rift_app/ui/forge_screen.dart';
 import 'package:rift_app/ui/journal_screen.dart';
@@ -86,6 +88,8 @@ void main() {
     ));
 
     final seen = <Type>{};
+    var minScale = double.infinity;
+    var maxScale = 0.0;
     const screens = [
       MercenaryScreen,
       JournalScreen,
@@ -104,12 +108,31 @@ void main() {
       for (final screen in screens) {
         if (find.byType(screen).evaluate().isNotEmpty) seen.add(screen);
       }
+      // Масштаб камеры читается прямо из матрицы: наезд, посчитанный
+      // неправильно, виден только так. Раньше рамка бралась как минимум из
+      // ширины и высоты, для панелей во всю ширину давала 1.0, и трейлер
+      // показывал неподвижный снимок экрана.
+      final lens = find.descendant(
+        of: find.byType(TrailerCamera),
+        matching: find.byType(Transform),
+      );
+      if (lens.evaluate().isNotEmpty) {
+        final scale =
+            tester.widget<Transform>(lens.first).transform.getMaxScaleOnAxis();
+        minScale = math.min(minScale, scale);
+        maxScale = math.max(maxScale, scale);
+      }
     }
 
     expect(tester.takeException(), isNull);
     expect(passes, greaterThan(0), reason: 'сценарий должен дойти до конца');
     expect(seen, containsAll(screens),
         reason: 'трейлер обязан показать всю игру, а не половину');
+    expect(maxScale, greaterThan(1.3),
+        reason: 'камера обязана наезжать, а не показывать снимок экрана');
+    expect(maxScale - minScale, greaterThan(0.25),
+        reason: 'кадр обязан меняться: одинаковый масштаб весь ролик — это '
+            'статичная картинка');
 
     // Снимаем дерево: контроллер держит таймер часов и автосохранения, и без
     // этого тест падает на «A Timer is still pending».

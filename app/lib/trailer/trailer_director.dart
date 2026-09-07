@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -6,6 +7,7 @@ import 'package:rift/core/model/player_profile.dart';
 import 'package:rift/core/sim/fork.dart';
 
 import '../state/game_controller.dart';
+import '../ui/coach_mark.dart';
 import 'trailer_camera.dart';
 import 'trailer_caption.dart';
 
@@ -270,10 +272,91 @@ class _TrailerHostState extends State<TrailerHost>
     }
   }
 
+  /// Самый верхний вертикальный список на экране.
+  ///
+  /// Ищется обходом дерева, а не через `PrimaryScrollController`: экраны игры
+  /// заводят списки сами и наружу их не отдают, а трейлеру нельзя требовать
+  /// правок в игре. Последний найденный — тот, что в верхнем маршруте: routes
+  /// лежат в навигаторе по порядку, и обход в глубину доходит до верхнего
+  /// последним.
+  ScrollableState? _topScrollable() {
+    ScrollableState? found;
+    void visit(Element e) {
+      if (e is StatefulElement && e.state is ScrollableState) {
+        final state = e.state as ScrollableState;
+        if (state.position.hasPixels &&
+            state.position.axis == Axis.vertical) {
+          found = state;
+        }
+      }
+      e.visitChildren(visit);
+    }
+
+    context.visitChildElements(visit);
+    return found;
+  }
+
+  /// Докручивает до метки и ставит её в кадр.
+  ///
+  /// Без этого половина съёмки срывалась в общий план. Экраны игры — ленивые
+  /// списки: то, что ниже сгиба, Flutter не строит вовсе, метки там просто
+  /// нет, и наводиться камере не на что. Живой человек в этом месте
+  /// прокручивает экран — трейлер делает то же самое.
+  Future<void> _reveal(String id) async {
+    // Откуда начали. Если метки на экране нет вовсе — наёмник не на развилке,
+    // сундук пуст, — поиск иначе укатывает экран в самый низ и оставляет его
+    // там: в дубль попал список построек под подписью «The path splits».
+    final from = _topScrollable()?.position.pixels;
+
+    for (var step = 0; step < 24 && !_done && mounted; step++) {
+      final anchor = TutorialAnchor.contextOf(id);
+      if (anchor != null && anchor.mounted) {
+        await Scrollable.ensureVisible(
+          anchor,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeInOut,
+          // Чуть выше середины: там же, где камера держит цель, и там, где
+          // её не перекрывает подпись.
+          alignment: 0.38,
+        );
+        return;
+      }
+
+      final list = _topScrollable();
+      if (list == null) return;
+      final at = list.position;
+      if (at.pixels >= at.maxScrollExtent) break;
+      await at.animateTo(
+        math.min(at.pixels + 240, at.maxScrollExtent),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.linear,
+      );
+    }
+
+    // Не нашли — возвращаем экран туда, где он был.
+    final back = _topScrollable();
+    if (from != null && back != null && back.position.hasPixels) {
+      await back.position.animateTo(
+        from.clamp(0.0, back.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   Future<void> _run() async {
     for (final beat in widget.script) {
       if (_done || !mounted) return;
       await _held();
+
+      // Подпись встаёт ДО действия, камера — после. Это не симметрия ради
+      // симметрии: действие бывает долгим — перемотка спуска идёт секунды, —
+      // и подпись, поставленная после него, всё это время показывает текст
+      // предыдущего кадра поверх уже другой картинки. Камере же наоборот
+      // нужен построенный экран, иначе метки, на которую она наводится, ещё
+      // нет и наезд срывается в общий план.
+      if (beat.line != _line) setState(() => _line = beat.line);
+
       try {
         await beat.act?.call(widget.stage);
       } catch (_) {
@@ -281,10 +364,14 @@ class _TrailerHostState extends State<TrailerHost>
         // не туда — наёмник умер раньше развилки, сундук полон, — и это
         // повод пропустить кадр, а не оборвать дубль на середине.
       }
+      // Докрутить до метки ДО того, как камера на неё наведётся: иначе она
+      // наводится на то, чего ещё нет в дереве, и срывается в общий план.
+      final anchor = beat.shot.anchor;
+      if (anchor != null) await _reveal(anchor);
+
       if (_done || !mounted) return;
       setState(() {
         _shot = beat.shot;
-        _line = beat.line;
         _move = beat.move;
       });
       await widget.stage.pause(beat.move + beat.hold);

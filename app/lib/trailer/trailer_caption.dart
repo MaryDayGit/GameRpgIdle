@@ -42,14 +42,27 @@ class TrailerCaptionLayer extends StatelessWidget {
   /// Сколько высоты кадра занимает интерфейс ленты. Снизу больше: там
   /// подпись, звук и три кнопки.
   static const safeTop = 0.14;
-  static const safeBottom = 0.22;
+  static const safeBottom = 0.16;
+
+  /// Докуда достаёт затемнение под текстом.
+  ///
+  /// Только нижняя треть. Раньше оно шло до середины кадра, и вместе с
+  /// крупным заголовком подпись съедала пол-экрана — а показывать надо игру,
+  /// а не подписи к ней.
+  static const scrim = 0.42;
 
   @override
   Widget build(BuildContext context) {
     final line = this.line;
 
+    // `Material` здесь не для вида. Слой подписей лежит поверх навигатора, вне
+    // `Scaffold`, и своего стиля текста у него нет: Flutter рисует такой текст
+    // служебным моноширинным шрифтом с жёлтым подчёркиванием — ровно то, что
+    // и попало в первый дубль.
     return IgnorePointer(
-      child: LayoutBuilder(
+      child: Material(
+        type: MaterialType.transparency,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final height = constraints.maxHeight;
 
@@ -65,13 +78,21 @@ class TrailerCaptionLayer extends StatelessWidget {
                       begin: line?.top ?? false
                           ? Alignment.topCenter
                           : Alignment.bottomCenter,
-                      end: line?.top ?? false
-                          ? Alignment.center
-                          : Alignment.center,
+                      // Конец градиента считается в долях от середины кадра:
+                      // -1 это край, 0 — середина. Держим его в трети.
+                      end: Alignment(
+                        0,
+                        (line?.top ?? false ? -1 : 1) * (1 - 2 * scrim),
+                      ),
                       colors: [
-                        Colors.black.withValues(alpha: line == null ? 0 : 0.72),
+                        Colors.black.withValues(alpha: line == null ? 0 : 0.94),
+                        Colors.black.withValues(alpha: line == null ? 0 : 0.8),
                         Colors.transparent,
                       ],
+                      // Почти непрозрачное дно и быстрый спад. Ровный градиент
+                      // не спасал: под подписью просвечивал список наёмников,
+                      // и два текста читались одновременно.
+                      stops: const [0, 0.42, 1],
                     ),
                   ),
                 ),
@@ -110,6 +131,7 @@ class TrailerCaptionLayer extends StatelessWidget {
             ],
           );
         },
+        ),
       ),
     );
   }
@@ -130,26 +152,28 @@ class _Text extends StatelessWidget {
       children: [
         Text(
           line.title,
+          maxLines: 2,
           style: const TextStyle(
-            fontSize: 31,
-            height: 1.16,
+            fontSize: 25,
+            height: 1.18,
             fontWeight: FontWeight.w600,
             color: Colors.white,
-            letterSpacing: -0.2,
+            letterSpacing: -0.1,
             shadows: [
-              Shadow(blurRadius: 18, color: Colors.black87),
+              Shadow(blurRadius: 16, color: Colors.black87),
               Shadow(blurRadius: 3, color: Colors.black),
             ],
           ),
         ),
         if (text != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 7),
           Text(
             text,
+            maxLines: 2,
             style: TextStyle(
-              fontSize: 16.5,
-              height: 1.35,
-              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 14.5,
+              height: 1.32,
+              color: Colors.white.withValues(alpha: 0.8),
               shadows: const [Shadow(blurRadius: 12, color: Colors.black87)],
             ),
           ),
