@@ -9,8 +9,12 @@ import 'package:rift/core/model/player_profile.dart';
 import 'package:rift/core/sim/descent.dart';
 import 'package:rift/core/sim/fork.dart';
 
+import '../state/game_controller.dart';
+import 'coach_mark.dart';
 import 'format.dart';
+import 'onboarding.dart';
 import 'strings.dart';
+import 'tutorial_host.dart';
 
 /// Журнал отсутствия (GDD §9.3).
 ///
@@ -25,10 +29,15 @@ class JournalScreen extends StatelessWidget {
     super.key,
     required this.contract,
     required this.onCollect,
+    this.controller,
   });
 
   final Contract contract;
   final VoidCallback onCollect;
+
+  /// Нужен только обучению: экран сам по себе читает контракт, а не игру.
+  /// `null` — журнал показывают без обучения (тесты, повтор из истории).
+  final GameController? controller;
 
   RunResult get result => contract.result!;
 
@@ -37,7 +46,7 @@ class JournalScreen extends StatelessWidget {
     final merc = contract.mercenary;
     final haul = result.haul;
 
-    return Scaffold(
+    final screen = Scaffold(
       appBar: AppBar(title: Text(S.journalTitle(merc.name))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -71,13 +80,24 @@ class JournalScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: FilledButton(
-            onPressed: onCollect,
-            child: Text(S.journalCollect(money(haul.totalGold), result.echo)),
-
+          child: TutorialAnchor(
+            id: Onboarding.anchorJournalCollect,
+            child: FilledButton(
+              onPressed: onCollect,
+              child: Text(S.journalCollect(money(haul.totalGold), result.echo)),
+            ),
           ),
         ),
       ),
+    );
+
+    final c = controller;
+    if (c == null) return screen;
+
+    return TutorialHost(
+      controller: c,
+      screen: TutorialScreen.journal,
+      child: screen,
     );
   }
 }

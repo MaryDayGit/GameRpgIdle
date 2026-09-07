@@ -40,31 +40,58 @@ class S {
   // --- Настройки -------------------------------------------------------------
 
   static String get settingsTitle => const Phrase(
-        'Язык, звук и вибрация',
-        'Language, sound and vibration',
+        'Язык, звук и отдача',
+        'Language, sound and haptics',
       ).text;
 
   static String get settingsLanguage =>
       const Phrase('Язык', 'Language').text;
 
   static String get settingsLanguageAbout =>
-      const Phrase('Интерфейс и названия в игре', 'Interface and in-game names')
+      const Phrase('Меню, названия, всё на экране',
+              'Menus, names, everything on screen')
           .text;
 
   static String get settingsSound => const Phrase('Звук', 'Sound').text;
 
   static String get settingsSoundAbout => const Phrase(
         'Удары, гибель, находки',
-        'Hits, deaths, finds',
+        'Blows, deaths, finds',
       ).text;
 
   static String get settingsHaptics =>
-      const Phrase('Вибрация', 'Vibration').text;
+      const Phrase('Отдача', 'Haptics').text;
 
   static String get settingsHapticsAbout => const Phrase(
-        'Отдача на действиях и на гибели',
-        'Feedback on actions and on death',
+        'Короткий толчок на важном',
+        'A short buzz when something lands',
       ).text;
+
+  // --- Обучение --------------------------------------------------------------
+
+  static String get settingsTutorial =>
+      const Phrase('Обучение', 'Tutorial').text;
+
+  static String get settingsTutorialAbout => const Phrase(
+        'Провести по игре заново, как в первый раз',
+        'Walk through the game again, the way it went on day one',
+      ).text;
+
+  static String get settingsTutorialRunning =>
+      const Phrase('Идёт прямо сейчас', 'Under way right now').text;
+
+  static String get settingsTutorialRestart =>
+      const Phrase('Пройти заново', 'Do it again').text;
+
+  /// «Шаг 3 из 21». Игрок должен видеть, что обучение кончится, и когда.
+  static String tutorialProgress(int step, int total) => Lang.current == Lang.ru
+      ? 'ШАГ $step ИЗ $total'
+      : 'STEP $step OF $total';
+
+  static String get tutorialNext => const Phrase('Дальше', 'Next').text;
+
+  static String get tutorialSkip =>
+      const Phrase('Дальше сам', 'I have got this').text;
 
   // --- Развилка --------------------------------------------------------------
 
@@ -83,44 +110,44 @@ class S {
       Lang.current == Lang.ru
           ? '${she ? "Остановилась" : "Остановился"} перед этажом $floor. '
               '$waiting, потом решит сам${she ? "а" : ""}: $order.'
-          : '${she ? "She" : "He"} stopped before floor $floor. '
-              '$waiting, then decides alone: $order.';
+          : '${she ? "She" : "He"} has stopped short of floor $floor. '
+              '$waiting, then picks without you: $order.';
 
   static String forkWaitsMore(String left) =>
-      Lang.current == Lang.ru ? 'Ждёт ещё $left' : 'Waits another $left';
+      Lang.current == Lang.ru ? 'Ждёт ещё $left' : 'Waiting $left more';
 
   static String get forkWaitsNoMore =>
-      const Phrase('Больше не ждёт', 'Waits no longer').text;
+      const Phrase('Ждать перестал', 'Done waiting').text;
 
   /// Здоровье после прошлого этажа. Четыре порога, а не число: игрок решает
   /// «рискнуть или нет», и «45 %» отвечает на этот вопрос хуже, чем «запас
   /// есть».
   static String forkHealth({required bool she, required String left}) =>
       Lang.current == Lang.ru
-          ? 'На прошлом этаже опускал${she ? "ась" : "ся"} до $left здоровья'
-          : 'On the last floor ${she ? "she" : "he"} dropped to $left health';
+          ? 'С прошлого этажа сошл${she ? "а" : "ёл"} с $left здоровья'
+          : 'Came off the last floor at $left health';
 
   static String get forkHealthUntouched => const Phrase(
-        'Прошлый этаж дался без единой царапины.',
-        'The last floor cost not a scratch.',
+        'Прошлый этаж прошёл без единой царапины.',
+        'Walked the last floor without a scratch.',
       ).text;
 
   static String get forkHealthRoomLeft =>
-      const Phrase(' — запас есть.', ' — there is room.').text;
+      const Phrase(' — запас есть.', ' — plenty in reserve.').text;
 
   static String forkHealthNearlyOut({required bool she}) => Lang.current ==
           Lang.ru
-      ? ' — ещё немного, и всё.'
-      : ' — a little further and that would have been the end of ${she ? "her" : "him"}.';
+      ? ' — ещё чуть-чуть, и всё.'
+      : ' — one more hit and that would have been it.';
 
   static String get forkBoldOnlyWhilePresent => const Phrase(
         'Открыт, только пока вы в игре',
-        'Open only while you are here',
+        'Yours only while you are watching',
       ).text;
 
   static String get forkCostHarmless => const Phrase(
         'Эта плата вам почти ничего не стоит',
-        'This price costs you almost nothing',
+        'This one barely costs you anything',
       ).text;
 
   // --- Общее -----------------------------------------------------------------
@@ -144,17 +171,18 @@ class S {
       Lang.current == Lang.ru ? 'Эхо $echo' : '$echo Echo';
 
   static String get echoTreeComplete =>
-      const Phrase('Древо пройдено', 'Tree complete').text;
+      const Phrase('Древо выкуплено', 'Every node bought').text;
 
   static String echoNextNode(int cost) => Lang.current == Lang.ru
       ? 'следующий узел — $cost'
-      : 'next node — $cost';
+      : 'next node costs $cost';
 
   static String echoTreeAbout(int bought, int total) => Lang.current == Lang.ru
       ? 'Куплено ${plural(bought, "узел", "узла", "узлов")} из $total. '
           'Цена растёт от числа купленных, поэтому дешёвой ветки нет.'
       : '${pluralEn(bought, "node")} of $total bought. '
-          'The price grows with the count, so there is no cheap branch.';
+          'Every one you take pushes up the price of the next, so no branch '
+          'stays cheap.';
 
   // --- Дерево пассивок -------------------------------------------------------
 
@@ -165,10 +193,10 @@ class S {
       const Phrase('Сбросить дерево?', 'Reset the tree?').text;
 
   static String get passiveResetAbout => const Phrase(
-        'Все очки вернутся, и дерево можно будет собрать заново. '
-            'Ничего не теряется — кроме самой сборки.',
-        'Every point comes back and the tree can be built again. '
-            'Nothing is lost except the build itself.',
+        'Очки вернутся все до одного, и разложить их можно будет иначе. '
+            'Пропадёт только сама сборка.',
+        'You get every point back and can spend them differently. The only '
+            'thing lost is the shape you had.',
       ).text;
 
   static String passivePointsFree(int left) => Lang.current == Lang.ru
@@ -199,15 +227,15 @@ class S {
 
   static String questsDone(int done, int all) => Lang.current == Lang.ru
       ? 'Выполнено ${outOf(done, all)} · каждое открывает умение'
-      : '${outOf(done, all)} done · each one opens an ability';
+      : '${outOf(done, all)} done · each one unlocks an ability';
 
   static String get questsNow => const Phrase('Сейчас', 'Now').text;
   static String get questsFinished =>
       const Phrase('Выполнено', 'Finished').text;
 
   static String questsHiddenAhead(int hidden) => Lang.current == Lang.ru
-      ? 'Ещё $hidden открывается дальше по цепочкам.'
-      : '$hidden more open further along the chains.';
+      ? 'Ещё $hidden ждут дальше по цепочкам.'
+      : 'Another $hidden wait further down the chains.';
 
   static String questReward(String name, {required bool opened, int echo = 0}) {
     final head = Lang.current == Lang.ru
@@ -220,17 +248,17 @@ class S {
   }
 
   static String get questsEmpty => const Phrase(
-        'Заданий пока нет. Отправьте наёмника вниз — первая цель придёт '
-            'вместе с первой добычей.',
-        'No quests yet. Send a mercenary down — the first goal arrives '
-            'with the first haul.',
+        'Заданий пока нет. Отправьте наёмника вниз — первая цель приедет '
+            'наверх вместе с первой добычей.',
+        'No quests yet. Send someone down — the first goal comes up with '
+            'the first haul.',
       ).text;
 
   // --- Карточка наёмника -----------------------------------------------------
 
   static String backpackOf(int slots) => Lang.current == Lang.ru
       ? 'рюкзак ${plural(slots, "предмет", "предмета", "предметов")}'
-      : 'backpack of ${pluralEn(slots, "item")}';
+      : '$slots-slot backpack';
 
   static String get buildPower =>
       const Phrase('Сила сборки', 'Build power').text;
@@ -249,7 +277,7 @@ class S {
           : '${outOf(filled, usable)} slots';
 
   static String get statsInFull =>
-      const Phrase('Характеристики целиком', 'Full statistics').text;
+      const Phrase('Все числа', 'The full sheet').text;
 
   static String get openBuild =>
       const Phrase('Сборка: снаряжение и умения', 'Build: gear and abilities')
@@ -267,15 +295,15 @@ class S {
       : 'Stash · ${outOf(total, slots)}';
 
   static String get stashFull => const Phrase(
-        'Сундук полон: лишнее с новой добычи уйдёт в золото. '
-            'Переплавьте ненужное или поднимите Хранилище.',
-        'The stash is full: anything over from a new haul turns to gold. '
-            'Salvage what you do not need, or raise the Vault.',
+        'Сундук полон: всё, что не влезет из новой добычи, уйдёт в золото. '
+            'Переплавьте лишнее или поднимите Хранилище.',
+        'The stash is full: whatever will not fit from the next haul turns '
+            'to gold. Melt down the surplus, or upgrade the Vault.',
       ).text;
 
   static String get stashEmpty => const Phrase(
-        'Пусто. Вещи приносят наёмники.',
-        'Empty. Mercenaries bring the items.',
+        'Пусто. Вещи приносят снизу.',
+        'Empty. Items come up from below.',
       ).text;
 
   static String stashEquipped(String kind, String merc) =>
@@ -285,7 +313,7 @@ class S {
 
   static String stashNotEquipped(String merc) => Lang.current == Lang.ru
       ? 'Не встало: $merc не может это надеть'
-      : 'Did not fit: $merc cannot wear this';
+      : 'Would not go on: $merc cannot use this';
 
   static String stashSalvaged(String kind, String gold) =>
       Lang.current == Lang.ru
@@ -321,8 +349,8 @@ class S {
 
   static String get stashNobodyToEquip => const Phrase(
         'Надеть некому: наёмник в бездне, и снаряжение заперто до его гибели.',
-        'Nobody to equip: the mercenary is in the abyss, and the gear is '
-            'locked until they fall.',
+        'No one to equip: your mercenary is down in the abyss, and their gear '
+            'is locked until they fall.',
       ).text;
 
   static String get equip => const Phrase('Надеть', 'Equip').text;
@@ -336,10 +364,9 @@ class S {
       Lang.current == Lang.ru ? 'Переплавить · $gold' : 'Salvage · $gold';
 
   static String get salvageAbout => const Phrase(
-        'Переплавка уничтожает вещь и возвращает золото. Сколько именно — '
-            'зависит от Алтаря.',
-        'Salvaging destroys the item and returns gold. How much depends on '
-            'the Altar.',
+        'Переплавка сжигает вещь в золото. Сколько выйдет — дело Алтаря.',
+        'Salvaging burns the item down to gold. How much you get is the '
+            'Altar’s business.',
       ).text;
 
   // --- Разбор добычи ---------------------------------------------------------
@@ -360,21 +387,22 @@ class S {
   static String lootBrought(int pending, int room, {required bool tight}) {
     final head = Lang.current == Lang.ru
         ? 'Наёмник донёс ${plural(pending, "вещь", "вещи", "вещей")}.'
-        : 'The mercenary brought back ${pluralEn(pending, "item")}.';
+        : 'Your mercenary hauled up ${pluralEn(pending, "item")}.';
     final tail = Lang.current == Lang.ru
         ? (tight ? 'Сундук полон.' : 'В сундуке свободно $room.')
-        : (tight ? 'The stash is full.' : '$room free in the stash.');
+        : (tight ? 'The stash is full.' : 'Room for $room more.');
     return '$head $tail';
   }
 
   static String get lootSortTight => const Phrase(
-        'Освободите место в сундуке или решите судьбу вещей здесь.',
-        'Make room in the stash, or decide the items’ fate here.',
+        'Освободите место в сундуке — или решите всё прямо здесь.',
+        'Free up the stash, or settle these here and now.',
       ).text;
 
   static String get lootSortAbout => const Phrase(
         'Переплавка даёт золото и осколок, продажа — только золото, но больше.',
-        'Salvaging gives gold and a shard; selling gives only gold, but more.',
+        'Salvage pays gold and a shard. Selling pays gold alone — but more '
+            'of it.',
       ).text;
 
   static String get relicMark => const Phrase('реликт', 'relic').text;
@@ -396,14 +424,14 @@ class S {
       : 'Finds · ${outOf(count, capacity)}';
 
   static String get journalNothingNew => const Phrase(
-        'Наёмник не донёс ничего нового.',
-        'The mercenary brought nothing new.',
+        'Ничего нового наверх не приехало.',
+        'Nothing new came up this time.',
       ).text;
 
   static String journalOverflow(int count, String gold, int shards) {
     final head = Lang.current == Lang.ru
         ? '$count не влезло в рюкзак → $gold золота'
-        : '$count did not fit in the backpack → $gold gold';
+        : '$count would not fit in the backpack → $gold gold';
     if (shards == 0) return head;
     return Lang.current == Lang.ru
         ? '$head и ${plural(shards, "осколок", "осколка", "осколков")}'
@@ -416,7 +444,7 @@ class S {
   static String journalCollect(String gold, int echo) =>
       Lang.current == Lang.ru
           ? 'Забрать всё · $gold золота, $echo Эха'
-          : 'Take everything · $gold gold, $echo Echo';
+          : 'Take it all · $gold gold, $echo Echo';
 
   /// Итог спуска целиком: в русском род правит глагол, в английском —
   /// местоимение, и предложения строятся по-разному.
@@ -435,17 +463,17 @@ class S {
           ? '${she ? "Упёрлась" : "Упёрся"} в стену на этаже $floor — '
               'волна не убивается.'
           : '${she ? "She" : "He"} hit a wall on floor $floor — the wave '
-              'will not die.';
+              'would not go down.';
 
   static String journalOutcomeTimeCap({required bool she}) =>
       Lang.current == Lang.ru
-          ? (she ? 'Отозвана по времени.' : 'Отозван по времени.')
-          : 'Recalled on time.';
+          ? (she ? 'Время вышло — отозвана.' : 'Время вышло — отозван.')
+          : 'Time ran out; pulled back up.';
 
   static String journalOutcomeFloorCap({required bool she}) =>
       Lang.current == Lang.ru
-          ? (she ? 'Дошла до предела.' : 'Дошёл до предела.')
-          : 'Reached the limit.';
+          ? (she ? 'Дошла до самого дна.' : 'Дошёл до самого дна.')
+          : 'Reached the bottom of the rift.';
 
   static String journalOutcomeAtFork(int floor) => Lang.current == Lang.ru
       ? 'Стоит на развилке у этажа $floor.'
@@ -456,9 +484,8 @@ class S {
       Lang.current == Lang.ru
           ? '${she ? "Отозвана" : "Отозван"} с этажа $floor, не закончив его. '
               '${she ? "Жива, добыча при ней." : "Жив, добыча при нём."}'
-          : 'Recalled from floor $floor without finishing it. '
-              '${she ? "She is" : "He is"} alive, and the haul is with '
-              '${she ? "her" : "him"}.';
+          : 'Called back from floor $floor, part-way through it. Alive, '
+              'and the haul came up with ${she ? "her" : "him"}.';
 
   static String journalFloors(int from, int to, int gained) =>
       Lang.current == Lang.ru
@@ -483,11 +510,11 @@ class S {
   static String journalNearlyDied({required bool she, required String left}) =>
       Lang.current == Lang.ru
           ? 'Чуть не ${she ? "погибла" : "погиб"} — оставалось $left здоровья'
-          : 'Nearly died — $left health left';
+          : 'Came within $left health of dying';
 
   static String get journalSlowing => const Phrase(
         'Этажи пошли вдвое медленнее — стена близко',
-        'Floors are going twice as slow — the wall is close',
+        'Floors started taking twice as long — the wall is close',
       ).text;
 
   static String journalEndedHere([String? killedBy]) {
@@ -520,10 +547,10 @@ class S {
       const Phrase('Отозвать наёмника?', 'Recall the mercenary?').text;
 
   static String get recallAbout => const Phrase(
-        'Спуск закончится там, где наёмник сейчас. Добыча и Эхо остаются при '
-            'нём — штрафа за отзыв нет.',
-        'The descent ends where the mercenary stands now. The haul and the '
-            'Echo stay with them — there is no penalty for recalling.',
+        'Спуск кончится на том этаже, где он стоит. Всё найденное '
+            'поднимется вместе с ним: за отзыв не берут ничего.',
+        'The descent ends on the floor they are standing on. Everything they '
+            'found comes up with them — calling someone back costs nothing.',
       ).text;
 
   static String get recallLetThemGo =>
@@ -545,17 +572,17 @@ class S {
 
   static String get battleAtFork => const Phrase(
         'Развилка · наёмник ждёт решения',
-        'A fork · the mercenary waits for a decision',
+        'A fork · waiting on your call',
       ).text;
 
   static String get battleWaitsAtOutpost => const Phrase(
         'Наёмник ждёт вас на Заставе',
-        'The mercenary waits for you at the Outpost',
+        'Waiting for you back at the Outpost',
       ).text;
 
   static String get battleResting => const Phrase(
         'Переход · наёмник переводит дух',
-        'Between floors · the mercenary catches their breath',
+        'Between floors · catching their breath',
       ).text;
 
   static String battleWave(int index) =>
@@ -568,8 +595,8 @@ class S {
   static String get battleWaveShort => const Phrase('Волна', 'Wave').text;
 
   static String get battleWatching => const Phrase(
-        'Вы наблюдаете. Сборка заперта до конца контракта.',
-        'You are watching. The build is locked until the contract ends.',
+        'Вы только смотрите. Сборка заперта до конца контракта.',
+        'You are only watching. The build is locked until the contract ends.',
       ).text;
 
   static String battlePath(int floors) => Lang.current == Lang.ru
@@ -597,7 +624,7 @@ class S {
           ? '$merc · всё, с чем ${she ? "она" : "он"} уйдёт вниз. '
               'Проценты посчитаны для глубины $depth.'
           : '$merc · everything ${she ? "she" : "he"} takes down. '
-              'Percentages are computed for depth $depth.';
+              'Percentages are worked out for depth $depth.';
 
   static String get statsGroupSurvival =>
       const Phrase('Живучесть', 'Survival').text;
@@ -619,7 +646,7 @@ class S {
 
   static String get statsRestNote => const Phrase(
         'Между этажами наёмник всё равно отдыхает',
-        'The mercenary rests between floors regardless',
+        'They catch their breath between floors either way',
       ).text;
 
   static String get resistFire => const Phrase('Огню', 'Fire').text;
@@ -638,14 +665,14 @@ class S {
       const Phrase('Урон оружия', 'Weapon damage').text;
   static String get statWeaponDamageAbout => const Phrase(
         'От него растут умения с тегом «Атака» и автоатака',
-        'Attack-tagged abilities and the auto-attack scale from it',
+        'Attack-tagged abilities and the auto-attack grow off this',
       ).text;
 
   static String get statSpellPower =>
       const Phrase('Сила чар', 'Spell power').text;
   static String get statSpellPowerAbout => const Phrase(
         'От неё растут умения с тегом «Чары». Автоатака — нет',
-        'Spell-tagged abilities scale from it. The auto-attack does not',
+        'Spell-tagged abilities grow off this. The auto-attack does not',
       ).text;
 
   static String get statIncreasedDamage =>
@@ -678,21 +705,21 @@ class S {
 
   static String get statCooldown => const Phrase('Перезарядка', 'Cooldown').text;
   static String get statCooldownAbout => const Phrase(
-        'Умения перезаряжаются за своё время',
-        'Abilities recharge on their own timers',
+        'У каждого умения свой отсчёт',
+        'Every ability runs its own timer',
       ).text;
 
   static String get statLeech => const Phrase('Вампиризм', 'Life leech').text;
   static String get statLeechAbout => const Phrase(
-        'доля нанесённого урона возвращается здоровьем',
-        'a share of damage dealt comes back as health',
+        'часть нанесённого урона возвращается здоровьем',
+        'part of the damage you deal comes back as health',
       ).text;
 
   static String get statLootQuality =>
       const Phrase('Качество добычи', 'Loot quality').text;
   static String get statLootQualityAbout => const Phrase(
         'Сдвигает выпадение к старшим редкостям',
-        'Shifts drops toward higher rarities',
+        'Tilts what drops toward the better rarities',
       ).text;
 
   static String get statLootQuantity =>
@@ -703,8 +730,8 @@ class S {
   static String get statsTagsAbout => const Phrase(
         'Работают только на умениях с этим тегом — и на автоатаке, если её '
             'тег совпал.',
-        'They work only on abilities with that tag — and on the auto-attack, '
-            'if its tag matches.',
+        'These count only on abilities carrying that tag — and on the '
+            'auto-attack, if its own tag matches.',
       ).text;
 
   static String get statsNoArmor => const Phrase(
@@ -719,7 +746,7 @@ class S {
     if (!capped) return head;
     return Lang.current == Lang.ru
         ? '$head — это потолок'
-        : '$head — that is the cap';
+        : '$head — and that is the ceiling';
   }
 
   static String statsDamageCut(String share, {required bool capped}) {
@@ -729,12 +756,12 @@ class S {
     if (!capped) return head;
     return Lang.current == Lang.ru
         ? '$head — выше потолка не считается'
-        : '$head — anything above the cap does not count';
+        : '$head — anything past the cap is wasted';
   }
 
   static String get statsNoCrits => const Phrase(
-        'Критов нет — множитель ни на что',
-        'No crits — the multiplier does nothing',
+        'Критов нет — множителю не на чем сработать',
+        'No crits — the multiplier has nothing to work on',
       ).text;
 
   static String statsAverageCrit(String value) => Lang.current == Lang.ru
@@ -751,13 +778,13 @@ class S {
       const Phrase('Спуски', 'Descents').text;
 
   static String get notificationChannelAbout => const Phrase(
-        'Сообщения о судьбе наёмников в бездне',
-        'News of what becomes of mercenaries in the abyss',
+        'Что случилось с наёмником, пока вас не было',
+        'Word from the abyss while you were away',
       ).text;
 
   static String notifyForkTitle(String merc) => Lang.current == Lang.ru
       ? '$merc ждёт решения'
-      : '$merc is waiting for a decision';
+      : '$merc is waiting on you';
 
   static String notifyDeathTitle(String merc) => Lang.current == Lang.ru
       ? '$merc не вернётся'
@@ -767,8 +794,8 @@ class S {
       Lang.current == Lang.ru
           ? '${she ? "Остановилась" : "Остановился"} на развилке у этажа '
               '$depth. Выберите путь, пока ${she ? "она" : "он"} ждёт.'
-          : 'Stopped at a fork by floor $depth. Choose the path while '
-              '${she ? "she" : "he"} waits.';
+          : 'Stopped at a fork below floor $depth. Pick the path while '
+              '${she ? "she" : "he"} is still standing there.';
 
   static String get helpTitle => const Phrase('Справка', 'Help').text;
 
@@ -781,17 +808,17 @@ class S {
   static String get cancel => const Phrase('Отмена', 'Cancel').text;
 
   static String shardsLost(int lost) => Lang.current == Lang.ru
-      ? 'Верстак полон: ${plural(lost, "осколок", "осколка", "осколков")} '
-          'потеряно. Улучшите Верстак осколков.'
-      : 'The Bench is full: ${pluralEn(lost, "shard")} lost. '
+      ? 'Верстак полон — ${plural(lost, "осколок", "осколка", "осколков")} '
+          'не доехало. Поднимите Верстак.'
+      : 'The Bench is full — ${pluralEn(lost, "shard")} never made it. '
           'Upgrade the Shard Bench.';
 
   static String stashOverflowed(int count) => Lang.current == Lang.ru
       ? 'В сундуке не хватило места: '
           '${plural(count, "вещь", "вещи", "вещей")} переплавлено в золото. '
           'Поднимите Хранилище.'
-      : 'The stash ran out of room: ${pluralEn(count, "item")} salvaged into '
-          'gold. Raise the Vault.';
+      : 'The stash ran out of room — ${pluralEn(count, "item")} melted down '
+          'into gold. Upgrade the Vault.';
 
   static String stashButton(int count) =>
       Lang.current == Lang.ru ? 'Сундук · $count' : 'Stash · $count';
@@ -812,29 +839,29 @@ class S {
             'вы не получаете ничего: всё, что он найдёт, вернётся только с '
             'ним. Снаряжение и умения выставляются ДО отправки и заперты до '
             'конца контракта.',
-        'A mercenary goes down alone and walks until they die. While they '
-            'are there you get nothing: everything they find comes back only '
-            'with them. Gear and abilities are set BEFORE departure and '
-            'locked until the contract ends.',
+        'A mercenary goes down alone and keeps going until they die. While '
+            'they are down there you get nothing: whatever they find comes up '
+            'only with them. Gear and abilities are set BEFORE they leave, '
+            'and locked until the contract ends.',
       ).text;
 
   static String get ropeAbout => const Phrase(
         'Спуск начинается не с первого этажа: до трети вашего рекорда '
             'спущена верёвка. Пройденное однажды не надо проходить заново — '
             'там нечего искать и некому сопротивляться.',
-        'A descent does not start on the first floor: a rope hangs down to a '
-            'third of your record. What was walked once need not be walked '
-            'again — there is nothing left to find and nobody left to '
-            'resist.',
+        'A descent does not start on the first floor: a rope reaches down '
+            'to a third of your record. Ground you have covered once is not '
+            'worth covering twice — nothing left to find there, and nobody '
+            'left to put up a fight.',
       ).text;
 
   static String sendDownFrom(int start) => Lang.current == Lang.ru
       ? 'Отправьте наёмника вниз. Верёвка спущена до этажа $start.'
-      : 'Send a mercenary down. The rope reaches floor $start.';
+      : 'Send someone down. The rope reaches floor $start.';
 
   static String get sendDown => const Phrase(
         'Отправьте наёмника вниз.',
-        'Send a mercenary down.',
+        'Send someone down.',
       ).text;
 
   static String mercAtFork(String merc) => Lang.current == Lang.ru
@@ -846,11 +873,11 @@ class S {
             'держится до следующей развилки — это не один этаж, а отрезок '
             'спуска. Пока вас нет, наёмник выбирает сам по приказу, но ждёт '
             'не вечно — и третий путь без вас ему недоступен.',
-        'Every fifth floor the rift splits in two. The chosen path holds '
-            'until the next fork — that is a stretch of the descent, not a '
-            'single floor. While you are away the mercenary chooses by their '
-            'standing order, but does not wait forever — and the third path '
-            'is out of their reach without you.',
+        'Every fifth floor the rift splits in two. Whichever path you pick '
+            'holds until the next fork — a stretch of the descent, not one '
+            'floor. With you away, the mercenary goes by their standing '
+            'order, and they do not wait forever. The third path is beyond '
+            'them without you.',
       ).text;
 
   static String mercInAbyss(String merc) => Lang.current == Lang.ru
@@ -859,12 +886,12 @@ class S {
 
   static String get descentCardAbout => const Phrase(
         'Снаряжение и умения заперты до конца контракта: наёмник уже внизу, '
-            'и переодеть его нельзя. Отзыв заканчивает спуск там, где наёмник '
-            'сейчас. Добыча и Эхо остаются при нём — штрафа за отзыв нет.',
-        'Gear and abilities are locked until the contract ends: the mercenary '
-            'is already down there and cannot be re-equipped. Recalling ends '
-            'the descent where they stand. The haul and the Echo stay with '
-            'them — there is no penalty for recalling.',
+            'и передать ему нечего. Отзыв кончает спуск на том этаже, где он '
+            'стоит. Всё найденное поднимется с ним, и стоит это ничего.',
+        'Gear and abilities are locked until the contract ends: they are '
+            'already down there, and nothing can be handed to them now. '
+            'Calling them back ends the descent on the floor they stand on. '
+            'Everything they found comes up with them — it costs nothing.',
       ).text;
 
   static String floorNumber(int depth) =>
@@ -900,7 +927,7 @@ class S {
 
   static String allSlotsBusy(int used, int total) => Lang.current == Lang.ru
       ? 'Все слоты спуска заняты: ${outOf(used, total)}'
-      : 'Every descent slot is busy: ${outOf(used, total)}';
+      : 'Every descent slot is taken: ${outOf(used, total)}';
 
   static String mercenariesCount(int count) => Lang.current == Lang.ru
       ? 'Наёмники ($count)'
@@ -915,11 +942,11 @@ class S {
   static String get slotsBusy =>
       const Phrase('Слоты заняты', 'Slots are busy').text;
 
-  static String get dailyRift => const Phrase('Разлом дня', 'Rift of the Day').text;
+  static String get dailyRift => const Phrase('Разлом дня', 'The Daily Rift').text;
 
   static String riftRecord(int best) => Lang.current == Lang.ru
       ? 'Ваш рекорд в разломах: этаж $best'
-      : 'Your rift record: floor $best';
+      : 'Your best in a rift: floor $best';
 
   static String riftModifierLine(String name) => Lang.current == Lang.ru
       ? '$name — на каждом этаже, а не между развилками.'
@@ -927,14 +954,14 @@ class S {
 
   static String riftReward(String plus) => Lang.current == Lang.ru
       ? '$plus. Эхо за спуск удваивается'
-      : '$plus. Echo for the descent is doubled';
+      : '$plus. The descent pays double Echo';
 
   static String get sendIntoRift =>
       const Phrase('Отправить в разлом', 'Send into the rift').text;
 
   static String get riftDoneToday => const Phrase(
         'Сегодня разлом уже пройден',
-        'Today’s rift is already done',
+        'You have already run today’s rift',
       ).text;
 
   static String get tavernTitle => const Phrase('Таверна', 'Tavern').text;
@@ -943,34 +970,34 @@ class S {
         'Ранг наёмника поднимает все его характеристики и размер рюкзака. '
             'Таверна сильнее никого не делает — она повышает шансы, что '
             'придёт кто-то хороший.',
-        'A mercenary’s rank raises every one of their statistics and the '
-            'size of their backpack. The Tavern makes nobody stronger — it '
-            'raises the odds that someone good walks in.',
+        'Rank lifts every stat a mercenary has, and the size of their '
+            'pack. The Tavern makes nobody stronger — it only improves the '
+            'odds that someone good walks in.',
       ).text;
 
   static String get hireCostAbout => const Phrase(
         ' Задаток растёт с вашим рекордом: чем глубже расселина, тем дороже '
             'те, кто в неё пойдёт. Оборванцы стоят своё всегда.',
-        ' The retainer grows with your record: the deeper the rift, the '
-            'dearer those who will go into it. The Ragged always cost their '
-            'own price.',
+        ' The fee climbs with your record: the deeper the rift runs, the '
+            'more they want for going into it. The Ragged always come at '
+            'their own flat price.',
       ).text;
 
   static String get refresh => const Phrase('Обновить', 'Refresh').text;
 
   static String get takeForFree =>
-      const Phrase('Взять даром', 'Take for free').text;
+      const Phrase('Взять даром', 'Take them for free').text;
 
   static String hireFor(String cost) =>
       Lang.current == Lang.ru ? 'Нанять за $cost' : 'Hire for $cost';
 
   static String notEnoughGold(String cost) => Lang.current == Lang.ru
       ? 'Не хватает золота: нужно $cost.'
-      : 'Not enough gold: $cost needed.';
+      : 'Not enough gold — you need $cost.';
 
   static String volunteerFree(String merc) => Lang.current == Lang.ru
       ? 'Платить нечем — $merc пойдёт даром.'
-      : 'Nothing to pay with — $merc will go for free.';
+      : 'Nothing left to pay with — $merc will go for nothing.';
 
   static String get forFree => const Phrase('даром', 'free').text;
 
@@ -998,12 +1025,12 @@ class S {
             'сама.\n\nНажмите на постройку, чтобы увидеть, что даст '
             'следующий уровень.',
         'The Outpost is bought with gold. It makes no mercenary stronger — '
-            'it makes your life easier: how much fits in the stash, what '
-            'salvage returns, who walks into the Tavern.\n\n'
-            'A level is unlocked by DEPTH reached, not by your purse. '
-            'Otherwise the Outpost would be bought out ahead of progress, and '
-            'the game would play itself from there.\n\nTap a building to see '
-            'what the next level gives.',
+            'it makes your life easier: how much the stash holds, what '
+            'salvage pays back, who walks into the Tavern.\n\n'
+            'Levels are unlocked by DEPTH reached, not by your purse. '
+            'Otherwise you would buy the whole Outpost out ahead of your own '
+            'progress, and the game would run itself from there.\n\nTap a '
+            'building to see what the next level gives.',
       ).text;
 
   static String buildingLevel(String name, int level, int max) =>
@@ -1018,8 +1045,8 @@ class S {
       Lang.current == Lang.ru ? 'Станет: $effect' : 'Becomes: $effect';
 
   static String get buildingMaxedFull =>
-      const Phrase('Предел.', 'The limit.').text;
-  static String get buildingMaxed => const Phrase('Предел', 'Limit').text;
+      const Phrase('Дальше некуда.', 'Nowhere left to go.').text;
+  static String get buildingMaxed => const Phrase('Предел', 'Maxed').text;
 
   static String buildingGate(int floor) => Lang.current == Lang.ru
       ? 'Следующий уровень откроется, когда наёмник дойдёт до этажа $floor.'
@@ -1044,8 +1071,8 @@ class S {
           : 'next rank: floor $depth at rank $onRank');
 
   static String get brandRankZero => const Phrase(
-        'Ранг 0: обычный спуск.',
-        'Rank 0: an ordinary descent.',
+        'Ранг 0 — обычный спуск.',
+        'Rank 0 — an ordinary descent.',
       ).text;
 
   static String brandRankEffect(int mobs, int loot, int echo) =>
@@ -1074,8 +1101,8 @@ class S {
             'ON the current one.\n\nEvery proven rank grants one extra '
             'passive tree point above its cap. That is what the Brand is for: '
             'once depth hits its ceiling, difficulty starts growing instead — '
-            'and the question changes from “how deep did you go” to “at what '
-            'Brand do you hold there”.',
+            'and the question turns from “how deep did you get” into “what '
+            'Brand can you hold it at”.',
       ).text;
 
   static String questsClosedTitle(int count) => count == 1
@@ -1087,7 +1114,7 @@ class S {
   static String abilityOpened(String name, int echo) {
     final head = Lang.current == Lang.ru
         ? 'Открыто умение: $name'
-        : 'Ability opened: $name';
+        : 'Ability unlocked: $name';
     if (echo <= 0) return head;
     return Lang.current == Lang.ru
         ? '$head · +$echo Эха'
@@ -1113,12 +1140,13 @@ class S {
   static String gearSlotHint(int stashed) => Lang.current == Lang.ru
       ? 'Нажмите на слот, чтобы надеть предмет из сундука ($stashed). '
           'Что наденете — то и уйдёт вниз; пустые слоты наёмник заполнит сам.'
-      : 'Tap a slot to equip an item from the stash ($stashed). Whatever you '
-          'put on is what goes down; empty slots the mercenary fills alone.';
+      : 'Tap a slot to equip something from the stash ($stashed). What you '
+          'put on is what goes down. Anything left empty they will fill from '
+          'the stash themselves.';
 
   static String get gearLockedNote => const Phrase(
-        'Наёмник ушёл с этим набором.',
-        'The mercenary left with this set.',
+        'Наёмник ушёл вот с этим.',
+        'This is what they left with.',
       ).text;
 
   static String get forkOrderTitle =>
@@ -1152,15 +1180,15 @@ class S {
   }
 
   static String get manaEnough => const Phrase(
-        'Маны хватает: умения не будут простаивать.',
-        'Mana is sufficient: abilities will not idle.',
+        'Маны хватает — простаивать не придётся.',
+        'Mana holds up — nothing will be left standing idle.',
       ).text;
 
   static String get manaShort => const Phrase(
         'Расход выше восстановления — в долгом бою умения начнут простаивать. '
             'Запас маны держит первые секунды.',
-        'Drain exceeds regeneration — in a long fight abilities will start to '
-            'idle. The mana pool covers the first seconds.',
+        'Drain outruns regeneration — in a long fight abilities start '
+            'standing idle. The pool covers the opening seconds, no more.',
       ).text;
 
   static String abilityActive(String cooldown, String mana) =>
@@ -1179,9 +1207,9 @@ class S {
         'Множителей по тегам пока нет. Они приходят с вещей, из дерева '
             'пассивок и от черты наёмника — и работают только на умениях с '
             'этим тегом.',
-        'No tag multipliers yet. They come from items, the passive tree and '
-            'the mercenary’s trait — and work only on abilities with that '
-            'tag.',
+        'No tag multipliers yet. They come off items, the passive tree and '
+            'the mercenary’s own trait — and count only on abilities carrying '
+            'that tag.',
       ).text;
 
   static String get tagDamageTitle =>
@@ -1190,8 +1218,8 @@ class S {
   static String get paleTagsNote => const Phrase(
         'Бледные теги не встречаются ни в одном выбранном умении — эти '
             'проценты сейчас ничего не дают.',
-        'Pale tags appear in none of the chosen abilities — those percentages '
-            'give nothing right now.',
+        'None of the chosen abilities carry the pale tags — those '
+            'percentages are doing nothing right now.',
       ).text;
 
   static String slotTakenByTwoHander(String kind) => Lang.current == Lang.ru
@@ -1205,13 +1233,13 @@ class S {
 
   static String get noAbilitiesWithTag => const Phrase(
         'С этим тегом открытых умений пока нет. Остальные открывает древо Эха.',
-        'No abilities with that tag are open yet. The Echo tree opens the '
+        'Nothing with that tag is unlocked yet. The Echo tree unlocks the '
             'rest.',
       ).text;
 
   static String get forkOrderLoot => const Phrase(
         'Редких предметов и осколков больше, глубина и Эхо ниже',
-        'More rare items and shards, less depth and Echo',
+        'More rares and shards; less depth, less Echo',
       ).text;
 
   static String get forkOrderSafety => const Phrase(
@@ -1220,7 +1248,7 @@ class S {
       ).text;
 
   static String get forkOrderRandom =>
-      const Phrase('Как повезёт', 'Whatever luck brings').text;
+      const Phrase('Как повезёт', 'Roll the dice').text;
 
   // --- Разбор умения ---------------------------------------------------------
   //
@@ -1229,30 +1257,30 @@ class S {
   // почти каждая идёт в паре с пояснением под ней.
 
   static String get abYourStatWeaponOnly => const Phrase(
-        'Ваша характеристика. Урон оружия этому умению не помогает вовсе.',
-        'Your statistic. Weapon damage does not help this ability at all.',
+        'Это ваше число. Урон оружия этому умению не помогает вовсе.',
+        'This one is yours. Weapon damage does nothing for this ability.',
       ).text;
 
   static String get abYourStatSpellOnly => const Phrase(
-        'Ваша характеристика. Сила чар этому умению не помогает вовсе.',
-        'Your statistic. Spell power does not help this ability at all.',
+        'Это ваше число. Сила чар этому умению не помогает вовсе.',
+        'This one is yours. Spell power does nothing for this ability.',
       ).text;
 
   static String get abYourStatWeaponShort => const Phrase(
-        'Ваша характеристика. Урон оружия этому умению не помогает.',
-        'Your statistic. Weapon damage does not help this ability.',
+        'Это ваше число. Урон оружия этому умению не помогает.',
+        'This one is yours. Weapon damage does not help here.',
       ).text;
 
   static String get abYourStatSpellShort => const Phrase(
-        'Ваша характеристика. Сила чар этому умению не помогает.',
-        'Your statistic. Spell power does not help this ability.',
+        'Это ваше число. Сила чар этому умению не помогает.',
+        'This one is yours. Spell power does not help here.',
       ).text;
 
   static String get abMultiplier =>
       const Phrase('Множитель умения', 'Ability multiplier').text;
   static String get abMultiplierAbout => const Phrase(
-        'Число самого умения, оно не меняется.',
-        'The ability’s own number; it does not change.',
+        'Число самого умения. Оно не меняется никогда.',
+        'The ability’s own number. It never changes.',
       ).text;
 
   static String get abHitBase =>
@@ -1268,7 +1296,7 @@ class S {
       const Phrase('вся волна', 'the whole wave').text;
   static String get abTargetsAbout => const Phrase(
         'Урон считается каждой цели отдельно.',
-        'Damage is computed for each target separately.',
+        'Damage is worked out for each target separately.',
       ).text;
 
   static String get abVsWounded =>
@@ -1394,7 +1422,7 @@ class S {
   static String get abTradeoff => const Phrase('Размен', 'Trade-off').text;
   static String get abTradeoffAbout => const Phrase(
         'Считается один раз при сборке, а не в бою.',
-        'Computed once when the build is assembled, not in the fight.',
+        'Worked out once when you build, not during the fight.',
       ).text;
 
   static String get abSlowsAttackers =>
@@ -1496,8 +1524,8 @@ class S {
   static String get abDrainAbout => const Phrase(
         'Столько это умение съедает из общего запаса, если срабатывает без '
             'перерыва.',
-        'That is what the ability eats out of the shared pool if it fires '
-            'without pause.',
+        'That is what this ability eats from the shared pool if it fires '
+            'without a break.',
       ).text;
 
   static String get abReserves => const Phrase('Резервирует', 'Reserves').text;
@@ -1510,8 +1538,8 @@ class S {
       Lang.current == Lang.ru
           ? 'Забирает и запас, и восстановление — насовсем, пока аура в слоте. '
               'Из $pool останется $left.'
-          : 'Takes both the pool and the regeneration — for good, while the '
-              'aura is slotted. Of $pool, $left remains.';
+          : 'Takes the pool and the regeneration both, for as long as the '
+              'aura sits in a slot. Of $pool, $left is left to you.';
 
   static String get abCostsWord => const Phrase('Стоит', 'Costs').text;
   static String get abOneSlot =>
@@ -1531,9 +1559,9 @@ class S {
         'Тег — единственное, за что цепляются вещи, дерево пассивок и черта '
             'наёмника. Множитель по тегу, которого у умения нет, на него не '
             'действует.',
-        'A tag is the only thing items, the passive tree and the mercenary’s '
-            'trait hook onto. A multiplier for a tag the ability does not '
-            'have does nothing for it.',
+        'A tag is the only thing items, the passive tree and a mercenary’s '
+            'trait can hook onto. A multiplier for a tag the ability does not '
+            'carry does nothing at all.',
       ).text;
 
   static String abTagElement(String tag) => Lang.current == Lang.ru
@@ -1557,8 +1585,8 @@ class S {
       ).text;
 
   static String get abTagArea => const Phrase(
-        'Задевает нескольких. Аффиксы на область усиливают.',
-        'Catches several. Area affixes boost it.',
+        'Задевает нескольких сразу. Аффиксы на область усиливают.',
+        'Hits several at once. Area affixes boost it.',
       ).text;
 
   static String get abTagDuration => const Phrase(
@@ -1632,10 +1660,10 @@ class S {
       const Phrase('Перебросить свойство', 'Reroll a property').text;
 
   static String get rerollAbout => const Phrase(
-        'Число у свойства бросается заново. Что именно выпадет — '
-            'неизвестно; известно, между чем и чем.',
-        'The property’s number is rolled again. What exactly comes up is '
-            'unknown; between what and what is known.',
+        'Число у свойства бросается заново. Что выпадет — неизвестно; '
+            'известно только, между чем и чем.',
+        'The property’s number is rolled again. You will not know what comes '
+            'up — only the range it lands in.',
       ).text;
 
   static String qualityOutOf(int percentile) => Lang.current == Lang.ru
@@ -1651,16 +1679,16 @@ class S {
       : 'no better than: $line';
 
   static String get rerollRisk => const Phrase(
-        'Может выпасть хуже, чем сейчас. Кузница поднимает нижнюю границу — '
-            'чем она выше, тем безопаснее переброс.',
-        'It can come up worse than it is now. The Forge raises the lower '
-            'bound — the higher it is, the safer the reroll.',
+        'Может выйти хуже, чем сейчас. Кузница поднимает нижнюю границу — '
+            'чем она выше, тем спокойнее переброс.',
+        'It can land worse than it is now. The Forge raises the floor of the '
+            'range — the higher that floor, the safer the reroll.',
       ).text;
 
   static String get rerollSafe => const Phrase(
         'Хуже не станет: Кузница подняла нижнюю границу выше нынешнего числа.',
-        'It cannot get worse: the Forge raised the lower bound above the '
-            'current number.',
+        'It cannot come out worse: the Forge has raised the floor of the '
+            'range above the number you have now.',
       ).text;
 
   static String get reroll => const Phrase('Перебросить', 'Reroll').text;
@@ -1685,7 +1713,7 @@ class S {
 
   static String get extractLoseRest => const Phrase(
         'Остальные свойства этой вещи пропадут.',
-        'The item’s other properties are lost.',
+        'Everything else on the item goes with it.',
       ).text;
 
   static String get extract => const Phrase('Разобрать', 'Break down').text;

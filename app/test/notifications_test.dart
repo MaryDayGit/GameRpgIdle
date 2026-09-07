@@ -130,11 +130,15 @@ void main() {
     expect(notifier.cancelled, [GameController.notificationIdFor(contract)]);
   });
 
-  test('разрешение спрашивается на старте и один раз', () async {
-    // Правило было обратным — «после первой гибели, там вопрос осмысленнее».
-    // Оно стоило первого спуска: наёмник встаёт на развилке через минуты
-    // после отправки, разрешения к тому моменту ещё нет, и система молча
-    // выбрасывает единственное уведомление, ради которого игру закрывают.
+  test('разрешение спрашивается при отправке и один раз', () async {
+    // Спрашивалось «после первой гибели» — это стоило первого спуска:
+    // наёмник встаёт на развилке через минуты после отправки, разрешения к
+    // тому моменту ещё нет, и система молча выбрасывает единственное
+    // уведомление, ради которого игру закрывают.
+    //
+    // Спрашивалось и «на загрузке» — системный диалог вставал ровно поверх
+    // вступительного окна первого запуска (проверено на телефоне). Отправка —
+    // и не поздно, и есть о чём: наёмник только что ушёл вниз.
     expect(notifier.permissionAsks, 0, reason: 'конструктор не спрашивает сам');
 
     await controller.askForNotifications();
@@ -151,6 +155,32 @@ void main() {
     controller.tick();
 
     expect(notifier.permissionAsks, 1, reason: 'гибель больше не спрашивает');
+  });
+
+  test('отправка сама спрашивает разрешение, и только первая', () async {
+    expect(notifier.permissionAsks, 0);
+
+    final first = controller.profile.roster.reserve.first;
+    controller.deploy(first);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.permissionAsks, 1,
+        reason: 'наёмник ушёл вниз — вот теперь уведомлять есть о чём');
+
+    // Второй отправки системный диалог не заслуживает: отказ есть отказ.
+    clock = clock.add(const Duration(days: 1));
+    controller.tick();
+    for (final c in [...controller.collectableContracts]) {
+      controller.collect(c);
+    }
+    controller.refreshTavern();
+    final next = controller.profile.tavernCandidates.first;
+    controller.profile.gold = 1e6;
+    controller.hire(next);
+    controller.deploy(next);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notifier.permissionAsks, 1);
   });
 
   test('манифест объявляет приёмники плагина уведомлений', () {

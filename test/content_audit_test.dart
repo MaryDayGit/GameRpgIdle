@@ -1,6 +1,11 @@
 import 'dart:io';
 
+import 'package:rift/core/content/affix_def.dart';
+import 'package:rift/core/content/content_pack.dart';
+import 'package:rift/core/model/gear.dart';
 import 'package:test/test.dart';
+
+import '../tool/content_io.dart';
 
 /// Каждый аффикс и каждая способность обязаны МЕНЯТЬ ИСХОД боя.
 ///
@@ -77,6 +82,44 @@ void main() {
           'которую нечем усиливать. Строка: «$line»',
     );
   }, timeout: _slow);
+
+  test('у слота два пула, и защита с атакой вместе не живут', () {
+    // Правило дизайна, а не инвариант данных: валидатор контента проверяет,
+    // что `kinds` и `pools` сходятся, а вот СКОЛЬКО пулов у слота и каких —
+    // решение, и его место здесь.
+    //
+    // Смысл правила: у слота должен быть характер. До пулов его не было ни у
+    // кого — почти каждый слот роллил почти всё, и «мне нужно хорошее кольцо»
+    // не значило ничего сверх «мне нужен хороший предмет».
+    loadContentFromDisk().apply();
+
+    // Два слота — исключение, и это их единственная роль: только здесь может
+    // выпасть что угодно.
+    const mixed = {GearKind.ring, GearKind.amulet};
+
+    for (final slot in ContentPack.current.implicits) {
+      final open = [
+        for (final e in slot.pools.entries)
+          if (e.value > 0) e.key,
+      ];
+
+      if (mixed.contains(slot.kind)) {
+        expect(open, hasLength(3),
+            reason: '${slot.kind.name} — свободный слот, у него все три пула');
+        continue;
+      }
+
+      expect(open, hasLength(2),
+          reason: '${slot.kind.name}: пулов ${open.length}, а должно быть два '
+              '— один основной и утилита');
+      expect(
+        open.contains(AffixPool.offence) && open.contains(AffixPool.defence),
+        isFalse,
+        reason: '${slot.kind.name} принимает и атаку, и защиту. Так можно '
+            'только кольцу и амулету — иначе у слота снова нет характера',
+      );
+    }
+  });
 }
 
 /// Каждый прогон поднимает свою VM и считает сотни боёв.

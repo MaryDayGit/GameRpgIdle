@@ -73,7 +73,7 @@ void main() {
     // шаг, а не простыню.
     final later = ContentPack.current.quest('fire_mastery')!;
     expect(find.text(later.name), findsNothing);
-    expect(find.textContaining('открывается дальше по цепочкам'),
+    expect(find.textContaining('ждут дальше по цепочкам'),
         findsOneWidget);
   });
 

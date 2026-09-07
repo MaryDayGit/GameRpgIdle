@@ -63,6 +63,12 @@ class ItemFactory {
         if (def.kinds.contains(itemKind)) def,
     ];
 
+    // Веса пулов слота — характер слота, записанный числом (`ImplicitDef`).
+    // Ролл выбирает СНАЧАЛА пул, потом аффикс внутри него: иначе доля защиты
+    // у слота получалась бы суммой двадцати шести чужих весов, и подвинуть её
+    // было бы нечем.
+    final slotPools = pack.implicitFor(itemKind)?.pools ?? const {};
+
     final affixes = <AffixRoll>[];
     String? triggerId;
     var triggersLeft = Tuning.maxTriggerAffixesPerItem;
@@ -72,18 +78,24 @@ class ItemFactory {
       final triggerCount = triggersLeft > 0 ? triggerPool.length : 0;
       if (statCount + triggerCount == 0) break;
 
-      final weights = <double>[
-        for (final def in statPool) def.weight,
-        if (triggersLeft > 0)
-          for (final def in triggerPool) def.weight,
-      ];
-      final index = rng.weightedIndex(weights);
+      // Стат против триггера — по прежним общим весам: доля триггеров на
+      // предмете от разбиения на пулы не меняется, меняется только то, какой
+      // именно стат выпадет.
+      final statWeight = statPool.fold<double>(0, (a, d) => a + d.weight);
+      final triggerWeight = triggersLeft == 0
+          ? 0.0
+          : triggerPool.fold<double>(0, (a, d) => a + d.weight);
 
-      if (index < statCount) {
-        final def = statPool.removeAt(index);
+      if (statCount > 0 &&
+          (triggerWeight <= 0 ||
+              rng.weightedIndex([statWeight, triggerWeight]) == 0)) {
+        final def = _pickStat(statPool, slotPools, rng);
+        statPool.remove(def);
         affixes.add(_rollAffix(def, ilvl, rng, rollBonus));
       } else {
-        final def = triggerPool.removeAt(index - statCount);
+        final index =
+            rng.weightedIndex([for (final def in triggerPool) def.weight]);
+        final def = triggerPool.removeAt(index);
         triggerId = def.id;
         triggersLeft--;
       }
@@ -126,6 +138,36 @@ class ItemFactory {
       relicEffect: relicEffect,
       twoHanded: twoHanded,
     );
+  }
+
+  /// Выбирает статовый аффикс: сперва пул по весам слота, потом аффикс.
+  ///
+  /// Пулы, в которых на этом предмете уже ничего не осталось, из розыгрыша
+  /// выпадают: слот с весами «защита 75, утилита 25», у которого разобрали всю
+  /// утилиту, обязан докатывать защитой, а не терять слот аффикса.
+  static StatAffixDef _pickStat(
+    List<StatAffixDef> pool,
+    Map<AffixPool, double> slotPools,
+    Rng rng,
+  ) {
+    final kinds = <AffixPool>[];
+    final weights = <double>[];
+    for (final entry in slotPools.entries) {
+      if (entry.value <= 0.0) continue;
+      if (!pool.any((d) => d.pool == entry.key)) continue;
+      kinds.add(entry.key);
+      weights.add(entry.value);
+    }
+
+    // Пулов у слота нет вовсе — старое поведение: разыгрываем всё скопом.
+    // Валидатор такого не пропустит, но ролл не должен падать из-за контента.
+    if (kinds.isEmpty) {
+      return pool[rng.weightedIndex([for (final d in pool) d.weight])];
+    }
+
+    final chosen = kinds[rng.weightedIndex(weights)];
+    final inPool = [for (final d in pool) if (d.pool == chosen) d];
+    return inPool[rng.weightedIndex([for (final d in inPool) d.weight])];
   }
 
   static AffixRoll _rollAffix(

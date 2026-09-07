@@ -18,13 +18,13 @@ String endingWord(RunEnding ending, [Gender gender = Gender.masculine]) {
     RunEnding.stalled => Phrase(
         she ? 'упёрлась в стену' : 'упёрся в стену', 'hit a wall').text,
     RunEnding.timeCap => Phrase(
-        she ? 'отозвана по времени' : 'отозван по времени',
-        'recalled on time').text,
+        she ? 'вышло время' : 'вышло время',
+        'out of time').text,
     RunEnding.floorCap => Phrase(
-        she ? 'дошла до предела' : 'дошёл до предела',
-        'reached the limit').text,
+        she ? 'дошла до дна' : 'дошёл до дна',
+        'reached the bottom').text,
     RunEnding.recalled =>
-      Phrase(she ? 'отозвана' : 'отозван', 'recalled').text,
+      Phrase(she ? 'отозвана' : 'отозван', 'called back').text,
     // Спуск не кончился — наёмник стоит на развилке. Слово в настоящем
     // времени намеренно: остальные исходы уже случились, этот происходит.
     RunEnding.atFork => const Phrase('на развилке', 'at a fork').text,

@@ -36,7 +36,7 @@
     },
     "first_blood_gauntlet": {
       "name": "Gauntlet of First Blood",
-      "text": "The first hit on a wave is three times stronger. Every hit after it is −25%."
+      "text": "The first blow against a wave lands three times as hard. Everything after it, −25%."
     },
     "glass_crown": {
       "name": "Glass Crown",
@@ -51,7 +51,7 @@
       "text": "Bosses give twice as much. Every other enemy has +35% HP."
     },
     "mask_of_certainty": {
-      "name": "Mask of Certainty",
+      "name": "Mask of Inevitability",
       "text": "Every hit is a critical strike. Base damage −45%."
     },
     "reaper_edge": {
@@ -64,10 +64,10 @@
     },
     "rope_of_the_deep": {
       "name": "Rope of the Deep",
-      "text": "The descent starts 10 floors deeper. Maximum HP −30%."
+      "text": "You start the descent 10 floors further down. Maximum HP −30%."
     },
     "scarred_pact": {
-      "name": "Scarred Pact",
+      "name": "Accursed Pact",
       "text": "Every hit you take grants +5% damage until the end of the wave, up to eight times."
     },
     "seal_of_haste": {
@@ -80,7 +80,7 @@
     },
     "skin_of_despair": {
       "name": "Skin of Despair",
-      "text": "Maximum HP −65%. Effects conditioned on being below X% HP are always active. Life leech doubled."
+      "text": "Maximum HP −65%. Anything that needs you below X% HP is always on. Life leech doubled."
     },
     "split_counterweight": {
       "name": "Split Counterweight",

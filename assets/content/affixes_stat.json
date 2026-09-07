@@ -1,9 +1,27 @@
 {
   "version": 1,
   "_comment": [
-    "Аффиксы вещей. Семейство `tagDamage` разложено по ОСЯМ, а не свалено в одну",
-    "кучу: раньше был один аффикс с восемью тегами внутри, и шанс найти нужный",
-    "конкретный тег был около процента — собрать под него билд было нельзя.",
+    "Аффиксы вещей. У каждого — ПУЛ: чему он служит.",
+    "",
+    "  offence -> урон, скорость, крит, множители по тегам;",
+    "  defence -> HP, броня, сопротивления, восстановление;",
+    "  utility -> мана, перезарядка, вампиризм, качество и количество добычи.",
+    "",
+    "Пул нужен ради одного правила: НА ОРУЖИИ НЕ БЫВАЕТ СОПРОТИВЛЕНИЙ. Раньше",
+    "оно держалось на двадцати шести списках `kinds` — то есть не держалось ни",
+    "на чём: нарушить его можно было одной строчкой, и заметить это было",
+    "некому. Теперь слот объявляет, с какими пулами работает и в какой",
+    "пропорции (items.json -> implicits -> pools), ролл выбирает сначала пул и",
+    "только потом аффикс, а валидатор не даёт игре стартовать, если `kinds`",
+    "противоречит пулам слота.",
+    "",
+    "Правило слотов: у слота ровно два пула, и защита с атакой не встречаются",
+    "вместе. Исключение — кольцо и амулет: это единственные слоты, где может",
+    "выпасть что угодно, и в этом вся их роль.",
+    "",
+    "Семейство `tagDamage` разложено по ОСЯМ, а не свалено в одну кучу: раньше",
+    "был один аффикс с восемью тегами внутри, и шанс найти нужный конкретный",
+    "тег был около процента — собрать под него билд было нельзя.",
     "",
     "damage_element  -> стихия: Огонь, Холод, Молния, Пустота, Физический;",
     "damage_form     -> ось силы: Атака (урон оружия) или Чары (сила чар);",
@@ -35,9 +53,9 @@
         "armor",
         "boots",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "defence",
       "weight": 12
     },
     {
@@ -50,6 +68,7 @@
         "armor",
         "amulet"
       ],
+      "pool": "defence",
       "weight": 6
     },
     {
@@ -63,6 +82,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "defence",
       "weight": 7
     },
     {
@@ -74,10 +94,9 @@
       "kinds": [
         "helmet",
         "armor",
-        "boots",
-        "offhand",
-        "gloves"
+        "boots"
       ],
+      "pool": "defence",
       "weight": 12
     },
     {
@@ -87,9 +106,10 @@
       "base": 0.08,
       "scales": false,
       "kinds": [
-        "armor",
-        "offhand"
+        "helmet",
+        "armor"
       ],
+      "pool": "defence",
       "weight": 6
     },
     {
@@ -103,9 +123,9 @@
         "armor",
         "boots",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "defence",
       "weight": 9
     },
     {
@@ -119,9 +139,9 @@
         "armor",
         "boots",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "defence",
       "weight": 9
     },
     {
@@ -135,9 +155,9 @@
         "armor",
         "boots",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "defence",
       "weight": 9
     },
     {
@@ -151,9 +171,9 @@
         "armor",
         "boots",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "defence",
       "weight": 9
     },
     {
@@ -168,6 +188,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "offence",
       "weight": 12
     },
     {
@@ -180,9 +201,9 @@
         "weapon",
         "offhand",
         "ring",
-        "amulet",
-        "helmet"
+        "amulet"
       ],
+      "pool": "offence",
       "weight": 12
     },
     {
@@ -197,6 +218,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "offence",
       "weight": 10
     },
     {
@@ -208,9 +230,9 @@
       "kinds": [
         "weapon",
         "gloves",
-        "boots",
         "ring"
       ],
+      "pool": "offence",
       "weight": 9
     },
     {
@@ -225,6 +247,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "offence",
       "weight": 8
     },
     {
@@ -238,6 +261,7 @@
         "gloves",
         "amulet"
       ],
+      "pool": "offence",
       "weight": 8
     },
     {
@@ -247,11 +271,14 @@
       "base": 0.05,
       "scales": false,
       "kinds": [
+        "weapon",
+        "offhand",
         "helmet",
         "gloves",
-        "amulet",
-        "offhand"
+        "boots",
+        "amulet"
       ],
+      "pool": "utility",
       "weight": 7
     },
     {
@@ -265,6 +292,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "utility",
       "weight": 5
     },
     {
@@ -276,10 +304,11 @@
       "kinds": [
         "weapon",
         "offhand",
+        "gloves",
         "ring",
-        "amulet",
-        "gloves"
+        "amulet"
       ],
+      "pool": "offence",
       "weight": 18,
       "family": [
         "fire",
@@ -300,6 +329,7 @@
         "offhand",
         "amulet"
       ],
+      "pool": "offence",
       "weight": 9,
       "family": [
         "attack",
@@ -313,11 +343,11 @@
       "base": 0.14,
       "scales": false,
       "kinds": [
+        "offhand",
         "gloves",
-        "helmet",
-        "ring",
-        "offhand"
+        "ring"
       ],
+      "pool": "offence",
       "weight": 7,
       "family": [
         "projectile",
@@ -325,22 +355,16 @@
       ]
     },
     {
-      "_comment": [
-        "Единственный тег, который усиливает НЕ урон: ауры его не наносят.",
-        "Множит величину ауры — броню «Каменной стойки», замедление «Морозного",
-        "покрова». Отдельным аффиксом, а не в семействе механик, потому что и",
-        "текст другой: «к силе Аур», а не «к урону»."
-      ],
       "id": "aura_power",
       "ru": "+{value:%} {tag}",
       "stat": "tagDamage",
       "base": 0.16,
       "scales": false,
       "kinds": [
-        "helmet",
-        "amulet",
-        "offhand"
+        "offhand",
+        "amulet"
       ],
+      "pool": "offence",
       "weight": 7,
       "family": [
         "aura"
@@ -353,11 +377,11 @@
       "base": 0.13,
       "scales": false,
       "kinds": [
-        "ring",
-        "amulet",
         "gloves",
-        "boots"
+        "ring",
+        "amulet"
       ],
+      "pool": "offence",
       "weight": 9,
       "family": [
         "duration",
@@ -378,6 +402,7 @@
         "ring",
         "amulet"
       ],
+      "pool": "utility",
       "weight": 5
     },
     {
@@ -391,6 +416,7 @@
         "boots",
         "ring"
       ],
+      "pool": "utility",
       "weight": 5
     },
     {
@@ -400,11 +426,13 @@
       "base": 25.0,
       "scales": false,
       "kinds": [
+        "offhand",
         "helmet",
+        "armor",
         "ring",
-        "amulet",
-        "offhand"
+        "amulet"
       ],
+      "pool": "utility",
       "weight": 8
     },
     {
@@ -414,11 +442,13 @@
       "base": 1.2,
       "scales": false,
       "kinds": [
-        "ring",
-        "amulet",
         "offhand",
-        "gloves"
+        "armor",
+        "gloves",
+        "ring",
+        "amulet"
       ],
+      "pool": "utility",
       "weight": 7
     }
   ]

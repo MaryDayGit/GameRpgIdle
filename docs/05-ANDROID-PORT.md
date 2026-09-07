@@ -58,8 +58,11 @@ idle-rpg-game/
       ui/echo_tree_screen.dart    древо Эха: три ветки, узлы по одному
       ui/passive_tree_screen.dart дерево пассивок: граф на 103 узла
       ui/tutorial.dart            подсказка о следующем шаге по состоянию
+      ui/onboarding.dart          сценарий первого запуска: шаги и что открыто
+      ui/coach_mark.dart          затемнение с окном, стрелка и карточка шага
+      ui/tutorial_host.dart       обучение поверх одного экрана
       data/feedback.dart          звук и вибрация
-      data/settings_store.dart    звук, вибрация, пройдено ли обучение
+      data/settings_store.dart    звук, вибрация, пройденные шаги обучения
       game/silhouettes.dart       фигуры бестиария, нарисованные кодом
       game/combat_animation.dart  замах, попадание, падение — по событиям боя
       ui/journal_screen.dart      журнал отсутствия: докуда, что принёс, от чего погиб

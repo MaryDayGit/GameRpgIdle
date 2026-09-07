@@ -433,6 +433,37 @@ class ContentPack {
       }
     }
 
+    // Пулы: правило «на оружии не бывает сопротивлений» проверяется здесь и
+    // больше нигде. Оно записано дважды — пулом у аффикса и весами у слота, —
+    // и эти две записи обязаны сходиться. Иначе `kinds` и `pools` начинают
+    // расходиться молча, и через месяц никто не скажет, какая из них правда.
+    for (final def in statAffixes) {
+      for (final kind in def.kinds) {
+        final slot = implicits.where((i) => i.kind == kind).firstOrNull;
+        if (slot == null) continue;
+        if ((slot.pools[def.pool] ?? 0.0) > 0.0) continue;
+        issues.add(
+            'affixes_stat.${def.id}.kinds',
+            'аффикс из пула «${def.pool.name}» стоит на слоте ${kind.name}, '
+                'который этот пул не принимает');
+      }
+    }
+
+    // Обратная сторона того же: слот объявил пул, а класть в него нечего.
+    // Вес такого пула — обещание, которое ролл не может выполнить.
+    for (final slot in implicits) {
+      for (final entry in slot.pools.entries) {
+        if (entry.value <= 0.0) continue;
+        final has = statAffixes.any(
+            (a) => a.pool == entry.key && a.kinds.contains(slot.kind));
+        if (has) continue;
+        issues.add(
+            'items.implicits.${slot.kind.name}.pools.${entry.key.name}',
+            'слот принимает пул с весом ${entry.value}, но ни один аффикс '
+                'этого пула на нём не выпадает');
+      }
+    }
+
     // Каждый вид снаряжения обязан иметь хотя бы один реликт.
     //
     // Раньше правило было обратным — «не больше одного на вид», — и это было

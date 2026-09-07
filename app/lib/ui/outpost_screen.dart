@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rift/core/sim/daily_rift.dart';
 import 'package:rift/core/balance/curves.dart' as balance;
@@ -8,6 +10,9 @@ import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/player_profile.dart';
 
 import '../state/game_controller.dart';
+import 'coach_mark.dart';
+import 'onboarding.dart';
+import 'tutorial_host.dart';
 import 'echo_tree_screen.dart';
 import 'forge_screen.dart';
 import 'help_screen.dart';
@@ -39,6 +44,15 @@ class OutpostScreen extends StatefulWidget {
   State<OutpostScreen> createState() => _OutpostScreenState();
 }
 
+/// Разделы, которые живут рядом кнопками над карточкой спуска.
+const _destinations = [
+  Feature.stash,
+  Feature.forge,
+  Feature.quests,
+  Feature.echoTree,
+  Feature.passiveTree,
+];
+
 class _OutpostScreenState extends State<OutpostScreen> {
   GameController get c => widget.controller;
 
@@ -60,9 +74,12 @@ class _OutpostScreenState extends State<OutpostScreen> {
         showDragHandle: true,
         builder: (context) => AnimatedBuilder(
           animation: c,
+          // Лист прокручивается: четыре строки настроек при крупном системном
+          // шрифте не помещаются в отведённую листу половину экрана, и без
+          // прокрутки нижняя просто обрезается — вместе с обучением.
           builder: (context, _) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: ListView(
+              shrinkWrap: true,
               children: [
                 // Языки подписаны каждый на себе самом и не переводятся:
                 // игрок, открывший игру не на своём языке, ищет знакомое
@@ -93,6 +110,9 @@ class _OutpostScreenState extends State<OutpostScreen> {
                   title: Text(S.settingsHaptics),
                   subtitle: Text(S.settingsHapticsAbout),
                 ),
+                // Обучение пропускается одной кнопкой, и вернуть его надо
+                // где-то, кроме переустановки игры.
+                TutorialRestartTile(controller: c),
                 const SizedBox(height: 12),
               ],
             ),
@@ -100,9 +120,14 @@ class _OutpostScreenState extends State<OutpostScreen> {
         ),
       );
 
+  /// Вступление первого запуска.
   Future<void> _maybeShowIntro() async {
     if (!mounted || c.settings.tutorialDone) return;
+    if (!Onboarding.needsIntro(c.tutorialSeen)) return;
+    await _showIntro();
+  }
 
+  Future<void> _showIntro() async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -132,7 +157,9 @@ class _OutpostScreenState extends State<OutpostScreen> {
       ),
     );
 
-    if (mounted) c.finishTutorial();
+    // Не «обучение пройдено», а «вступление прочитано»: дальше начинается
+    // сценарий с указателями, и он тоже часть обучения.
+    if (mounted) c.markTutorialSeen(const [Onboarding.introId]);
   }
 
   @override
@@ -149,6 +176,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => JournalScreen(
+          controller: c,
           contract: contract,
           onCollect: () {
             c.collect(contract);
@@ -217,7 +245,18 @@ class _OutpostScreenState extends State<OutpostScreen> {
       animation: c,
       builder: (context, _) {
         final profile = c.profile;
-        return Scaffold(
+
+        // Разделы открываются по мере того, как у них появляется смысл.
+        // Пустой сундук, древо без Эха и восемь построек на нулевом золоте —
+        // это не «богатый экран», а восемь вопросов без ответа сразу после
+        // установки.
+        bool shows(Feature f) => Onboarding.shows(
+              f,
+              p: profile,
+              tutorialDone: c.settings.tutorialDone,
+            );
+
+        final scaffold = Scaffold(
           appBar: AppBar(
             title: Text(S.outpostTitle),
             actions: [
@@ -243,7 +282,12 @@ class _OutpostScreenState extends State<OutpostScreen> {
               // Подсказка о следующем шаге. Считается от состояния игры, а не
               // хранится указателем на шаг сценария: игрок, ушедший в Кузницу
               // посреди обучения, вернётся и увидит ту же строку.
-              _NextStep(step: Tutorial.stepFor(profile)),
+              //
+              // Пока идёт сценарий первого запуска, её нет: он говорит про
+              // тот же следующий шаг, только громче и с указателем, и две
+              // подсказки об одном превращаются в шум.
+              if (c.settings.tutorialDone)
+                _NextStep(step: Tutorial.stepFor(profile)),
 
               _Resources(profile: profile),
               const SizedBox(height: 8),
@@ -263,68 +307,109 @@ class _OutpostScreenState extends State<OutpostScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _Destination(
-                    icon: Icons.inventory_2_outlined,
-                    label: S.stashButton(profile.stash.length),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => StashScreen(controller: c),
+                  if (shows(Feature.stash))
+                    TutorialAnchor(
+                      id: Onboarding.anchorStash,
+                      child: _Destination(
+                        icon: Icons.inventory_2_outlined,
+                        label: S.stashButton(profile.stash.length),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => StashScreen(controller: c),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  _Destination(
-                    icon: Icons.auto_fix_high,
-                    label: S.forgeTitle,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ForgeScreen(controller: c),
+                  if (shows(Feature.forge))
+                    TutorialAnchor(
+                      id: Onboarding.anchorForge,
+                      child: _Destination(
+                        icon: Icons.auto_fix_high,
+                        label: S.forgeTitle,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ForgeScreen(controller: c),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  _Destination(
-                    icon: Icons.flag_outlined,
-                    label: S.questsTitle,
-                    // Точка зовёт туда, где появился выбор: новая цель,
-                    // непотраченное Эхо, неистраченные очки.
-                    marked: c.profile.quests.doneCount == 0,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => QuestsScreen(controller: c),
+                  if (shows(Feature.quests))
+                    TutorialAnchor(
+                      id: Onboarding.anchorQuests,
+                      child: _Destination(
+                        icon: Icons.flag_outlined,
+                        label: S.questsTitle,
+                        // Точка зовёт туда, где появился выбор: новая цель,
+                        // непотраченное Эхо, неистраченные очки.
+                        marked: c.profile.quests.doneCount == 0,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => QuestsScreen(controller: c),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  _Destination(
-                    icon: Icons.hub_outlined,
-                    label: S.echoTreeTitle,
-                    marked: c.canBuyEchoNode,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => EchoTreeScreen(controller: c),
+                  if (shows(Feature.echoTree))
+                    TutorialAnchor(
+                      id: Onboarding.anchorEcho,
+                      child: _Destination(
+                        icon: Icons.hub_outlined,
+                        label: S.echoTreeTitle,
+                        marked: c.canBuyEchoNode,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => EchoTreeScreen(controller: c),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  _Destination(
-                    icon: Icons.account_tree_outlined,
-                    label: S.passivesTitle,
-                    marked: c.profile.passivePointsLeft > 0,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PassiveTreeScreen(controller: c),
+                  if (shows(Feature.passiveTree))
+                    TutorialAnchor(
+                      id: Onboarding.anchorPassives,
+                      child: _Destination(
+                        icon: Icons.account_tree_outlined,
+                        label: S.passivesTitle,
+                        marked: c.profile.passivePointsLeft > 0,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => PassiveTreeScreen(controller: c),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              // Отступ под ряд переходов — только если ряд есть. На первом
+              // спуске не открыт ни один, и пустая полоса читалась бы как
+              // «здесь что-то не загрузилось».
+              SizedBox(height: _destinations.any(shows) ? 16 : 0),
               _DescentCard(controller: c, onCollect: _openJournal),
               const SizedBox(height: 16),
               _RosterSection(controller: c),
-              const SizedBox(height: 16),
-              _TavernSection(controller: c),
-              const SizedBox(height: 16),
-              _BuildingsSection(controller: c),
+              if (shows(Feature.tavern)) ...[
+                const SizedBox(height: 16),
+                TutorialAnchor(
+                  id: Onboarding.anchorTavern,
+                  child: _TavernSection(controller: c),
+                ),
+              ],
+              if (shows(Feature.buildings)) ...[
+                const SizedBox(height: 16),
+                TutorialAnchor(
+                  id: Onboarding.anchorBuildings,
+                  child: _BuildingsSection(controller: c),
+                ),
+              ],
             ],
           ),
+        );
+
+        // Обучение поверх Заставы: экран расставил метки и больше про него
+        // ничего не знает — какой сейчас шаг, решает `Onboarding`.
+        return TutorialHost(
+          controller: c,
+          screen: TutorialScreen.outpost,
+          child: scaffold,
         );
       },
     );
@@ -438,13 +523,27 @@ class _DescentCard extends StatelessWidget {
       // Развилка — первой, впереди даже добычи: наёмник СТОИТ и ждёт, и
       // каждая секунда раздумий тратит бюджет ожидания. Добыча подождёт,
       // она уже никуда не денется.
-      final cards = <Widget>[
-        for (final contract in active)
-          if (contract.atFork) _fork(context, contract),
-        for (final contract in ready) _ready(context, contract),
-        for (final contract in active)
-          if (!contract.atFork) _active(context, contract),
-      ];
+      // Слотов спуска бывает несколько, а метка обучения — одна на всю игру:
+      // два виджета с одним ключом дерево не переживёт. Метку получает первая
+      // карточка своего вида — указывать всё равно надо на одну.
+      final cards = <Widget>[];
+      var first = true;
+      for (final contract in active) {
+        if (!contract.atFork) continue;
+        cards.add(_fork(context, contract, marked: first));
+        first = false;
+      }
+      first = true;
+      for (final contract in ready) {
+        cards.add(_ready(context, contract, marked: first));
+        first = false;
+      }
+      first = true;
+      for (final contract in active) {
+        if (contract.atFork) continue;
+        cards.add(_active(context, contract, marked: first));
+        first = false;
+      }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -478,25 +577,27 @@ class _DescentCard extends StatelessWidget {
   /// Единственное место в игре, где игрок нужен ВО ВРЕМЯ спуска. До этого
   /// между отправкой и гибелью не происходило ничего, и живой прогон назвал
   /// это «захожу, собираю билд, отправляю и выхожу».
-  Widget _fork(BuildContext context, Contract contract) {
+  Widget _fork(BuildContext context, Contract contract,
+      {required bool marked}) {
     if (contract.pendingFork == null) return const SizedBox.shrink();
 
-    return _Panel(
+    final panel = _Panel(
       title: S.mercAtFork(contract.mercenary.name),
       about: S.forkCardAbout,
-
-
-
       child: ForkCard(controller: controller, contract: contract),
     );
+    return marked
+        ? TutorialAnchor(id: Onboarding.anchorFork, child: panel)
+        : panel;
   }
 
-  Widget _active(BuildContext context, Contract contract) {
+  Widget _active(BuildContext context, Contract contract,
+      {required bool marked}) {
     final now = controller.now;
     final depth = contract.currentFloorAt(now);
     final record = controller.profile.maxDepthEver;
 
-    return _Panel(
+    final panel = _Panel(
       title: S.mercInAbyss(contract.mercenary.name),
       about: S.descentCardAbout,
       child: Column(
@@ -560,6 +661,9 @@ class _DescentCard extends StatelessWidget {
         ],
       ),
     );
+    return marked
+        ? TutorialAnchor(id: Onboarding.anchorDescent, child: panel)
+        : panel;
   }
 
   Future<void> _confirmRecall(BuildContext context, Contract contract) async {
@@ -584,7 +688,8 @@ class _DescentCard extends StatelessWidget {
     if (agreed == true) controller.recall(contract);
   }
 
-  Widget _ready(BuildContext context, Contract contract) {
+  Widget _ready(BuildContext context, Contract contract,
+      {required bool marked}) {
     final result = contract.result!;
     return _Panel(
       title: '${contract.mercenary.name} '
@@ -606,10 +711,19 @@ class _DescentCard extends StatelessWidget {
             style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
           const SizedBox(height: 12),
-          FilledButton(
-            onPressed: () => onCollect(contract),
-            child: Text(S.openJournal),
-          ),
+          if (marked)
+            TutorialAnchor(
+              id: Onboarding.anchorCollect,
+              child: FilledButton(
+                onPressed: () => onCollect(contract),
+                child: Text(S.openJournal),
+              ),
+            )
+          else
+            FilledButton(
+              onPressed: () => onCollect(contract),
+              child: Text(S.openJournal),
+            ),
         ],
       ),
     );
@@ -666,7 +780,7 @@ class _RosterSection extends StatelessWidget {
               style: const TextStyle(fontSize: 13, color: Colors.white70),
             )
           else
-            for (final merc in reserve)
+            for (final (index, merc) in reserve.indexed)
               _MercRow(
                 merc: merc,
                 abilitySlots: controller.profile.abilitySlotsFor(merc),
@@ -674,6 +788,10 @@ class _RosterSection extends StatelessWidget {
                 onTap: canDeploy ? () => controller.deploy(merc) : null,
                 onOpen: () => _openCard(context, merc),
                 onBuild: () => _openLoadout(context, merc),
+                // Метки обучения — только на первой строке: два виджета с
+                // одной меткой в дереве не живут, а указывать всё равно надо
+                // на кого-то одного.
+                marked: index == 0,
               ),
 
           // Клеймо стоит рядом с «Отправить», потому что это решение перед
@@ -687,9 +805,20 @@ class _RosterSection extends StatelessWidget {
           // Разлом дня — здесь же, рядом с «Отправить»: это не отдельный
           // режим, а вторая кнопка того же решения. Отдельным экраном он
           // превратился бы в место, куда надо не забыть зайти.
-          if (reserve.isNotEmpty) ...[
+          //
+          // На первом спуске его нет: «чем завтра отличается от сегодня» —
+          // не тот вопрос, который задают, ещё не увидев сегодня.
+          if (reserve.isNotEmpty &&
+              Onboarding.shows(
+                Feature.rift,
+                p: controller.profile,
+                tutorialDone: controller.settings.tutorialDone,
+              )) ...[
             const SizedBox(height: 12),
-            _RiftRow(controller: controller, merc: reserve.first),
+            TutorialAnchor(
+              id: Onboarding.anchorRift,
+              child: _RiftRow(controller: controller, merc: reserve.first),
+            ),
           ],
         ],
       ),
@@ -854,7 +983,12 @@ class _MercRow extends StatelessWidget {
     this.onTap,
     this.onOpen,
     this.onBuild,
+    this.marked = false,
   });
+
+  /// Ставить ли на строку метки обучения. Ровно одна строка на экране: метка
+  /// — это [GlobalKey], а двух одинаковых ключей дерево не терпит.
+  final bool marked;
 
   final Mercenary merc;
   final String action;
@@ -922,27 +1056,38 @@ class _MercRow extends StatelessWidget {
     // словами. Раньше «Снаряжение» пряталось за иконкой с подсказкой —
     // на телефоне подсказку никто не увидит: её надо удерживать пальцем.
     if (onBuild != null) {
+      final build = OutlinedButton.icon(
+        onPressed: onBuild,
+        icon: const Icon(Icons.shield_outlined, size: 18),
+        // «Сборка», а не «Снаряжение»: за этой кнопкой и вещи,
+        // и способности, и приказ на развилку — весь билд.
+        label: Text(S.buildButton),
+      );
+      final send = FilledButton(onPressed: onTap, child: Text(action));
+      final title = InkWell(onTap: onOpen, child: _title());
+
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            InkWell(onTap: onOpen, child: _title()),
+            marked
+                ? TutorialAnchor(id: Onboarding.anchorMerc, child: title)
+                : title,
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onBuild,
-                    icon: const Icon(Icons.shield_outlined, size: 18),
-                    // «Сборка», а не «Снаряжение»: за этой кнопкой и вещи,
-                    // и способности, и приказ на развилку — весь билд.
-                    label: Text(S.buildButton),
-                  ),
+                  child: marked
+                      ? TutorialAnchor(
+                          id: Onboarding.anchorBuild, child: build)
+                      : build,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(onPressed: onTap, child: Text(action)),
+                  child: marked
+                      ? TutorialAnchor(id: Onboarding.anchorSend, child: send)
+                      : send,
                 ),
               ],
             ),

@@ -63,12 +63,12 @@ class Tutorial {
       return const TutorialStep(
         id: 'fork',
         title: Phrase('Наёмник ждёт решения',
-            'The mercenary waits for a decision'),
+            'Your mercenary is waiting'),
         text: Phrase(
             'Он остановился на развилке. Выберите путь — или он выберет '
-                'сам, и вы узнаете об этом из журнала.',
-            'They stopped at a fork. Choose the path — or they will choose '
-                'it themselves, and you will read about it in the journal.'),
+                'сам, и вы прочитаете об этом в журнале.',
+            'They have stopped at a fork. Pick the path — or they will pick '
+                'it for you, and you will read about it in the journal.'),
       );
     }
 
@@ -79,25 +79,25 @@ class Tutorial {
         id: 'collect',
         title: Phrase('Заберите добычу', 'Collect the haul'),
         text: Phrase(
-            'Пока не заберёте — у вас ничего нет: ни золота, ни вещей. '
+            'Пока не заберёте — ничего из этого не ваше: ни золота, ни вещей. '
                 'Откройте журнал, там написано, чем всё кончилось.',
-            'Until you do, you have nothing: no gold, no items. Open the '
-                'journal — it says how it all ended.'),
+            'Until you do, none of it is yours: no gold, no items. Open the '
+                'journal — it tells you how it ended.'),
       );
     }
 
     if (descending) {
       return const TutorialStep(
         id: 'watch',
-        title: Phrase('Наёмник внизу', 'The mercenary is below'),
+        title: Phrase('Наёмник внизу', 'Someone is down there'),
         text: Phrase(
             'Игру можно закрыть — спуск идёт по часам, а не по экрану. '
                 'Но каждые пять этажей расселина расходится надвое, и наёмник '
-                'ждёт вашего решения. Не дождётся — выберет сам.',
-            'You can close the game — the descent runs on the clock, not on '
-                'the screen. But every five floors the rift splits in two, '
-                'and the mercenary waits for your decision. If they do not '
-                'get one, they choose alone.'),
+                'встаёт и ждёт вас. Не дождётся — пойдёт сам.',
+            'Close the game if you like — the descent runs on the clock, not '
+                'on the screen. But every five floors the rift splits in two, '
+                'and they stop to ask you. Left waiting too long, they go on '
+                'without an answer.'),
       );
     }
 
@@ -106,10 +106,10 @@ class Tutorial {
         id: 'hire',
         title: Phrase('Наймите наёмника', 'Hire a mercenary'),
         text: Phrase(
-            'Он спустится один раз и погибнет — так и задумано. Всё, что '
-                'он найдёт, останется вам.',
-            'They go down once and die — that is the design. Everything they '
-                'find stays with you.'),
+            'Он спустится один раз и погибнет. Это не поломка: всё, что он '
+                'найдёт, останется вам.',
+            'They go down once, and they die. That is not a flaw — whatever '
+                'they find stays with you.'),
       );
     }
 
@@ -117,12 +117,13 @@ class Tutorial {
     if (merc.gear.filledSlots < 2 && profile.stash.isNotEmpty) {
       return const TutorialStep(
         id: 'gear',
-        title: Phrase('Соберите наёмника', 'Build the mercenary'),
+        title: Phrase('Соберите наёмника', 'Build them out'),
         text: Phrase(
             'Нажмите «Сборка». Девять слотов под вещи и четыре под умения — '
-                'это всё, чем вы управляете. Внизу вмешаться уже нельзя.',
-            'Tap “Build”. Nine slots for items and four for abilities — that '
-                'is everything you control. Down below you cannot step in.'),
+                'больше вы не решаете ничего. Внизу вмешаться уже нельзя.',
+            'Tap “Build”. Nine slots for items, four for abilities — that is '
+                'the whole of what you decide. Once they are down there, you '
+                'cannot step in.'),
       );
     }
 
@@ -132,11 +133,11 @@ class Tutorial {
         title: Phrase('Отправьте его вниз', 'Send them down'),
         text: Phrase(
             'Снаряжение и умения решаются здесь, до отправки. Внизу он '
-                'справляется сам — кроме развилок: там он остановится и '
-                'спросит вас.',
-            'Gear and abilities are settled here, before departure. Below they '
-                'manage alone — except at forks, where they stop and ask '
-                'you.'),
+                'справляется сам — кроме развилок: там он встанет и спросит '
+                'вас.',
+            'Gear and abilities are settled up here, before they leave. Below '
+                'they manage on their own — except at forks, where they stop '
+                'and ask.'),
       );
     }
 
@@ -147,13 +148,13 @@ class Tutorial {
             profile.abilitySlots + _spareAbilities) {
       return const TutorialStep(
         id: 'quests',
-        title: Phrase('Загляните в задания', 'Look at the quests'),
+        title: Phrase('Загляните в задания', 'Look in on the quests'),
         text: Phrase(
-            'Новые умения дают за дела: дойти глубже, одолеть чудовище, '
-                'собрать сборку вокруг одной стихии. Кнопка наверху.',
-            'New abilities are earned by deeds: reach deeper, bring down a '
-                'monster, build around a single element. The button is up '
-                'top.'),
+            'Новые умения не покупаются — их дают за дела: дойти глубже, '
+                'одолеть чудовище, собрать всё вокруг одной стихии.',
+            'New abilities are not for sale — they are earned: get deeper, '
+                'bring down a monster, build the whole thing around one '
+                'element.'),
       );
     }
 
@@ -167,8 +168,9 @@ class Tutorial {
             'Эхо приходит только со смертью наёмника и копится между '
                 'спусками. В древе оно превращается в то, что останется '
                 'навсегда.',
-            'Echo comes only with a mercenary’s death and accumulates between '
-                'descents. In the tree it turns into what stays forever.'),
+            'Echo only ever comes from a mercenary’s death, and it piles up '
+                'between descents. Spent in the tree, it turns into something '
+                'that stays for good.'),
       );
     }
 
@@ -176,12 +178,12 @@ class Tutorial {
         profile.outpost.levelOf(Building.forge) == 0) {
       return const TutorialStep(
         id: 'forge',
-        title: Phrase('В Кузнице лежат осколки', 'Shards wait in the Forge'),
+        title: Phrase('В Кузнице лежат осколки', 'Shards are piling up'),
         text: Phrase(
-            'Осколок помнит, насколько удачно выпало свойство. Вставьте '
-                'его в вещь получше — и он даст больше.',
-            'A shard remembers how well a property rolled. Set it into a '
-                'better item and it gives more.'),
+            'Осколок помнит не число, а удачу броска. Вставьте его в вещь '
+                'получше — и та же удача даст больше.',
+            'A shard remembers the luck of the roll, not the number. Set it '
+                'into a better item and the same luck pays out more.'),
       );
     }
 
@@ -208,24 +210,24 @@ class Tutorial {
       "Наёмник берёт то, что вы ему дали, и уходит вниз. В бою вы им не "
           "управляете. Но каждые пять этажей расселина расходится надвое — "
           "там он останавливается и ждёт, какой путь выберете вы.",
-      "The mercenary takes what you gave them and goes down. You do not "
-          "control them in a fight. But every five floors the rift splits in "
-          "two, and there they stop and wait for you to choose the path.",
+      "The mercenary takes whatever you gave them and goes down. You do not "
+          "command them in a fight. But every five floors the rift splits, "
+          "and there they stop and wait for you to choose.",
     ),
     Phrase(
       "Он погибнет. Обязательно и довольно скоро — так устроена расселина. "
           "Но всё, что он успел найти, поднимется наверх вместе с вестью о "
           "его смерти.",
-      "They will die. Certainly, and fairly soon — that is how the rift "
-          "works. But everything they found comes back up along with the "
-          "news of their death.",
+      "They will die. Certainly, and fairly soon — the rift is built that "
+          "way. Everything they found comes back up with the news of it.",
     ),
     Phrase(
       "Ваша работа здесь, на Заставе: собирать снаряжение, выбирать умения "
           "и решать, кого отправить следующим. Каждый следующий уйдёт глубже "
           "предыдущего.",
-      "Your work is here, at the Outpost: assemble gear, choose abilities "
-          "and decide who goes next. Each one goes deeper than the last.",
+      "Your work is up here at the Outpost: put gear together, pick "
+          "abilities, decide who goes next. Each one gets further than the "
+          "last.",
     ),
   ];
 

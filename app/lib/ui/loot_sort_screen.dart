@@ -6,8 +6,11 @@ import 'package:rift/core/model/gear.dart';
 import 'package:rift/core/model/item.dart';
 
 import '../state/game_controller.dart';
+import 'coach_mark.dart';
 import 'format.dart';
+import 'onboarding.dart';
 import 'strings.dart';
+import 'tutorial_host.dart';
 import 'help_screen.dart';
 
 /// Разбор добычи: что из принесённого достойно места в сундуке.
@@ -54,7 +57,7 @@ class _LootSortScreenState extends State<LootSortScreen> {
             ? loot
             : [for (final item in loot) if (item.kind == filter) item];
 
-        return Scaffold(
+        final scaffold = Scaffold(
           appBar: AppBar(
             title: Text(S.lootSortTitle),
             actions: [
@@ -94,16 +97,25 @@ class _LootSortScreenState extends State<LootSortScreen> {
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   itemCount: shown.length,
-                  itemBuilder: (context, i) => _LootRow(
-                    item: shown[i],
-                    // Место в сундуке кончилось — «оставить» перестаёт быть
-                    // доступным, и это надо показать до нажатия, а не после.
-                    canKeep: room > 0,
-                    salvage: c.profile.salvageValue(shown[i]),
-                    onKeep: () => setState(() => c.keepLoot(shown[i])),
-                    onMelt: () => setState(() => c.meltLoot(shown[i])),
-                    onSell: () => setState(() => c.sellLoot(shown[i])),
-                  ),
+                  itemBuilder: (context, i) {
+                    final row = _LootRow(
+                      item: shown[i],
+                      // Место в сундуке кончилось — «оставить» перестаёт быть
+                      // доступным, и это надо показать до нажатия, а не после.
+                      canKeep: room > 0,
+                      salvage: c.profile.salvageValue(shown[i]),
+                      onKeep: () => setState(() => c.keepLoot(shown[i])),
+                      onMelt: () => setState(() => c.meltLoot(shown[i])),
+                      onSell: () => setState(() => c.sellLoot(shown[i])),
+                    );
+                    // Обучение указывает на первую находку: три кнопки под
+                    // ней и есть весь разбор, объяснять их по второй строке
+                    // нечего.
+                    return i == 0
+                        ? TutorialAnchor(
+                            id: Onboarding.anchorLootRow, child: row)
+                        : row;
+                  },
                 ),
               ),
             ],
@@ -132,6 +144,12 @@ class _LootSortScreenState extends State<LootSortScreen> {
                     ),
             ),
           ),
+        );
+
+        return TutorialHost(
+          controller: c,
+          screen: TutorialScreen.loot,
+          child: scaffold,
         );
       },
     );

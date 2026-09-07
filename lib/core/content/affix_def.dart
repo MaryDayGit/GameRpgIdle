@@ -6,6 +6,31 @@ import 'json_node.dart';
 import 'params.dart';
 import 'text_template.dart';
 
+/// Чему аффикс служит: бить, выживать или всё остальное.
+///
+/// Пул существует ради одного правила: **на оружии не бывает сопротивлений.**
+/// До него это правило держалось на двадцати шести списках `kinds` — то есть
+/// не держалось ни на чём: чтобы его нарушить, хватало одной строчки в JSON,
+/// и заметить это было некому.
+///
+/// Теперь правило живёт в двух числах: у аффикса — пул, у слота — с какими
+/// пулами он работает и в какой пропорции ([ImplicitDef.pools]). Валидатор
+/// сверяет их при загрузке, и `kinds`, противоречащий пулу слота, не даёт
+/// игре стартовать.
+///
+/// Побочное следствие, ради которого стоило: «доля защиты у слота» стала
+/// числом, которое ставят, а не тем, что случайно вышло из весов.
+enum AffixPool {
+  /// Урон, скорость, крит, множители по тегам.
+  offence,
+
+  /// HP, броня, сопротивления, восстановление.
+  defence,
+
+  /// Мана, перезарядка, вампиризм, качество и количество добычи.
+  utility,
+}
+
 /// Статовый аффикс: «+X к чему-то». 18 записей дают 25 различимых роллов —
 /// `damage_tag` это семейство из восьми, по одному на тег.
 class StatAffixDef {
@@ -16,6 +41,7 @@ class StatAffixDef {
     required this.base,
     required this.scales,
     required this.kinds,
+    required this.pool,
     required this.weight,
     required this.family,
   });
@@ -36,13 +62,17 @@ class StatAffixDef {
   /// На каких типах предметов может выпасть.
   final List<GearKind> kinds;
 
+  /// Чему аффикс служит. Слот принимает пулы, а не отдельные аффиксы.
+  final AffixPool pool;
+
   final double weight;
 
   /// Для `tagDamage` — по какому тегу может выпасть ролл. Пусто у остальных.
   final List<Tag> family;
 
   static const _keys = {
-    'id', 'ru', 'stat', 'base', 'scales', 'kinds', 'weight', 'family',
+    'id', 'ru', 'stat', 'base', 'scales', 'kinds', 'pool', 'weight',
+    'family',
   };
 
   static StatAffixDef parse(JsonNode node) {
@@ -51,6 +81,7 @@ class StatAffixDef {
     final stat = node.enumByName('stat', StatKey.values, or: StatKey.maxHp)!;
     final scales = node.flag('scales');
     final kinds = node.enumList('kinds', GearKind.values);
+    final pool = node.enumByName('pool', AffixPool.values);
     final family = node.enumList('family', Tag.values);
     final weight = node.dbl('weight');
 
@@ -96,13 +127,14 @@ class StatAffixDef {
       base: node.dbl('base'),
       scales: scales,
       kinds: kinds,
+      pool: pool ?? AffixPool.utility,
       weight: weight,
       family: family,
     );
   }
 
   @override
-  String toString() => 'StatAffixDef($id, ${stat.name})';
+  String toString() => 'StatAffixDef($id, ${stat.name}, ${pool.name})';
 }
 
 /// Реализация триггера. Как и [AbilityKind], это контракт с рантаймом.

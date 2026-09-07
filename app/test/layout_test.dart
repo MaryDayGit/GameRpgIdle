@@ -17,6 +17,7 @@ import 'package:rift/core/sim/loot.dart';
 import 'package:rift/core/sim/rng.dart';
 import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
+import 'package:rift_app/data/settings_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/ability_detail.dart';
 import 'package:rift_app/ui/battle_screen.dart';
@@ -73,6 +74,11 @@ void main() {
       profile: profile,
       clock: () => DateTime.utc(2026, 8, 1),
       seed: 7,
+      // Обучение выключено: этот файл про вёрстку, а обучение затемняет
+      // экран и глушит нажатия мимо подсвеченного места — то есть прячет
+      // ровно то, что тут проверяется. Своя вёрстка у него ниже, отдельным
+      // тестом.
+      initialSettings: AppSettings(lang: lang, tutorialDone: true),
     );
   }
 

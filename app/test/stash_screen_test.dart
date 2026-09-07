@@ -158,6 +158,6 @@ void main() {
     controller.profile.stash.clear();
     await pump(tester);
 
-    expect(find.textContaining('Вещи приносят наёмники'), findsOneWidget);
+    expect(find.textContaining('Вещи приносят снизу'), findsOneWidget);
   });
 }

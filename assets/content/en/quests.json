@@ -12,7 +12,7 @@
     },
     "aura_font": {
       "name": "Mana Font",
-      "text": "Raise the Shard Bench to level 2"
+      "text": "Upgrade the Shard Bench to level 2"
     },
     "aura_hunter": {
       "name": "Hunter's Mark",
@@ -80,7 +80,7 @@
     },
     "guard_last_stand": {
       "name": "Last Stand",
-      "text": "Raise the Forge to level 2"
+      "text": "Upgrade the Forge to level 2"
     },
     "guard_stone": {
       "name": "Stone Stance",
@@ -88,7 +88,7 @@
     },
     "guard_totem": {
       "name": "Totem of Fury",
-      "text": "Raise the Tavern to level 3"
+      "text": "Upgrade the Tavern to level 3"
     },
     "guard_warden": {
       "name": "Warden's Vigil",
@@ -156,7 +156,7 @@
     },
     "war_butcher": {
       "name": "Butcher",
-      "text": "Raise the Armory to level 2"
+      "text": "Upgrade the Armory to level 2"
     },
     "war_execute": {
       "name": "Coup de Grâce",
@@ -164,7 +164,7 @@
     },
     "war_focus": {
       "name": "Battle Focus",
-      "text": "Raise the Campfire to level 2"
+      "text": "Upgrade the Campfire to level 2"
     },
     "war_impale": {
       "name": "Impale",

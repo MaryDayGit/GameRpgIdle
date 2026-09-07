@@ -642,8 +642,15 @@ void main() {
     await tester.tap(find.text('Понятно'));
     await tester.pumpAndSettle();
 
-    expect(controller.settings.tutorialDone, isTrue);
+    // Вступление прочитано — но обучение на этом не кончилось: дальше идёт
+    // сценарий с указателями, и «пройдено» поднимается только в его конце.
+    expect(controller.tutorialSeen, contains('intro'));
+    expect(controller.settings.tutorialDone, isFalse);
     expect(find.text('Понятно'), findsNothing);
+
+    // Первый шаг сценария стоит там же, где стоял бы палец: на наёмнике,
+    // который уже есть в резерве.
+    expect(find.text('Это ваш наёмник'), findsOneWidget);
   });
 
   testWidgets('подсказка называет следующий шаг и исчезает, когда он сделан',

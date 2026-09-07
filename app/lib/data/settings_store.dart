@@ -15,7 +15,8 @@ class AppSettings {
     this.sound = true,
     this.haptics = true,
     this.tutorialDone = false,
-  });
+    Set<String>? tutorialSeen,
+  }) : tutorialSeen = tutorialSeen ?? <String>{};
 
   /// Язык игры.
   ///
@@ -30,13 +31,26 @@ class AppSettings {
 
   /// Обучение пройдено или пропущено. Показывать его второй раз — худшее,
   /// что можно сделать с игроком, который уже разобрался.
+  ///
+  /// Раньше поле поднималось сразу после вступительного окна, и означало
+  /// «вступление прочитано». Теперь оно означает то, что написано: сценарий
+  /// первого запуска пройден целиком или пропущен кнопкой. Старые сейвы от
+  /// этого не страдают — у них поле уже `true`, и обучение к ним не лезет.
   bool tutorialDone;
+
+  /// Шаги обучения, которые игрок уже прошёл — или которые опоздали.
+  ///
+  /// Множество, а не номер шага: сценарий не линеен. Игрок, разобравший
+  /// добычу раньше, чем ему про неё сказали, не должен упереться в подсказку,
+  /// которой нечего показать, — а с номером шага упёрся бы.
+  final Set<String> tutorialSeen;
 
   Map<String, dynamic> toJson() => {
         'lang': lang.code,
         'sound': sound,
         'haptics': haptics,
         'tutorialDone': tutorialDone,
+        'tutorialSeen': tutorialSeen.toList(),
       };
 
   /// Читает настройки, прощая всё. Испорченный файл настроек не повод не
@@ -49,6 +63,15 @@ class AppSettings {
         haptics: j['haptics'] is bool ? j['haptics'] as bool : true,
         tutorialDone:
             j['tutorialDone'] is bool ? j['tutorialDone'] as bool : false,
+        // Незнакомый шаг не выбрасывается: файл, написанный будущей версией
+        // с другим сценарием, обязан открыться, а лишний идентификатор в
+        // множестве не стоит ничего.
+        tutorialSeen: {
+          for (final id in (j['tutorialSeen'] is List
+              ? j['tutorialSeen'] as List
+              : const []))
+            if (id is String) id,
+        },
       );
 }
 

@@ -21,7 +21,7 @@ enum Building {
   forge(
       Phrase('Кузница', 'Forge'),
       Phrase('Насколько выгодно перебрасывать свойства вещей',
-          'How favourable rerolling an item’s properties is')),
+          'How safe it is to reroll an item’s properties')),
   vault(
       Phrase('Хранилище', 'Vault'),
       Phrase('Сколько вещей влезает в сундук',
@@ -29,11 +29,11 @@ enum Building {
   shardBench(
       Phrase('Верстак осколков', 'Shard Bench'),
       Phrase('Сколько осколков хранится и что уцелеет при замене',
-          'How many shards you keep, and what survives a swap')),
+          'How many shards you can keep, and what survives a swap')),
   altar(
       Phrase('Алтарь', 'Altar'),
       Phrase('Сколько золота даёт переплавка лишних вещей',
-          'How much gold salvaging surplus items yields')),
+          'How much gold you get for melting down what you do not need')),
   cartographer(
       Phrase('Картограф', 'Cartographer'),
       Phrase('На сколько этажей вперёд виден путь',

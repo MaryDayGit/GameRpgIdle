@@ -15,6 +15,9 @@ import 'package:rift/core/model/stat_block.dart';
 import 'package:rift/core/model/tags.dart';
 
 import '../state/game_controller.dart';
+import 'coach_mark.dart';
+import 'onboarding.dart';
+import 'tutorial_host.dart';
 import 'ability_detail.dart';
 import 'mercenary_stats.dart';
 import 'format.dart';
@@ -137,7 +140,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
         // числам, с которыми наёмник вниз не пойдёт.
         final stats = c.profile.heroProfileFor(m).aggregate();
 
-        return Scaffold(
+        final scaffold = Scaffold(
           appBar: AppBar(
             title: Text(m.name),
             actions: [
@@ -224,9 +227,12 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 style: const TextStyle(fontSize: 12, color: Colors.white38),
               ),
               const SizedBox(height: 8),
-              GearGrid(
-                equipment: m.gear,
-                onTapSlot: editable ? _pickItem : null,
+              TutorialAnchor(
+                id: Onboarding.anchorGearGrid,
+                child: GearGrid(
+                  equipment: m.gear,
+                  onTapSlot: editable ? _pickItem : null,
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -242,31 +248,45 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
-              _ManaBudget(profile: c.profile.heroProfileFor(m), mercenary: m),
-              for (var slot = 0; slot < c.profile.abilitySlotsFor(m); slot++)
-                _AbilityRow(
-                  index: slot,
-                  def: slot < m.abilities.length
-                      ? ContentPack.current.ability(m.abilities[slot])
-                      : null,
-                  stats: stats,
-                  onTap: editable ? () => _pickAbility(slot) : null,
-                  highlight: {
-                    for (final e in stats.tagDamage.entries)
-                      if (e.value > 0.001) e.key,
-                  },
+              TutorialAnchor(
+                id: Onboarding.anchorAbilities,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ManaBudget(
+                        profile: c.profile.heroProfileFor(m), mercenary: m),
+                    for (var slot = 0;
+                        slot < c.profile.abilitySlotsFor(m);
+                        slot++)
+                      _AbilityRow(
+                        index: slot,
+                        def: slot < m.abilities.length
+                            ? ContentPack.current.ability(m.abilities[slot])
+                            : null,
+                        stats: stats,
+                        onTap: editable ? () => _pickAbility(slot) : null,
+                        highlight: {
+                          for (final e in stats.tagDamage.entries)
+                            if (e.value > 0.001) e.key,
+                        },
+                      ),
+                  ],
                 ),
+              ),
 
               const SizedBox(height: 16),
               _TagPower(stats: stats, loadout: m.abilities),
 
               const SizedBox(height: 20),
               _Header(S.forkOrderTitle),
-              _ForkOrder(
-                policy: m.forkPolicy,
-                onPick: editable
-                    ? (policy) => c.setForkPolicy(m, policy)
-                    : null,
+              TutorialAnchor(
+                id: Onboarding.anchorForkOrder,
+                child: _ForkOrder(
+                  policy: m.forkPolicy,
+                  onPick: editable
+                      ? (policy) => c.setForkPolicy(m, policy)
+                      : null,
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -280,6 +300,16 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 ),
             ],
           ),
+        );
+
+        return TutorialHost(
+          controller: c,
+          screen: TutorialScreen.build,
+          // Шаги про слоты спрашивают про ОТКРЫТОГО наёмника, а не про
+          // первого в резерве: иначе подсказка «оденьте его» говорила бы про
+          // кого-то другого.
+          mercenary: m,
+          child: scaffold,
         );
       },
     );
@@ -1133,14 +1163,18 @@ class _ForkOrder extends StatelessWidget {
   static const _meaning = {
     ForkPolicy.loot: Phrase(
         'Редких предметов и осколков больше, глубина и Эхо ниже',
-        'More rare items and shards, less depth and Echo'),
+        'More rares and shards; less depth, less Echo'),
     ForkPolicy.safety: Phrase(
         'Глубже, больше Эха и золота — но добыча беднее',
-        'Deeper, more Echo and gold — but a poorer haul'),
+        'Deeper, more Echo and gold — but a thinner haul'),
     ForkPolicy.echo: Phrase(
         'Гонится за Эхом боссов; где Эха нет — берёт добычу',
-        'Chases boss Echo; where there is none, takes the loot'),
-    ForkPolicy.random: Phrase('Как повезёт', 'Whatever luck brings'),
+        'Chases down boss Echo; where there is none, takes the loot'),
+    ForkPolicy.random: Phrase(
+        'Кидает монетку на каждой развилке. Ни хуже, ни лучше остальных — '
+            'просто непредсказуемо',
+        'Flips a coin at every fork. No worse than the others, no better — '
+            'just unpredictable'),
   };
 
   @override

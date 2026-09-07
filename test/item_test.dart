@@ -75,6 +75,66 @@ void main() {
       }
     });
 
+    test('на оружии и в левой руке не выпадает защита', () {
+      // То, ради чего заведены пулы. Раньше это правило держалось на списках
+      // `kinds` у двадцати шести аффиксов и не проверялось ничем: сопротивление
+      // на оружии добавлялось одной строчкой в JSON.
+      //
+      // Левая рука тут важнее оружия. Её имплицит — сила чар, то есть это слот
+      // второй оси силы, а роллилась она как щит: HP, броня и четыре
+      // сопротивления забирали 47 % веса, а сила чар выпадала реже, чем в
+      // одном ролле из десяти.
+      for (final kind in [GearKind.weapon, GearKind.offhand, GearKind.gloves]) {
+        for (final item in _many(400, ilvl: 60, kind: kind, seed: 11)) {
+          for (final roll in item.affixes) {
+            final def = ContentPack.current.statAffix(roll.affixId);
+            expect(def?.pool, isNot(AffixPool.defence),
+                reason: '${kind.name}: «${roll.affixId}» — защитный аффикс');
+          }
+        }
+      }
+    });
+
+    test('на броне, шлеме и ботинках не выпадает атака', () {
+      // Обратная сторона того же правила: доспех перестал быть слотом, про
+      // который нельзя принять ни одного решения, но остался защитным.
+      for (final kind in [GearKind.armor, GearKind.helmet, GearKind.boots]) {
+        for (final item in _many(400, ilvl: 60, kind: kind, seed: 13)) {
+          for (final roll in item.affixes) {
+            final def = ContentPack.current.statAffix(roll.affixId);
+            expect(def?.pool, isNot(AffixPool.offence),
+                reason: '${kind.name}: «${roll.affixId}» — атакующий аффикс');
+          }
+        }
+      }
+    });
+
+    test('доля пула держится весами слота, а не суммой чужих весов', () {
+      // Смысл пулов не только в запрете. «Доля защиты у слота» стала числом,
+      // которое ставят в контенте, — и ролл обязан его соблюдать.
+      final pools = ContentPack.current.implicitFor(GearKind.amulet)!.pools;
+      final total = pools.values.reduce((a, b) => a + b);
+
+      final seen = <AffixPool, int>{};
+      var rolls = 0;
+      for (final item in _many(1500, ilvl: 60, kind: GearKind.amulet, seed: 5)) {
+        for (final roll in item.affixes) {
+          final def = ContentPack.current.statAffix(roll.affixId);
+          if (def == null) continue;
+          seen[def.pool] = (seen[def.pool] ?? 0) + 1;
+          rolls++;
+        }
+      }
+
+      for (final entry in pools.entries) {
+        final want = entry.value / total;
+        final got = (seen[entry.key] ?? 0) / rolls;
+        expect((got - want).abs(), lessThan(0.06),
+            reason: 'пул ${entry.key.name}: ждали '
+                '${(want * 100).round()} %, вышло ${(got * 100).round()} %');
+      }
+    });
+
     test('число аффиксов задаёт редкость, двуручник получает лишний', () {
       for (final item in _many(200, ilvl: 25)) {
         final slots = (Tuning.affixSlotsByRarity[item.rarity] ?? 0) +

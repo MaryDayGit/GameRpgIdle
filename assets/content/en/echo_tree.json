@@ -3,7 +3,7 @@
   "_comment": "Перевод echo_tree.json на en. Числа и правила остаются в исходнике; здесь только строки. Строка, совпадающая с русской, считается непереведённой — см. tool/l10n.dart --check.",
   "entries": {
     "abyss": {
-      "name": "The Abyss",
+      "name": "Abyss",
       "about": "Rules"
     },
     "abyss_ability_slot": {
@@ -31,7 +31,7 @@
       "text": "One shard makes it home even when the Bench is full"
     },
     "blade": {
-      "name": "The Blade",
+      "name": "Blade",
       "about": "Damage"
     },
     "blade_cooldown": {

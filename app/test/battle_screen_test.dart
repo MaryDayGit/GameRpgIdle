@@ -250,7 +250,7 @@ void main() {
     expect(find.textContaining('Этаж'), findsOneWidget);
     expect(find.textContaining('Волна'), findsWidgets);
     expect(find.text('HP наёмника'), findsOneWidget);
-    expect(find.textContaining('Вы наблюдаете'), findsOneWidget);
+    expect(find.textContaining('Вы только смотрите'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
   });

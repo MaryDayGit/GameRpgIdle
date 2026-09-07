@@ -756,12 +756,15 @@ class BalanceSheet {
     final entities = _entities(json, source.path);
     return [
       for (final entity in entities)
-        if (entity['id'] is String)
+        // Ключом строки служит `id`, а где его нет — `kind`. Второе нужно
+        // имплицитам: они опознаются типом предмета, и заводить им ещё и `id`
+        // значило бы держать в контенте два имени одного и того же.
+        if (entity['id'] is String || entity['kind'] is String)
           () {
             final cells = <_Cell>[];
             _flatten(entity, '', cells);
             return _Row(
-              id: entity['id'] as String,
+              id: (entity['id'] ?? entity['kind']) as String,
               name: (entity['ru'] ?? entity['name'] ?? '') as String,
               cells: cells,
               notes: const {},
@@ -816,7 +819,8 @@ class BalanceSheet {
   static Map<String, Object?>? _findById(
       Object? json, List<String> path, String id) {
     for (final entity in _entities(json, path)) {
-      if (entity['id'] == id) return entity;
+      // Тот же ключ, что и при выгрузке: `id`, а где его нет — `kind`.
+      if ((entity['id'] ?? entity['kind']) == id) return entity;
     }
     return null;
   }

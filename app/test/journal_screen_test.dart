@@ -40,11 +40,10 @@ void main() {
           text.data ?? '',
       ];
 
-  Future<List<String>> journalOf(WidgetTester tester, Mercenary merc) async {
+  Future<List<String>> journalOf(WidgetTester tester, Mercenary merc,
+      {int seed = 3}) async {
     final profile = PlayerProfile(gold: 50000)..roster.reserve.add(merc);
-    // Сид выбран так, чтобы спуск ЗАВЕДОМО прошёл через опасный этаж:
-    // иначе строка «чуть не погибла» не появится и проверять будет нечего.
-    final contract = profile.deploy(merc, seed: 3);
+    final contract = profile.deploy(merc, seed: seed);
     profile.refreshContracts(
         DateTime.now().toUtc().add(const Duration(days: 1)));
 
@@ -76,14 +75,25 @@ void main() {
 
   testWidgets('про наёмницу говорят в женском роде', (tester) async {
     // «Тала» — женское имя в пуле игры, род выводится из него.
-    final lines = await journalOf(tester, merc('f', 'Тала Слепая'));
+    //
+    // Опасный этаж ищется перебором сидов, а не задан одним числом. Раньше он
+    // был захардкожен, и любая правка контента, сдвигающая поток случайных
+    // чисел, роняла проверку рода — хотя род при этом был в порядке. Тест
+    // должен падать от рода, а не от везения.
+    var lines = <String>[];
+    for (var seed = 1; seed <= 40; seed++) {
+      lines = await journalOf(tester, merc('f', 'Тала Слепая'), seed: seed);
+      if (lines.any((l) => l.contains('Чуть не'))) break;
+    }
+
+    expect(lines.any((l) => l.contains('Чуть не')), isTrue,
+        reason: 'ни на одном из сорока сидов спуск не прошёл через опасный '
+            'этаж — проверять строку «чуть не погибла» стало не на чем');
 
     expect(lines.any((l) => l.contains('Погибла')), isTrue,
         reason: 'исход спуска обязан согласоваться с именем');
     expect(lines.any((l) => l.contains('Погиб ')), isFalse);
-    expect(lines.any((l) => l.contains('Чуть не погибла —')), isTrue,
-        reason: 'на этом сиде спуск обязан пройти через опасный этаж — иначе '
-            'проверка ниже ничего не проверяет');
+    expect(lines.any((l) => l.contains('Чуть не погибла —')), isTrue);
     expect(lines.any((l) => l.contains('Чуть не погиб —')), isFalse,
         reason: 'мужская форма в строке «чуть не погиб»');
   });

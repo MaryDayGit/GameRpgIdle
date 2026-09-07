@@ -80,7 +80,7 @@ enum MercTrait {
   swift(Phrase('Скорый', 'Swift'), 'Скорая',
       Phrase('Скорость атаки +12 %', 'Attack speed +12%')),
   lucky(Phrase('Удачливый', 'Lucky'), 'Удачливая',
-      Phrase('Качество лута +15 %', 'Loot quality +15%'));
+      Phrase('Качество добычи +15 %', 'Loot quality +15%'));
 
   const MercTrait(this._title, this._feminine, this._description);
 
