@@ -99,6 +99,7 @@ class RelicDef {
     required this.effect,
     required this.params,
     required this.exclusiveWith,
+    this.source,
   });
 
   final String id;
@@ -115,8 +116,24 @@ class RelicDef {
   /// Проверка ссылок — в [ContentPack], здесь только чтение.
   final List<String> exclusiveWith;
 
+  /// Единственный, кто роняет этот реликт: идентификатор босса. `null` —
+  /// реликт общего пула, падает откуда угодно.
+  ///
+  /// Существует ради одного вопроса, на который у игры не было ответа:
+  /// **зачем идти именно туда.** Пока любая находка равновероятна везде,
+  /// глубина — единственная цель, и после неё целей не остаётся. Реликт с
+  /// источником превращает конкретного босса в адрес: «Проводник пепла — у
+  /// Владыки Пепла», и этот адрес игрок выбирает сам.
+  ///
+  /// Поле здесь, в реликте, а не списком добычи у босса, потому что
+  /// вопрос игрока звучит «откуда взять ЭТУ вещь», а не «что роняет ЭТОТ
+  /// босс». Обратный порядок дал бы то же знание, но потребовал бы искать
+  /// вещь перебором боссов — и в справочнике, и в коде.
+  final String? source;
+
   static const _keys = {
     'id', 'ru', 'kind', 'text', 'effect', 'params', 'exclusiveWith',
+    'source',
   };
 
   static RelicDef parse(JsonNode node) {
@@ -142,6 +159,7 @@ class RelicDef {
       effect: effect,
       params: params,
       exclusiveWith: node.strList('exclusiveWith'),
+      source: node.has('source') ? node.str('source') : null,
     );
   }
 

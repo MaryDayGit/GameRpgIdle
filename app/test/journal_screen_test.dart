@@ -8,6 +8,7 @@ import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/model/player_profile.dart';
 import 'package:rift_app/data/content.dart';
 import 'package:rift_app/ui/journal_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Журнал — единственный экран, где про наёмника говорят В ПРОШЕДШЕМ ВРЕМЕНИ,
 /// а в русском прошедшее время согласуется с родом. Половина имён в пуле
@@ -56,7 +57,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: JournalScreen(contract: contract, onCollect: () {}),
     ));
     await tester.pump();

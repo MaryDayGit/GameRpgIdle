@@ -18,6 +18,7 @@ import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/gear_grid.dart';
 import 'package:rift_app/ui/mercenary_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Пятый рычаг игры: игрок сам собирает билд. Проверяется не вёрстка, а то,
 /// что нажатие действительно меняет снаряжение и способности наёмника.
@@ -80,7 +81,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: MercenaryScreen(controller: controller, mercenary: merc),
     ));
     await tester.pump();
@@ -234,7 +235,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await scrollTo(tester, find.textContaining('Множителей по тегам'));
-    expect(find.textContaining('дерева пассивок'), findsWidgets);
+    expect(find.textContaining('пассивки'), findsWidgets);
   });
 
   testWidgets('приказ на развилку выбирается и запирается вместе с лоадаутом',

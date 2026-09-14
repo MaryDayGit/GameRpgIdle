@@ -12,6 +12,7 @@ import 'package:rift/core/model/player_profile.dart';
 import '../state/game_controller.dart';
 import 'coach_mark.dart';
 import 'onboarding.dart';
+import 'account_tile.dart';
 import 'tutorial_host.dart';
 import 'echo_tree_screen.dart';
 import 'forge_screen.dart';
@@ -29,6 +30,7 @@ import 'run_ending_text.dart';
 import 'strings.dart';
 import 'stash_screen.dart';
 import 'tutorial.dart';
+import 'theme.dart';
 
 /// Застава — то место, куда игрок возвращается.
 ///
@@ -64,7 +66,22 @@ class _OutpostScreenState extends State<OutpostScreen> {
 
     // Вступление показывается после первого кадра: до него нет ни контекста
     // для диалога, ни уверенности, что экран вообще построился.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowIntro());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openingDialogs());
+  }
+
+  /// Что спрашивается сразу после первого кадра — и в каком порядке.
+  ///
+  /// Расхождение сейвов идёт ПЕРВЫМ и до вступления. Причина простая: пока
+  /// игрок не ответил, неизвестно, в какой профиль он играет, — а вступление
+  /// первого запуска показывается по состоянию профиля. Показать его, а
+  /// потом подменить профиль облачным значило бы поздороваться с новичком и
+  /// тут же выдать ему сорок этажей.
+  Future<void> _openingDialogs() async {
+    if (c.hasPendingSync) {
+      await showSyncConflictDialog(context, c);
+      if (!mounted) return;
+    }
+    await _maybeShowIntro();
   }
 
   /// Настройки: язык, звук, вибрация.
@@ -74,13 +91,27 @@ class _OutpostScreenState extends State<OutpostScreen> {
         showDragHandle: true,
         builder: (context) => AnimatedBuilder(
           animation: c,
-          // Лист прокручивается: четыре строки настроек при крупном системном
+          // Лист прокручивается: пять строк настроек при крупном системном
           // шрифте не помещаются в отведённую листу половину экрана, и без
           // прокрутки нижняя просто обрезается — вместе с обучением.
           builder: (context, _) => SafeArea(
             child: ListView(
               shrinkWrap: true,
               children: [
+                // Заголовок листа. Без него лист начинался сразу с «Языка», и
+                // было непонятно, что открылось: настройки или выбор языка.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.settings_outlined,
+                          size: 22, color: RiftColors.ember),
+                      const SizedBox(width: 10),
+                      Text(S.settingsTitle, style: RiftText.title),
+                    ],
+                  ),
+                ),
+                const Divider(),
                 // Языки подписаны каждый на себе самом и не переводятся:
                 // игрок, открывший игру не на своём языке, ищет знакомое
                 // слово, а не его перевод на язык, которого не знает.
@@ -98,18 +129,36 @@ class _OutpostScreenState extends State<OutpostScreen> {
                         c.setLanguage(picked.first),
                   ),
                 ),
+                const Divider(indent: 16, endIndent: 16),
                 SwitchListTile(
+                  secondary: const Icon(Icons.volume_up_outlined),
                   value: c.settings.sound,
                   onChanged: c.setSound,
                   title: Text(S.settingsSound),
                   subtitle: Text(S.settingsSoundAbout),
                 ),
                 SwitchListTile(
+                  secondary: const Icon(Icons.vibration),
                   value: c.settings.haptics,
                   onChanged: c.setHaptics,
                   title: Text(S.settingsHaptics),
                   subtitle: Text(S.settingsHapticsAbout),
                 ),
+                // Выключатель стоит здесь, а не за экраном согласия: игра не
+                // собирает ничего о человеке (`docs/11-ANALYTICS.md` §5), и
+                // отдельный диалог перед первым кадром сообщил бы обратное.
+                SwitchListTile(
+                  secondary: const Icon(Icons.insights_outlined),
+                  value: c.settings.analytics,
+                  onChanged: c.setAnalytics,
+                  title: Text(S.settingsAnalytics),
+                  subtitle: Text(S.settingsAnalyticsAbout),
+                ),
+                // Аккаунт — под статистикой и над обучением: это настройка
+                // того же порядка, что и остальные, а не отдельная сущность,
+                // ради которой стоит уходить с экрана (`account_tile.dart`).
+                const Divider(indent: 16, endIndent: 16),
+                AccountTile(controller: c),
                 // Обучение пропускается одной кнопкой, и вернуть его надо
                 // где-то, кроме переустановки игры.
                 TutorialRestartTile(controller: c),
@@ -132,7 +181,10 @@ class _OutpostScreenState extends State<OutpostScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(S.gameTitle),
+        icon: const Icon(Icons.local_fire_department,
+            size: 40, color: RiftColors.ember),
+        title: Text(S.gameTitle,
+            style: RiftText.display.copyWith(letterSpacing: 1.5)),
         // Прокрутка обязательна: четыре абзаца при крупном системном шрифте
         // не помещаются в диалог на невысоком экране, и без неё нижний
         // просто обрезается — вместе с кнопкой.
@@ -141,17 +193,26 @@ class _OutpostScreenState extends State<OutpostScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final line in Tutorial.intro) ...[
-                Text(line, style: const TextStyle(fontSize: 13, height: 1.35)),
-                const SizedBox(height: 10),
+              for (final (i, line) in Tutorial.intro.indexed) ...[
+                Text(
+                  line,
+                  style: i == 0
+                      ? RiftText.body.copyWith(
+                          fontSize: 16, fontWeight: FontWeight.w600)
+                      : RiftText.body.copyWith(color: RiftColors.inkMuted),
+                ),
+                const SizedBox(height: 12),
               ],
             ],
           ),
         ),
         actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(S.gotIt),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(S.gotIt),
+            ),
           ),
         ],
       ),
@@ -265,13 +326,13 @@ class _OutpostScreenState extends State<OutpostScreen> {
                 icon: const Icon(Icons.menu_book_outlined),
                 onPressed: () => openHelp(context),
               ),
+              // Шестерня, а не динамик. Кнопка открывает ВСЕ настройки —
+              // язык, звук, вибрацию, аккаунт, обучение, — а динамик обещал
+              // одну из пяти и читался выключателем звука: на пробе игрок
+              // именно так его и понял и настроек не нашёл.
               IconButton(
                 tooltip: S.settingsTitle,
-                icon: Icon(
-                  c.settings.sound
-                      ? Icons.volume_up_outlined
-                      : Icons.volume_off_outlined,
-                ),
+                icon: const Icon(Icons.settings_outlined),
                 onPressed: () => _openSettings(context),
               ),
             ],
@@ -433,7 +494,7 @@ Future<void> showAbout(BuildContext context, String title, String text) =>
               const SizedBox(height: 10),
               Text(
                 text,
-                style: const TextStyle(fontSize: 13, color: Colors.white70),
+                style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
               ),
             ],
           ),
@@ -448,10 +509,26 @@ class _Resources extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    // Полоса ресурсов — карточкой, а не голым рядом чисел над кнопками. На
+    // снимке числа висели в воздухе и читались частью списка переходов; у
+    // каждой валюты теперь свой цвет, тот же, что у её цен по всей игре.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: RiftColors.surface,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(color: RiftColors.line),
+      ),
+      child: Row(
       children: [
-        _Stat(label: S.resourceGold, value: money(profile.gold)),
-        _Stat(label: S.resourceEcho, value: '${profile.echo}'),
+        _Stat(
+            label: S.resourceGold,
+            value: money(profile.gold),
+            color: RiftColors.gold),
+        _Stat(
+            label: S.resourceEcho,
+            value: '${profile.echo}',
+            color: RiftColors.echo),
         _Stat(label: S.resourceRecord, value: '${profile.maxDepthEver}'),
         // Осколки — такой же ресурс, как золото и Эхо: они копятся с каждого
         // спуска и упираются в потолок Верстака. Ресурс, которого нет в шапке,
@@ -459,17 +536,22 @@ class _Resources extends StatelessWidget {
         _Stat(
           label: S.resourceShards,
           value: '${profile.shards.length}/${profile.outpost.shardCapacity}',
+          color: RiftColors.shard,
         ),
       ],
+      ),
     );
   }
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+  const _Stat({required this.label, required this.value, this.color});
 
   final String label;
   final String value;
+
+  /// Цвет валюты. `null` — не валюта (рекорд).
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -477,18 +559,11 @@ class _Stat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Colors.white54),
-          ),
-          const SizedBox(height: 2),
+          Text(label, style: RiftText.caption),
+          const SizedBox(height: 3),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
+            style: RiftText.stat.copyWith(color: color ?? RiftColors.ink),
           ),
         ],
       ),
@@ -567,7 +642,7 @@ class _DescentCard extends StatelessWidget {
         start > 1
             ? S.sendDownFrom(start)
             : S.sendDown,
-        style: const TextStyle(fontSize: 13, color: Colors.white70),
+        style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
       ),
     );
   }
@@ -603,25 +678,30 @@ class _DescentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Обе половины гибкие, и это не перестраховка. Слева растёт номер
+          // этажа, справа — время: «Этаж 128» и «в бездне 3 ч 40 мин» вместе
+          // не помещаются в 360 точек, а idle-игру именно так и открывают —
+          // через несколько часов после отправки. Жёсткая строка вылезала за
+          // край ровно в тот момент, ради которого игру и открыли.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                S.floorNumber(depth),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
+              Flexible(
+                child: Text(S.floorNumber(depth), style: RiftText.display),
               ),
+              const SizedBox(width: 8),
               // Сколько наёмник УЖЕ внизу, а не сколько ему осталось.
               //
               // Ран посчитан целиком в момент отправки, поэтому «осталось
               // 11 мин» — это не оценка, а дата смерти: игрок знал исход
               // до спуска. Прошедшее время говорит ровно то же про ход
               // спуска и ничего не выдаёт про его конец.
-              Text(
-                S.inAbyssFor(duration(contract.elapsedAt(now))),
-                style: const TextStyle(fontSize: 13, color: Colors.white60),
+              Flexible(
+                child: Text(
+                  S.inAbyssFor(duration(contract.elapsedAt(now))),
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted),
+                ),
               ),
             ],
           ),
@@ -633,7 +713,7 @@ class _DescentCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
               value: record <= 0 ? 0.0 : (depth / record).clamp(0.0, 1.0),
-              minHeight: 6,
+              minHeight: 8,
             ),
           ),
           const SizedBox(height: 4),
@@ -643,7 +723,7 @@ class _DescentCard extends StatelessWidget {
                 : depth >= record
                     ? S.newRecord
                     : S.recordIs(record),
-            style: const TextStyle(fontSize: 11, color: Colors.white38),
+            style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -698,17 +778,14 @@ class _DescentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            S.floorNumber(result.maxDepth),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-          ),
+          Text(S.floorNumber(result.maxDepth), style: RiftText.display),
           const SizedBox(height: 4),
           Text(
             S.haulWaiting(result.haul.itemCount,
                 money(result.haul.totalGold), result.echo),
 
 
-            style: const TextStyle(fontSize: 13, color: Colors.white70),
+            style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
           ),
           const SizedBox(height: 12),
           if (marked)
@@ -777,7 +854,7 @@ class _RosterSection extends StatelessWidget {
           if (reserve.isEmpty)
             Text(
               S.nobodyHired,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+              style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
             )
           else
             for (final (index, merc) in reserve.indexed)
@@ -845,13 +922,14 @@ class _RiftRow extends StatelessWidget {
     final best = controller.profile.riftBestDepth;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        color: RiftColors.raised,
+        borderRadius: BorderRadius.circular(RiftSize.radiusSmall + 2),
         border: Border.all(
           color: available
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
-              : Colors.white12,
+              ? RiftColors.voidTone.withValues(alpha: 0.55)
+              : RiftColors.line,
         ),
       ),
       child: Column(
@@ -860,27 +938,32 @@ class _RiftRow extends StatelessWidget {
           // Заголовок и рекорд — разными строками, а не в один ряд: при
           // крупном системном шрифте «Разлом дня» и «рекорд: этаж 128» на
           // узком экране выдавливали друг друга за край.
-          Text(S.dailyRift,
-              style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w600)),
+          Row(
+            children: [
+              const Icon(Icons.blur_circular,
+                  size: 20, color: RiftColors.voidTone),
+              const SizedBox(width: 8),
+              Flexible(child: Text(S.dailyRift, style: RiftText.heading)),
+            ],
+          ),
           if (best > 0)
             Text(S.riftRecord(best),
-                style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted)),
           const SizedBox(height: 4),
           // Модификатор назван до отправки: разлом отличается от обычного
           // спуска ровно им, и узнавать это из журнала было бы поздно.
           Text(
             S.riftModifierLine(rift.modifier.name),
-            style: const TextStyle(fontSize: 12, color: Colors.white60),
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
           ),
           Text(
             rift.modifier.minus,
-            style: const TextStyle(fontSize: 12, color: Colors.orangeAccent),
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.bad),
           ),
           Text(
             S.riftReward(rift.modifier.plus),
             style:
-                const TextStyle(fontSize: 12, color: Colors.lightGreenAccent),
+                const TextStyle(fontSize: 13.5, color: RiftColors.good),
           ),
           const SizedBox(height: 8),
           FilledButton(
@@ -955,7 +1038,7 @@ class _TavernSection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 S.volunteerFree(volunteer.name),
-                style: const TextStyle(fontSize: 12, color: Color(0xFF7FB069)),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.good),
               ),
             ),
           for (final merc in candidates)
@@ -1014,12 +1097,11 @@ class _MercRow extends StatelessWidget {
           // Долговязая» при крупном системном шрифте длиннее строки, и на
           // узком экране ряд вылезал за границу карточки.
           Flexible(
-            child: Text(merc.name,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(merc.name, style: RiftText.heading),
           ),
           if (onOpen != null) ...[
             const SizedBox(width: 6),
-            const Icon(Icons.info_outline, size: 14, color: Colors.white38),
+            const Icon(Icons.info_outline, size: 16, color: RiftColors.inkFaint),
           ],
         ],
       ),
@@ -1027,7 +1109,7 @@ class _MercRow extends StatelessWidget {
         '${merc.rank.forGender(merc.gender)} · '
         '${merc.trait.forGender(merc.gender)} · '
         '${S.backpackShort(merc.backpackSlots)}',
-        style: const TextStyle(fontSize: 12, color: Colors.white54),
+        style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
       ),
       if (onBuild != null)
         Text(
@@ -1038,13 +1120,13 @@ class _MercRow extends StatelessWidget {
               merc.abilities.length, abilitySlots),
 
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13.5,
             // Пустые слоты подсвечены: это не украшение, а единственное
             // место, где игрок узнаёт, что снаряжать вообще надо.
             color: merc.gear.filledSlots < merc.gear.usableSlots ||
                     merc.abilities.length < abilitySlots
-                ? const Color(0xFFE0A87A)
-                : Colors.white38,
+                ? RiftColors.warn
+                : RiftColors.inkFaint,
           ),
         ),
     ],
@@ -1104,7 +1186,20 @@ class _MercRow extends StatelessWidget {
             child: InkWell(onTap: onOpen, child: _title()),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(onPressed: onTap, child: Text(action)),
+          // Цена — золотом, пока по карману: это валюта, и цвет у неё один
+          // по всей игре. Недоступная гаснет вместе с кнопкой.
+          OutlinedButton(
+            onPressed: onTap,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: RiftColors.gold,
+              side: BorderSide(
+                color: onTap == null
+                    ? RiftColors.line
+                    : RiftColors.gold.withValues(alpha: 0.55),
+              ),
+            ),
+            child: Text(action),
+          ),
         ],
       ),
     );
@@ -1177,7 +1272,7 @@ class _BuildingsSection extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     building.description,
-                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                    style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
                   ),
                   const SizedBox(height: 14),
 
@@ -1185,15 +1280,15 @@ class _BuildingsSection extends StatelessWidget {
                   // предложение купить кота в мешке.
                   Text(
                     S.buildingNow(Outpost.effectAt(building, level)),
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 14.5),
                   ),
                   if (!maxed) ...[
                     const SizedBox(height: 4),
                     Text(
                       S.buildingNext(Outpost.effectAt(building, level + 1)),
                       style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF7FB069),
+                        fontSize: 14.5,
+                        color: RiftColors.good,
                       ),
                     ),
                   ],
@@ -1203,14 +1298,14 @@ class _BuildingsSection extends StatelessWidget {
                     Text(
                       S.buildingMaxedFull,
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.white38),
+                          const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
                     )
                   else if (!open)
                     Text(
                       S.buildingGate(outpost.nextGate(building)!),
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFC7643F),
+                        fontSize: 13.5,
+                        color: RiftColors.ember,
                       ),
                     )
                   else
@@ -1286,8 +1381,8 @@ class _BuildingRow extends StatelessWidget {
                       Text(
                         '$level/${Building.maxLevel}',
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white54,
+                          fontSize: 13.5,
+                          color: RiftColors.inkMuted,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
@@ -1297,8 +1392,8 @@ class _BuildingRow extends StatelessWidget {
                     Text(
                       S.opensFromFloor(gate!),
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFFC7643F),
+                        fontSize: 12.5,
+                        color: RiftColors.ember,
                       ),
                     ),
                 ],
@@ -1352,16 +1447,32 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
+    // Карточка с рамкой, а не полупрозрачная заливка: заливка поверх фона
+    // давала разделам почти тот же цвет, что у экрана, и Застава читалась
+    // одним длинным полотном. Разделу, который зовёт к действию (добыча
+    // ждёт), — рамка и тёплый отсвет углей сверху.
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(10),
-        border: accent
-            ? Border.all(color: scheme.primary.withValues(alpha: 0.6))
+        color: RiftColors.surface,
+        gradient: accent
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  RiftColors.ember.withValues(alpha: 0.16),
+                  RiftColors.surface,
+                ],
+                stops: const [0.0, 0.6],
+              )
             : null,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(
+          color: accent
+              ? RiftColors.ember.withValues(alpha: 0.7)
+              : RiftColors.line,
+          width: accent ? 1.5 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1371,10 +1482,8 @@ class _Panel extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    color: Colors.white54,
+                  style: RiftText.overline.copyWith(
+                    color: accent ? RiftColors.ember : RiftColors.inkFaint,
                   ),
                 ),
               ),
@@ -1385,8 +1494,8 @@ class _Panel extends StatelessWidget {
                   constraints: const BoxConstraints(),
                   icon: const Icon(
                     Icons.info_outline,
-                    size: 16,
-                    color: Colors.white38,
+                    size: 18,
+                    color: RiftColors.inkFaint,
                   ),
                   onPressed: () => showAbout(context, title, about!),
                 ),
@@ -1431,7 +1540,7 @@ class _BrandPicker extends StatelessWidget {
             Flexible(
               child: Text(
                 S.brandTitle,
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: RiftText.overline,
               ),
             ),
             IconButton(
@@ -1441,19 +1550,22 @@ class _BrandPicker extends StatelessWidget {
               icon: const Icon(
                 Icons.info_outline,
                 size: 14,
-                color: Colors.white24,
+                color: RiftColors.inkDisabled,
               ),
               onPressed: () => showAbout(context, S.brandTitle, _brandAbout),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        Row(
+        // Ранги — во всю ширину, а условие следующего — строкой ниже. Рядом
+        // они делили ряд пополам, и на снимке третий ранг уже уходил под
+        // текст: выбрать можно было то, чего не видно.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Рангов бывает много: список прокручивается, а не сжимается.
-            Expanded(
-              child: SizedBox(
-                height: 34,
+            SizedBox(
+                height: 42,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
@@ -1468,18 +1580,17 @@ class _BrandPicker extends StatelessWidget {
                       ),
                   ],
                 ),
-              ),
             ),
             if (next != null)
-              Expanded(
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   // Две разные причины, и игрок должен видеть, какая держит
                   // его: не хватает рекорда или не доказан текущий ранг.
                   next.atBrand == null
                       ? S.brandNextRank(next.depth)
                       : S.brandNextRank(next.depth, next.atBrand),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 11, color: Colors.white24),
+                  style: RiftText.caption,
                 ),
               ),
           ],
@@ -1493,12 +1604,12 @@ class _BrandPicker extends StatelessWidget {
                   (balance.Curves.brandLootPerRank * rank * 100).round(),
                   (balance.Curves.brandEchoPerRank * rank * 100).round(),
                 ),
-          style: const TextStyle(fontSize: 11, color: Colors.white38),
+          style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
         ),
         if (profile.provenBrandRanks > 0)
           Text(
             S.brandProven(profile.provenBrandRanks),
-            style: const TextStyle(fontSize: 11, color: Color(0xFF7FB069)),
+            style: const TextStyle(fontSize: 12.5, color: RiftColors.good),
           ),
       ],
     );
@@ -1523,28 +1634,24 @@ class _BrandChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(6),
+    borderRadius: BorderRadius.circular(8),
     child: Container(
-      width: 34,
-      height: 30,
+      width: 42,
+      height: 40,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: selected
-            ? const Color(0xFFC7643F).withValues(alpha: 0.25)
-            : Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(6),
+        color: selected ? RiftColors.ember : RiftColors.raised,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: selected
-              ? const Color(0xFFC7643F)
-              : Colors.white.withValues(alpha: 0.12),
+          color: selected ? RiftColors.ember : RiftColors.line,
         ),
       ),
       child: Text(
         '$rank',
         style: TextStyle(
-          fontSize: 13,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-          color: selected ? const Color(0xFFE0A87A) : Colors.white54,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: selected ? RiftColors.emberDeep : RiftColors.inkMuted,
         ),
       ),
     ),
@@ -1566,25 +1673,32 @@ class _NextStep extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFC7643F).withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(10),
+          color: RiftColors.ember.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(RiftSize.radius),
           border: Border.all(
-            color: const Color(0xFFC7643F).withValues(alpha: 0.35),
+            color: RiftColors.ember.withValues(alpha: 0.45),
           ),
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              current.title,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            const Padding(
+              padding: EdgeInsets.only(top: 1),
+              child: Icon(Icons.local_fire_department_outlined,
+                  size: 22, color: RiftColors.ember),
             ),
-            const SizedBox(height: 4),
-            Text(
-              current.text,
-              style: const TextStyle(fontSize: 12, color: Colors.white60),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(current.title, style: RiftText.heading),
+                  const SizedBox(height: 3),
+                  Text(current.text, style: RiftText.small),
+                ],
+              ),
             ),
           ],
         ),
@@ -1619,13 +1733,13 @@ class _QuestsClosedDialog extends StatelessWidget {
               S.abilityOpened(
                   ContentPack.current.ability(quest.rewardAbility)?.name ?? "?",
                   quest.rewardEcho),
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.ink),
             ),
             const SizedBox(height: 12),
           ],
           Text(
             S.abilitySlotHint(many: quests.length > 1),
-            style: const TextStyle(fontSize: 12, color: Colors.white38),
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
           ),
         ],
       ),
@@ -1664,23 +1778,29 @@ class _Destination extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
 
+    // Плитка поднятой поверхностью, иконка — углями. Контурные кнопки того
+    // же цвета, что текст, сливались в одну строку: пять переходов читались
+    // как одна фраза, а не как пять мест.
     return OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        backgroundColor: RiftColors.raised,
+        side: const BorderSide(color: RiftColors.line),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        minimumSize: const Size(0, 44),
         visualDensity: VisualDensity.compact,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18),
+          Icon(icon, size: 20, color: RiftColors.ember),
           const SizedBox(width: 6),
           Text(label),
           if (marked) ...[
             const SizedBox(width: 6),
             Container(
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
             ),
           ],

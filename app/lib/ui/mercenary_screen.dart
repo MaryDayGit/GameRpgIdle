@@ -24,6 +24,8 @@ import 'format.dart';
 import 'strings.dart';
 import 'gear_grid.dart';
 import 'help_screen.dart';
+import 'theme.dart';
+import 'gear_icons.dart';
 
 /// Сборка билда: девять слотов снаряжения и четыре слота способностей.
 ///
@@ -173,12 +175,12 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               Text(
                 '${m.rank.forGender(m.gender)} · ${m.trait.forGender(m.gender)} · '
                 '${S.backpackShort(m.backpackSlots)}',
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
               ),
               const SizedBox(height: 4),
               Text(
                 m.trait.description,
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 16),
 
@@ -206,14 +208,14 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
               const SizedBox(height: 2),
               Text(
                 S.statsTapHint,
-                style: const TextStyle(fontSize: 11, color: Colors.white38),
+                style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 8),
               if (!editable)
                 Text(
                   S.buildLocked,
                   style: const TextStyle(
-                      fontSize: 12, color: Colors.orangeAccent),
+                      fontSize: 13.5, color: RiftColors.bad),
                 ),
               const SizedBox(height: 16),
 
@@ -224,7 +226,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
 
 
                     : S.gearLockedNote,
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 8),
               TutorialAnchor(
@@ -244,7 +246,7 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
                 Text(
                   note,
                   style: const TextStyle(
-                      fontSize: 12, color: Colors.orangeAccent),
+                      fontSize: 13.5, color: RiftColors.bad),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -279,6 +281,13 @@ class _MercenaryScreenState extends State<MercenaryScreen> {
 
               const SizedBox(height: 20),
               _Header(S.forkOrderTitle),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  S.forkOrderAbout,
+                  style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
+                ),
+              ),
               TutorialAnchor(
                 id: Onboarding.anchorForkOrder,
                 child: _ForkOrder(
@@ -337,31 +346,42 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget cell(String label, String value) => Expanded(
+    Widget cell(String label, String value, {Color? color, int flex = 2}) =>
+        Expanded(
+          flex: flex,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style:
-                      const TextStyle(fontSize: 11, color: Colors.white54)),
+                  style: RiftText.caption),
+              const SizedBox(height: 2),
               Text(value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  )),
+                  style: RiftText.stat.copyWith(
+                      fontSize: 18, color: color ?? RiftColors.ink)),
             ],
           ),
         );
 
-    return Row(
-      children: [
-        cell(S.buildPower, money(power)),
-        cell('HP', money(hp)),
-        cell(S.statDamage, money(damage)),
-        cell(S.statSpell, money(spellPower)),
-        cell(S.statArmor, money(armor)),
-      ],
+    // Сила сборки — первой и углями: это единственное число, по которому
+    // сравнивают «стало лучше или хуже». Остальные — её составляющие.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: RiftColors.surface,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(color: RiftColors.line),
+      ),
+      child: Row(
+        children: [
+          // Шире остальных: «Сила сборки» — единственная подпись в два
+          // слова, и в равной доле она наезжала на соседнее «HP».
+          cell(S.buildPower, money(power), color: RiftColors.ember, flex: 3),
+          cell('HP', money(hp), color: RiftColors.health),
+          cell(S.statDamage, money(damage)),
+          cell(S.statSpell, money(spellPower)),
+          cell(S.statArmor, money(armor)),
+        ],
+      ),
     );
   }
 }
@@ -374,14 +394,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.2,
-            color: Colors.white54,
-          ),
-        ),
+        child: Text(text, style: RiftText.overline),
       );
 }
 
@@ -414,9 +427,8 @@ class _AbilityRow extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: _SlotBadge(label: '${index + 1}'),
       title: Text(ability?.name ?? S.emptySlot,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: ability == null ? Colors.white38 : null,
+          style: RiftText.heading.copyWith(
+            color: ability == null ? RiftColors.inkFaint : RiftColors.ink,
           )),
       subtitle: ability == null
           ? null
@@ -425,7 +437,7 @@ class _AbilityRow extends StatelessWidget {
               children: [
                 Text(
                   _abilityLine(ability),
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
                 ),
                 const SizedBox(height: 4),
                 TagChips(tags: ability.tags, highlight: highlight),
@@ -495,7 +507,7 @@ class _ManaBudget extends StatelessWidget {
                     drain: drain.toStringAsFixed(1),
                     full: full.toStringAsFixed(0),
                     reservedPercent: (reserved * 100).round()),
-            style: const TextStyle(fontSize: 12, color: Colors.white54),
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
           ),
           Text(
             ok
@@ -503,8 +515,8 @@ class _ManaBudget extends StatelessWidget {
                 : S.manaShort,
 
             style: TextStyle(
-              fontSize: 11,
-              color: ok ? const Color(0xFF7FB069) : const Color(0xFFD98F4E),
+              fontSize: 12.5,
+              color: ok ? RiftColors.good : RiftColors.warn,
             ),
           ),
         ],
@@ -554,27 +566,28 @@ class TagChips extends StatelessWidget {
       children: [
         for (final tag in tags)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
               color: highlight.contains(tag)
-                  ? tagColor(tag).withValues(alpha: 0.28)
-                  : Colors.white10,
-              borderRadius: BorderRadius.circular(3),
+                  ? tagColor(tag).withValues(alpha: 0.22)
+                  : RiftColors.raised,
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: highlight.contains(tag)
                     ? tagColor(tag)
-                    : Colors.transparent,
-                width: 0.8,
+                    : RiftColors.line,
+                width: 1,
               ),
             ),
             child: Text(
               tag.title,
               style: TextStyle(
-                fontSize: 10,
-                letterSpacing: 0.2,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
                 color: highlight.contains(tag)
                     ? tagColor(tag)
-                    : Colors.white54,
+                    : RiftColors.inkMuted,
               ),
             ),
           ),
@@ -586,14 +599,14 @@ class TagChips extends StatelessWidget {
 /// Цвет тега. Стихии красятся так же, как одноимённые лучи дерева пассивок:
 /// игрок ищет глазами один и тот же огонь на двух экранах.
 Color tagColor(Tag tag) => switch (tag) {
-      Tag.fire => const Color(0xFFD9622B),
-      Tag.cold => const Color(0xFF6FB6D6),
-      Tag.lightning => const Color(0xFFC9A227),
-      Tag.voidTag => const Color(0xFF8B5FB0),
-      Tag.physical => const Color(0xFFC9C0B0),
-      Tag.spell => const Color(0xFF4FA88B),
-      Tag.attack => const Color(0xFFE0A87A),
-      _ => const Color(0xFFA9A29A),
+      Tag.fire => RiftColors.fire,
+      Tag.cold => RiftColors.cold,
+      Tag.lightning => RiftColors.lightning,
+      Tag.voidTag => RiftColors.voidTone,
+      Tag.physical => RiftColors.physical,
+      Tag.spell => RiftColors.arcane,
+      Tag.attack => RiftColors.warn,
+      _ => RiftColors.inkMuted,
     };
 
 /// Во что игрок вложился и попадает ли в это его сборка.
@@ -620,7 +633,7 @@ class _TagPower extends StatelessWidget {
         S.noTagMultipliers,
 
 
-        style: const TextStyle(fontSize: 12, color: Colors.white38),
+        style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
       );
     }
 
@@ -655,10 +668,10 @@ class _TagPower extends StatelessWidget {
                 child: Text(
                   '${e.key.title} +${(e.value * 100).round()} %',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13.5,
                     color: used.contains(e.key)
                         ? tagColor(e.key)
-                        : Colors.white30,
+                        : RiftColors.inkDisabled,
                   ),
                 ),
               ),
@@ -669,7 +682,7 @@ class _TagPower extends StatelessWidget {
           Text(
             S.paleTagsNote,
 
-            style: const TextStyle(fontSize: 11, color: Colors.white30),
+            style: const TextStyle(fontSize: 12.5, color: RiftColors.inkDisabled),
           ),
         ],
       ],
@@ -706,21 +719,21 @@ class _GearRow extends StatelessWidget {
       leading: _SlotBadge(label: kind.title.substring(0, 1)),
       title: Text(
         blocked ? S.slotTakenByTwoHander(kind.title) : kind.title,
-        style: const TextStyle(fontSize: 12, color: Colors.white54),
+        style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
       ),
       subtitle: worn == null
           ? Text(blocked ? '—' : S.empty,
-              style: const TextStyle(fontSize: 13, color: Colors.white38))
+              style: const TextStyle(fontSize: 14.5, color: RiftColors.inkFaint))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(ItemText.title(worn),
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
+                    style: RiftText.heading.copyWith(
+                        fontSize: 15, color: colorFor(worn.rarity))),
                 for (final line in ItemText.lines(worn))
                   Text(line,
                       style: const TextStyle(
-                          fontSize: 12, color: Colors.white60)),
+                          fontSize: 13.5, color: RiftColors.inkMuted)),
               ],
             ),
       trailing: onTap == null ? null : const Icon(Icons.chevron_right, size: 18),
@@ -736,18 +749,19 @@ class _SlotBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Theme.of(context)
-              .colorScheme
-              .surfaceContainerHighest
-              .withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(6),
+          color: RiftColors.raised,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: RiftColors.line),
         ),
         child: Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.white70)),
+            style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: RiftColors.inkMuted)),
       );
 }
 
@@ -787,8 +801,7 @@ class _SlotSheet extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(title,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(title, style: RiftText.title),
                   ),
                   if (onUnequip != null)
                     TextButton(onPressed: onUnequip, child: Text(S.drop)),
@@ -799,7 +812,7 @@ class _SlotSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 child: Text(S.nothingForSlot,
-                    style: const TextStyle(fontSize: 13, color: Colors.white54)),
+                    style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted)),
               )
             else
               Flexible(
@@ -839,35 +852,60 @@ class _ItemOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final better = gain > 0;
 
+    final color = colorFor(item.rarity);
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+                border: Border.all(color: color.withValues(alpha: 0.55)),
+              ),
+              child: GearIcon(kind: item.kind, size: 24, color: color),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(ItemText.title(item),
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: RiftText.heading
+                          .copyWith(fontSize: 15, color: color)),
                   for (final line in ItemText.lines(item))
-                    Text(line,
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.white60)),
+                    Text(line, style: RiftText.small),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              better ? '+${money(gain)}' : '—',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: better ? Colors.lightGreenAccent : Colors.white38,
-                fontFeatures: const [FontFeature.tabularFigures()],
+            // Прирост силы — плашкой: это и есть ответ на вопрос «что
+            // надеть», и он не должен теряться в конце длинной строки.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: better
+                    ? RiftColors.good.withValues(alpha: 0.14)
+                    : RiftColors.raised,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: better
+                      ? RiftColors.good.withValues(alpha: 0.5)
+                      : RiftColors.line,
+                ),
+              ),
+              child: Text(
+                better ? '+${money(gain)}' : '—',
+                style: RiftText.number.copyWith(
+                  color: better ? RiftColors.good : RiftColors.inkFaint,
+                ),
               ),
             ),
           ],
@@ -958,8 +996,7 @@ class _AbilitySheetState extends State<_AbilitySheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(S.abilityWord,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(S.abilityWord, style: RiftText.title),
                   ),
                   if (widget.current != null)
                     TextButton(
@@ -970,7 +1007,7 @@ class _AbilitySheetState extends State<_AbilitySheet> {
               ),
             ),
             SizedBox(
-              height: 34,
+              height: 40,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -978,7 +1015,7 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                   _FilterChip(
                     label: S.filterEvery,
                     selected: _filter == null,
-                    color: Colors.white70,
+                    color: RiftColors.ink,
                     onTap: () => setState(() => _filter = null),
                   ),
                   for (final tag in tags)
@@ -1002,7 +1039,7 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                       child: Text(
                         S.noAbilitiesWithTag,
                         style: const TextStyle(
-                            fontSize: 12, color: Colors.white38),
+                            fontSize: 13.5, color: RiftColors.inkFaint),
                       ),
                     )
                   : ListView.builder(
@@ -1029,18 +1066,17 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                                     children: [
                                       Expanded(
                                         child: Text(def.name,
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600)),
+                                            style: RiftText.heading),
                                       ),
                                       if (def.id == widget.current)
-                                        const Icon(Icons.check, size: 16),
+                                        const Icon(Icons.check_circle,
+                                            size: 20, color: RiftColors.good),
                                       // Прочитать разбор, не выбирая: иначе
                                       // сравнить два умения можно только
                                       // поставив каждое по очереди.
                                       IconButton(
                                         icon: const Icon(Icons.info_outline,
-                                            size: 16),
+                                            size: 20),
                                         tooltip: S.inDetail,
                                         visualDensity: VisualDensity.compact,
                                         constraints: const BoxConstraints(),
@@ -1053,16 +1089,14 @@ class _AbilitySheetState extends State<_AbilitySheet> {
                                     ],
                                   ),
                                   Text(_abilityLine(def),
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white60)),
+                                      style: RiftText.small),
                                   if (blocked != null) ...[
                                     const SizedBox(height: 2),
                                     Text(
                                       blocked,
                                       style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.orangeAccent),
+                                          fontSize: 12.5,
+                                          color: RiftColors.bad),
                                     ),
                                   ],
                                   const SizedBox(height: 4),
@@ -1106,15 +1140,14 @@ class _FilterChip extends StatelessWidget {
       padding: const EdgeInsets.only(right: 6),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.3) : Colors.white10,
-            borderRadius: BorderRadius.circular(4),
+            color: selected ? color.withValues(alpha: 0.18) : RiftColors.raised,
+            borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
             border: Border.all(
-              color: selected ? color : Colors.transparent,
-              width: 0.8,
+              color: selected ? color : RiftColors.line,
             ),
           ),
           child: Row(
@@ -1122,8 +1155,8 @@ class _FilterChip extends StatelessWidget {
             children: [
               if (marked) ...[
                 Container(
-                  width: 5,
-                  height: 5,
+                  width: 7,
+                  height: 7,
                   decoration:
                       BoxDecoration(color: color, shape: BoxShape.circle),
                 ),
@@ -1132,8 +1165,9 @@ class _FilterChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: selected ? color : Colors.white60,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? color : RiftColors.inkMuted,
                 ),
               ),
             ],
@@ -1171,10 +1205,10 @@ class _ForkOrder extends StatelessWidget {
         'Гонится за Эхом боссов; где Эха нет — берёт добычу',
         'Chases down boss Echo; where there is none, takes the loot'),
     ForkPolicy.random: Phrase(
-        'Кидает монетку на каждой развилке. Ни хуже, ни лучше остальных — '
-            'просто непредсказуемо',
-        'Flips a coin at every fork. No worse than the others, no better — '
-            'just unpredictable'),
+        'Кидает монетку на развилке, которую решает без вас. Ни хуже, ни '
+            'лучше остальных — просто непредсказуемо',
+        'Flips a coin at any fork they settle without you. No worse than the '
+            'others, no better — just unpredictable'),
   };
 
   @override
@@ -1186,30 +1220,43 @@ class _ForkOrder extends StatelessWidget {
             opacity: onPick == null && option != policy ? 0.4 : 1.0,
             child: InkWell(
               onTap: onPick == null ? null : () => onPick!(option),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+              borderRadius: BorderRadius.circular(RiftSize.radiusSmall + 2),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: option == policy
+                      ? RiftColors.ember.withValues(alpha: 0.10)
+                      : RiftColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(RiftSize.radiusSmall + 2),
+                  border: Border.all(
+                    color: option == policy
+                        ? RiftColors.ember.withValues(alpha: 0.7)
+                        : RiftColors.line,
+                  ),
+                ),
                 child: Row(
                   children: [
                     Icon(
                       option == policy
                           ? Icons.radio_button_checked
                           : Icons.radio_button_unchecked,
-                      size: 18,
+                      size: 22,
                       color: option == policy
-                          ? const Color(0xFF7FB069)
-                          : Colors.white38,
+                          ? RiftColors.ember
+                          : RiftColors.inkFaint,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(option.title,
-                              style: const TextStyle(fontSize: 13)),
+                          Text(option.title, style: RiftText.heading),
                           Text(
                             _meaning[option]?.text ?? '',
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.white38),
+                            style: RiftText.small,
                           ),
                         ],
                       ),

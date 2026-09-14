@@ -111,9 +111,12 @@ void main() {
         CombatBeat(BeatKind.heroHurt, index: 2, amount: 40.0),
       ]);
 
-    expect(anims.hero.swing, 1.0);
+    expect(anims.hero.swinging, isTrue);
     expect(anims.hero.flash, 1.0, reason: 'видно, что бьют ТЕБЯ');
     expect(anims.enemy(2).flash, 0.0, reason: 'бил моб, а не по мобу');
+    expect(anims.enemy(2).swinging, isTrue,
+        reason: 'ударивший моб обязан замахнуться: иначе урон по наёмнику '
+            'прилетает из ниоткуда');
 
     anims
       ..apply(const [CombatBeat(BeatKind.heroDied)])

@@ -13,6 +13,7 @@ import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/state/descent_replay.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/battle_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Боевая сцена показывает ПОВТОР уже посчитанного рана. Если повтор
 /// разойдётся с записанным результатом, игрок увидит бой, которого не было.
@@ -170,7 +171,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: BattleScreen(controller: own, contract: contract),
     ));
     await tester.pump();
@@ -241,7 +242,7 @@ void main() {
     clock = contract.startedAtUtc.add(const Duration(seconds: 3));
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: BattleScreen(controller: controller, contract: contract),
     ));
     await tester.pump();
@@ -250,7 +251,7 @@ void main() {
     expect(find.textContaining('Этаж'), findsOneWidget);
     expect(find.textContaining('Волна'), findsWidgets);
     expect(find.text('HP наёмника'), findsOneWidget);
-    expect(find.textContaining('Вы только смотрите'), findsOneWidget);
+    expect(find.textContaining('Вы наблюдаете'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
   });
@@ -276,7 +277,7 @@ void main() {
         .add(Duration(milliseconds: ((seconds + 0.5) * 1000).round()));
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: BattleScreen(controller: controller, contract: contract),
     ));
     await tester.pump();

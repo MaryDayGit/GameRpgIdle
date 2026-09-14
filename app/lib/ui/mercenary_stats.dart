@@ -10,6 +10,7 @@ import 'package:rift/core/sim/abilities.dart';
 import 'format.dart';
 import 'strings.dart';
 import 'mercenary_screen.dart' show TagChips, tagColor;
+import 'theme.dart';
 
 /// Полный лист характеристик наёмника.
 ///
@@ -68,15 +69,14 @@ class MercenaryStatsSheet extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
           children: [
-            Text(S.statsTitle,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(S.statsTitle, style: RiftText.title.copyWith(fontSize: 20)),
             const SizedBox(height: 2),
             Text(
               S.statsAbout(mercenary.name, depth,
                   she: mercenary.gender == Gender.feminine),
 
 
-              style: const TextStyle(fontSize: 12, color: Colors.white38),
+              style: RiftText.small,
             ),
             const SizedBox(height: 18),
 
@@ -160,7 +160,7 @@ class MercenaryStatsSheet extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 S.statsTagsAbout,
-                style: TextStyle(fontSize: 12, color: Colors.white38),
+                style: TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 10),
               for (final e in _sortedTags(stats))
@@ -172,7 +172,7 @@ class MercenaryStatsSheet extends StatelessWidget {
                       Text(
                         percent(e.value),
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w600,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
@@ -223,17 +223,28 @@ class _Group extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _GroupTitle(title),
           const SizedBox(height: 8),
-          ...lines,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+            decoration: BoxDecoration(
+              color: RiftColors.raised,
+              borderRadius: BorderRadius.circular(RiftSize.radiusSmall + 2),
+              border: Border.all(color: RiftColors.line),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: lines,
+            ),
+          ),
           if (note case final text?) ...[
             const SizedBox(height: 6),
-            Text(text,
-                style: const TextStyle(fontSize: 11, color: Colors.white38)),
+            Text(text, style: RiftText.caption),
           ],
         ],
       ),
@@ -249,12 +260,7 @@ class _GroupTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          letterSpacing: 1.2,
-          color: Colors.white54,
-          fontWeight: FontWeight.w600,
-        ),
+        style: RiftText.overline,
       );
 }
 
@@ -282,31 +288,31 @@ class _Line extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
-                ),
+                flex: 3,
+                child: Text(label, style: RiftText.body.copyWith(fontSize: 14.5)),
               ),
               const SizedBox(width: 12),
-              Text(
+              // Значение гибкое: строки стоят в карточке с внутренним отступом,
+              // и на узком экране с крупным шрифтом «4.00 удара в секунду»
+              // выдавливало подпись за край.
+              Expanded(
+                flex: 2,
+                child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: tag == null ? Colors.white : tagColor(tag!),
-                  fontFeatures: const [FontFeature.tabularFigures()],
+                style: RiftText.number.copyWith(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w700,
+                  color: tag == null ? RiftColors.ink : tagColor(tag!),
                 ),
+              ),
               ),
             ],
           ),
           if (hint case final text?)
             Padding(
               padding: const EdgeInsets.only(top: 1),
-              child: Text(
-                text,
-                style: const TextStyle(fontSize: 11, color: Colors.white38),
-              ),
+              child: Text(text, style: RiftText.caption),
             ),
         ],
       ),

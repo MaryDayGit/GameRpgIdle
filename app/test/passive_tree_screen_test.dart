@@ -12,6 +12,7 @@ import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/data/settings_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/passive_tree_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Дерево пассивок глазами игрока.
 ///
@@ -66,7 +67,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: PassiveTreeScreen(controller: controller),
     ));
     await tester.pump();

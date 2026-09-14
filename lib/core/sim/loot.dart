@@ -2,6 +2,7 @@ import '../balance/curves.dart';
 import '../balance/tuning.dart';
 import '../content/affix_def.dart';
 import '../content/content_pack.dart';
+import '../content/relic_def.dart';
 import '../model/equipment.dart';
 import '../model/gear.dart';
 import '../model/item.dart';
@@ -33,13 +34,20 @@ class ItemFactory {
     int rarityBonus = 0,
     int bonusAffixSlots = 0,
     bool forceRelic = false,
+    RelicDef? relic,
   }) {
     final pack = ContentPack.current;
 
-    final itemKind = kind ?? GearKind.values[rng.nextInt(GearKind.values.length)];
+    // Названный реликт диктует и слот, и редкость: это добыча с адресом
+    // («Проводник пепла с Владыки Пепла»), а не результат розыгрыша. Слот,
+    // выпавший отдельно от правила, означал бы «Проводник пепла в виде
+    // сапог».
+    final itemKind = relic?.kind ??
+        kind ??
+        GearKind.values[rng.nextInt(GearKind.values.length)];
     // Модификатор «Пустотная гниль» поднимает редкость сундука на ранг —
     // это подъём уже выпавшего, а не наклон весов: гарантия, а не шанс.
-    final rarity = forceRelic
+    final rarity = forceRelic || relic != null
         ? Rarity.relic
         : _raise(_rollRarity(rng, lootQuality), rarityBonus);
 
@@ -102,16 +110,33 @@ class ItemFactory {
     }
 
     // Реликт — это редкость, а не отдельный тип предмета: он несёт и обычные
-    // аффиксы, и уникальное правило. Правило одно на тип предмета (§04-RELICS).
+    // аффиксы, и уникальное правило.
+    //
+    // Правило РАЗЫГРЫВАЕТСЯ среди всех реликтов слота, а не берётся первым
+    // подходящим. Раньше здесь стоял `break` на первом совпадении — и это
+    // молча делало содержимым игры восемь реликтов из двадцати пяти:
+    // семнадцать были описаны, проверены аудитом (`docs/04-RELICS.md`) и не
+    // могли выпасть никогда. Дефект такого рода не виден ни одному тесту,
+    // который спрашивает «работает ли реликт», — только тому, который
+    // спрашивает «а этот вообще доходит до игрока».
     String? relicId;
     RelicEffect? relicEffect;
-    if (rarity == Rarity.relic) {
-      for (final relic in pack.relics) {
-        if (relic.kind == itemKind) {
-          relicId = relic.id;
-          relicEffect = relic.effect;
-          break;
-        }
+    if (relic != null) {
+      relicId = relic.id;
+      relicEffect = relic.effect;
+    } else if (rarity == Rarity.relic) {
+      // Реликты с источником из общего розыгрыша исключены: они падают
+      // только со своего босса (`RelicDef.source`), и выпади такой из
+      // сундука — адрес, ради которого источник и заведён, перестал бы
+      // что-либо значить.
+      final pool = [
+        for (final relic in pack.relics)
+          if (relic.kind == itemKind && relic.source == null) relic,
+      ];
+      if (pool.isNotEmpty) {
+        final relic = pool[rng.nextInt(pool.length)];
+        relicId = relic.id;
+        relicEffect = relic.effect;
       }
     }
 

@@ -5,6 +5,7 @@ import '../model/echo_tree.dart';
 import '../model/haul.dart';
 import '../model/hero.dart';
 import '../model/item.dart';
+import '../content/content_pack.dart';
 import '../content/floor_modifier_def.dart';
 import '../model/stat_block.dart';
 import '../model/tags.dart';
@@ -853,6 +854,31 @@ class DescentDriver {
 
         taken++;
         haul.addItem(found);
+      }
+
+      // Уникальная вещь босса. Разыгрывается ОТДЕЛЬНО от сундука и не
+      // занимает его места: это не «ещё один предмет с этажа», а причина
+      // прийти именно к этому боссу (`RelicDef.source`). Общий пул её не
+      // знает, и больше взять её негде.
+      //
+      // Правило редкости («Сапоги нисходящего» проходят мимо мелочи) на неё
+      // не распространяется: реликт старше любого порога, а наёмник, прошедший
+      // мимо вещи, ради которой его и отправили, — это не правило, а насмешка.
+      if (_boss != null && _survived) {
+        final unique = [
+          for (final relic in ContentPack.current.relics)
+            if (relic.source == _boss!.id) relic,
+        ];
+        if (unique.isNotEmpty && _lootRng.chance(Tuning.bossRelicChance)) {
+          final found = ItemFactory.roll(
+            ilvl: _depth,
+            rng: _lootRng,
+            relic: unique[_lootRng.nextInt(unique.length)],
+          );
+          haul.addItem(found);
+          taken++;
+          _floorsSinceRelic = 0;
+        }
       }
 
       // Считаем ВЗЯТОЕ, а не выпавшее: «Сапоги нисходящего» заставляют

@@ -158,7 +158,7 @@ class _TutorialHostState extends State<TutorialHost> {
                 // а разделы, которые открывались по ходу, открыты все.
                 if (beat.id == 'finale') c.finishTutorial();
               },
-        onSkip: c.finishTutorial,
+        onSkip: () => c.finishTutorial(skipped: true),
         // Указывать оказалось не на что — шаг закрывается кнопкой, а игрок
         // не остаётся запертым под затемнением.
         onLost: () => c.markTutorialSeen([beat.id]),

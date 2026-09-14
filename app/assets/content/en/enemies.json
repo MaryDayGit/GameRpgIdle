@@ -37,8 +37,8 @@
       "name": "The Frost Patriarch"
     },
     "frost_warden": {
-      "name": "Frost Warden",
-      "role": "Armor"
+      "name": "Patriarch of the Frozen Vault",
+      "role": "Slows you, then hardens"
     },
     "grave_swarm": {
       "name": "Grave Swarm",
@@ -76,8 +76,8 @@
       "name": "The Storm Sovereign"
     },
     "storm_warden": {
-      "name": "Storm Warden",
-      "role": "Reflector"
+      "name": "Warden of the Storm Reach",
+      "role": "Answers every blow"
     },
     "void_devourer": {
       "name": "The Void Devourer"
@@ -89,6 +89,22 @@
     "void_whisperer": {
       "name": "Void Whisperer",
       "role": "Debuffer"
+    },
+    "warden_ash": {
+      "name": "Warden of the Ashen Halls",
+      "role": "Drag it out and you burn"
+    },
+    "warden_frost": {
+      "name": "Patriarch of the Frozen Vault",
+      "role": "Slows you, then hardens"
+    },
+    "warden_storm": {
+      "name": "Warden of the Storm Reach",
+      "role": "Answers every blow"
+    },
+    "warden_void": {
+      "name": "Keeper of the Hollow Burrows",
+      "role": "Eats mana and resistances"
     }
   }
 }

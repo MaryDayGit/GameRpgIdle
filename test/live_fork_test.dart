@@ -299,13 +299,53 @@ void main() {
       expect(contract.atFork, isTrue);
 
       p.refreshContracts(arrivedAt
-          .add(Duration(seconds: Tuning.forkWaitSeconds.round() + 1)));
+          .add(Duration(seconds: Tuning.forkWaitAwaySeconds.round() + 1)));
 
       expect(contract.atFork, isFalse);
       expect(contract.result!.awaitingFork, isFalse,
           reason: 'остаток решает приказ, новых остановок не будет');
-      expect(contract.waitedSeconds, closeTo(Tuning.forkWaitSeconds, 0.01),
+      expect(contract.waitedSeconds, closeTo(Tuning.forkWaitAwaySeconds, 0.01),
           reason: 'отсутствие стоит ровно один простой за спуск');
+    });
+
+    test('пришедшему по уведомлению развилка ещё на месте', () {
+      // Ради этого срок отсутствия и появился. Уведомление зовёт к развилке,
+      // будильник Android неточный, игрок берёт телефон не мгновенно — и
+      // сорока пяти секунд не хватало НИКОГДА: на пробе игрок открыл игру по
+      // зову и нашёл на месте развилки другую подсказку.
+      final p = player();
+      final contract = p.deploy(p.roster.reserve.first, seed: 42);
+      final arrivedAt = contract.segmentEndsAtUtc!;
+
+      p.refreshContracts(arrivedAt);
+      p.refreshContracts(arrivedAt.add(const Duration(minutes: 4)));
+
+      expect(contract.atFork, isTrue, reason: 'четыре минуты — он ещё стоит');
+      expect(contract.pendingFork, isNotNull);
+    });
+
+    test('срок присутствия отмеряет время С ИГРОКОМ, а не настенное', () {
+      // Присутствующему отмерено сорок пять секунд, и это ЕГО секунды: те,
+      // что игра провела на экране. Иначе два срока спорили бы за один и тот
+      // же момент, и присутствие оказалось бы короче отсутствия.
+      final p = player();
+      final contract = p.deploy(p.roster.reserve.first, seed: 42);
+      final arrivedAt = contract.segmentEndsAtUtc!;
+      p.refreshContracts(arrivedAt);
+
+      // Игра открыта полминуты: срок присутствия ещё не вышел.
+      p.attendForks(30);
+      p.refreshContracts(arrivedAt.add(const Duration(seconds: 30)));
+      expect(contract.atFork, isTrue);
+      expect(contract.forkWaitLeftAt(arrivedAt.add(const Duration(seconds: 30))),
+          const Duration(seconds: 15));
+
+      // Ещё двадцать — и наёмник уходит, не дожидаясь срока отсутствия.
+      p.attendForks(20);
+      p.refreshContracts(arrivedAt.add(const Duration(seconds: 50)));
+      expect(contract.atFork, isFalse);
+      expect(contract.waitedSeconds, closeTo(50, 0.01),
+          reason: 'простоял ровно столько, сколько простоял');
     });
 
     test('за ночь офлайна контракт доходит до «забрать добычу»', () {

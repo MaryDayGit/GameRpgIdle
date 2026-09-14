@@ -31,6 +31,7 @@ class TuningConfig {
     this.abilitySlots = 4,
     this.forkEveryFloors = 5,
     this.forkWaitSeconds = 45.0,
+    this.forkWaitAwaySeconds = 600.0,
     this.boldForkLootBonus = 0.0,
     this.boldForkRarityBonus = 0,
     this.boldForkEchoBonus = 0.35,
@@ -41,6 +42,7 @@ class TuningConfig {
     this.bossItems = 1,
     this.bigBossItems = 1,
     this.relicPityFloors = 40,
+    this.bossRelicChance = 0.12,
     this.percentileMin = 0.70,
     this.percentileMax = 1.00,
     this.extractionPercentilePenalty = 0.10,
@@ -125,6 +127,7 @@ class TuningConfig {
   final int wavesPerFloor;
   final int wavesPerBossFloor;
 
+
   /// Переход между этажами. Было 5 с — и это половина этажа: замер профиля
   /// даёт 5-13 игровых секунд на этаж, так что пауза читалась дольше боя,
   /// который её заслужил. 2 с короче любого этажа и всё ещё дают полоске
@@ -169,7 +172,30 @@ class TuningConfig {
   /// «Ждёт один раз» стоит отсутствующему игроку 45 секунд за спуск и не
   /// стоит ничего тому, кто отвечает: присутствие вознаграждается, отсутствие
   /// не наказывается.
+  ///
+  /// Считается ВРЕМЯ С ИГРОКОМ — секунды, проведённые в открытой игре, пока
+  /// наёмник стоит. Отсутствующему отмерено отдельно, см.
+  /// [forkWaitAwaySeconds].
   final double forkWaitSeconds;
+
+  /// Сколько наёмник стоит на развилке, пока игры на экране нет.
+  ///
+  /// Отдельная ручка появилась после пробы, и вот почему. Уведомление зовёт
+  /// именно к развилке — «выберите путь, пока он ждёт», — а будильник Android
+  /// неточный и в дозе опаздывает на минуты (`docs/02-TECH.md` §3). Сорока
+  /// пяти секунд не хватало НИКОГДА: игрок брал телефон, открывал игру по
+  /// уведомлению и находил на месте развилки пустоту. Уведомление обещало
+  /// решение, которого к моменту доставки уже не существовало.
+  ///
+  /// Десять минут — это доставка плюс время взять телефон в руки. Ошибиться
+  /// в большую сторону здесь дешевле, чем в меньшую: стояние заморожено,
+  /// игровое время спуска на нём не идёт (`ForkPause`), и цена ожидания —
+  /// только более поздний конец спуска по настенным часам.
+  ///
+  /// Больше десяти минут ставить незачем: вернувшийся через час игрок хочет
+  /// застать добычу собранной, а не наёмника, простоявшего всё это время на
+  /// одном месте.
+  final double forkWaitAwaySeconds;
 
   /// Прибавка к КОЛИЧЕСТВУ добычи на третьем пути. По умолчанию ноль.
   ///
@@ -217,6 +243,16 @@ class TuningConfig {
   final int bossItems;
   final int bigBossItems;
   final int relicPityFloors;
+
+  /// Шанс, что убитый босс отдаст СВОЙ уникальный реликт (`RelicDef.source`).
+  ///
+  /// Отдельная ручка, а не доля от общей добычи: это не «сколько падает», а
+  /// «сколько стоит поход именно сюда». Число выбрано так, чтобы вещь была
+  /// целью на несколько заходов, а не подарком с первого и не лотереей на
+  /// сотню: при 0.12 половина игроков видит свой реликт за 6 убийств босса,
+  /// девять из десяти — за 18.
+  final double bossRelicChance;
+
   final double percentileMin;
   final double percentileMax;
   final double extractionPercentilePenalty;
@@ -371,6 +407,8 @@ class TuningConfig {
       abilitySlots: _i(combat, 'abilitySlots', d.abilitySlots),
       forkEveryFloors: _i(combat, 'forkEveryFloors', d.forkEveryFloors),
       forkWaitSeconds: _d(combat, 'forkWaitSeconds', d.forkWaitSeconds),
+      forkWaitAwaySeconds:
+          _d(combat, 'forkWaitAwaySeconds', d.forkWaitAwaySeconds),
       boldForkLootBonus:
           _d(combat, 'boldForkLootBonus', d.boldForkLootBonus),
       boldForkRarityBonus:
@@ -385,6 +423,7 @@ class TuningConfig {
       bossItems: _i(loot, 'bossItems', d.bossItems),
       bigBossItems: _i(loot, 'bigBossItems', d.bigBossItems),
       relicPityFloors: _i(loot, 'relicPityFloors', d.relicPityFloors),
+      bossRelicChance: _d(loot, 'bossRelicChance', d.bossRelicChance),
       percentileMin: _d(loot, 'percentileMin', d.percentileMin),
       percentileMax: _d(loot, 'percentileMax', d.percentileMax),
       extractionPercentilePenalty: _d(
@@ -530,6 +569,7 @@ class Tuning {
   static int get abilitySlots => _config.abilitySlots;
   static int get forkEveryFloors => _config.forkEveryFloors;
   static double get forkWaitSeconds => _config.forkWaitSeconds;
+  static double get forkWaitAwaySeconds => _config.forkWaitAwaySeconds;
   static double get boldForkLootBonus => _config.boldForkLootBonus;
   static int get boldForkRarityBonus => _config.boldForkRarityBonus;
   static double get boldForkEchoBonus => _config.boldForkEchoBonus;
@@ -556,6 +596,7 @@ class Tuning {
   static int get bossItems => _config.bossItems;
   static int get bigBossItems => _config.bigBossItems;
   static int get relicPityFloors => _config.relicPityFloors;
+  static double get bossRelicChance => _config.bossRelicChance;
 
   /// Диапазон перцентиля ролла. Осколок хранит перцентиль, а не значение —
   /// поэтому 96-й перцентиль остаётся ценным на любой глубине (GDD §5.3).

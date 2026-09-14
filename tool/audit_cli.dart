@@ -14,6 +14,7 @@
 ///     dart run tool/audit_cli.dart --affixes
 ///     dart run tool/audit_cli.dart --abilities
 ///     dart run tool/audit_cli.dart --tags
+///     dart run tool/audit_cli.dart --bosses
 library;
 
 import 'package:rift/core/content/ability_def.dart';
@@ -34,6 +35,7 @@ import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/sim/abilities.dart';
 import 'package:rift/core/sim/combat.dart';
 import 'package:rift/core/sim/events.dart';
+import 'package:rift/core/sim/loot.dart';
 import 'package:rift/core/sim/relics.dart';
 import 'package:rift/core/sim/rng.dart';
 import 'package:rift/core/sim/triggers.dart';
@@ -49,6 +51,7 @@ void main(List<String> args) {
   if (all || args.contains('--tags')) _auditTags();
   if (all || args.contains('--relics')) _auditRelics();
   if (all || args.contains('--enemies')) _auditEnemies();
+  if (all || args.contains('--bosses')) _auditBosses();
 }
 
 // --------------------------------------------------------------- бестиарий --
@@ -1299,4 +1302,350 @@ void _rule(int cols) {
     if (i < cols - 1) buf.write(' ');
   }
   print(buf.toString());
+}
+
+
+// --------------------------------------------------------------- боссы -----
+
+/// Босс обязан быть РЕШЕНИЕМ, а не стеной с большим запасом HP.
+///
+/// Вопрос, на который отвечает этот стенд, не «сильный ли босс» — силу видно
+/// и по таблице множителей. Вопрос другой: **заставляет ли он игрока думать
+/// перед тем, как идти.** А думать есть о чём только тогда, когда ответ
+/// зависит от сборки: одна проходит, другая нет, и у разных боссов ломаются
+/// РАЗНЫЕ сборки. Босс, которого одинаково проходят все четыре эталона, — это
+/// задержка, а не бой.
+///
+/// Поэтому проверяется три вещи, и каждая может провалиться отдельно:
+///
+/// * **опасен** — хотя бы одна эталонная сборка не справляется;
+/// * **проходим** — хотя бы одна справляется (иначе это не босс, а стена);
+/// * **свой** — набор сборок, которые он ломает, не совпадает ни с одним
+///   другим боссом. Два босса с одинаковым профилем — это один босс, надетый
+///   дважды.
+///
+/// Эталоны нарочно равны по СИЛЕ и отличаются только ФОРМОЙ: один и тот же
+/// урон в секунду, разложенный по-разному. Иначе таблица говорила бы, какая
+/// сборка сильнее, а не какая кому подходит.
+/// Запас здоровья, с которым бой считается пройденным ЧИСТО.
+///
+/// Страж стоит не в пустоте: после него спуск продолжается, и наёмник,
+/// вышедший из боя с десятой частью здоровья, умрёт на ближайшей обычной
+/// волне. Победа, за которую платят всем запасом, — это отложенное поражение,
+/// и считать её проходом значит объявить босса лёгким там, где игра его
+/// лёгким не считает.
+const _cleanWin = 0.25;
+
+void _auditBosses() {
+  _header('СТРАЖИ ОБЛАСТЕЙ · кого и чем берут');
+
+  // Меряются СТРАЖИ, а не боссы бездны. В бездне босс — ритм: он попадается
+  // каждые несколько этажей, мимо него идут вниз, и требовать от него
+  // «подумай, чем идти» бессмысленно — игрок идёт не к нему. Проверено
+  // дорого: правка, которая стражу проходит даром, сдвинула окно первого
+  // спуска за нижнюю границу, потому что Владыка Пепла попадается каждые
+  // пять этажей.
+  final bosses = ContentPack.current.guardians;
+  const depth = 40;
+  final builds = _bossBuilds(depth);
+  final holes = <String>[];
+
+  /// Профиль формы на босса: какие сборки он ломает. Сам по себе близнецов
+  /// не ловит — два стража могут ломать одни и те же сборки и всё равно
+  /// требовать разного ответа. Поэтому проверка ниже берёт форму ВМЕСТЕ со
+  /// стихией: одинаково должно совпасть и то и другое.
+  final shapes = <String, String>{};
+  final profiles = <String, String>{};
+
+  _row(['босс', ...builds.map((b) => b.what)]);
+  _rule(builds.length + 1);
+
+  for (final boss in bosses) {
+    final cells = <String>[];
+    final profile = StringBuffer();
+
+    for (final build in builds) {
+      final r = _bossFight(boss, build, depth);
+
+      // Исходов три, а не два, и это не придирка. Победа, оставившая от
+      // героя десятую часть здоровья, — не победа: страж стоит не в пустоте,
+      // после него спуск продолжается, и такого наёмника добьёт первая же
+      // обычная волна. Чистым проходом считается запас, с которым можно идти
+      // дальше.
+      cells.add(switch (r) {
+        _BossFight(killed: false, heroDied: true) => 'смерть',
+        _BossFight(killed: false) => 'не добил',
+        _BossFight(hpLeft: final hp) when hp < _cleanWin =>
+          'едва (${(hp * 100).round()} %)',
+        _BossFight(hpLeft: final hp) => '${(hp * 100).round()} %',
+      });
+      profile.write(switch (r) {
+        _BossFight(killed: false) => '-',
+        _BossFight(hpLeft: final hp) when hp < _cleanWin => '~',
+        _ => '+',
+      });
+    }
+
+    _row([boss.name, ...cells]);
+
+    // «Опасен» решается уже здесь: страж, которого все четыре формы проходят
+    // чисто, безопасен независимо от стихии.
+    if (!profile.toString().contains('-') &&
+        !profile.toString().contains('~')) {
+      holes.add('${boss.name}: его чисто проходят все четыре сборки — '
+          'перед таким боссом не о чем думать');
+    }
+
+    shapes[boss.id] = profile.toString();
+  }
+
+  print('');
+  print('Столбец — эталонная сборка, клетка — остаток HP героя после боя.');
+  print('Сборки равны по урону в секунду и отличаются только формой.');
+
+  // --- чем бить ---------------------------------------------------------------
+  //
+  // Второй вопрос игрока перед боем — не «как», а «ЧЕМ». У каждого стража
+  // своя стихия и своя слабость, а единственный способ сменить стихию урона
+  // целиком — надеть «Проводник». Проводники лежат у самих стражей, и это
+  // замыкает круг: чтобы взять одного, идут за вещью к другому.
+  final conduits = [
+    for (final r in ContentPack.current.relics)
+      if (r.effect == RelicEffect.elementalConduit) r,
+  ];
+
+  if (conduits.isEmpty) {
+    holes.add('в контенте нет ни одного «Проводника» — стихию сменить нечем');
+  } else {
+    print('');
+    _row(['босс', ...conduits.map((c) => c.name.replaceAll('Проводник ', ''))]);
+    _rule(conduits.length + 1);
+
+    final answers = <String, String>{};
+    for (final boss in bosses) {
+      final cells = <String>[];
+      var best = -1.0;
+      var bestName = '';
+      var worst = 2.0;
+
+      for (final conduit in conduits) {
+        final r = _bossFight(boss, builds.first, depth, wearing: conduit);
+        final left = r.killed ? r.hpLeft : 0.0;
+        cells.add(r.killed ? '${(left * 100).round()} %' : 'смерть');
+        if (left > best) {
+          best = left;
+          bestName = conduit.name;
+        }
+        if (left < worst) worst = left;
+      }
+
+      _row([boss.name, ...cells]);
+
+      // Стихия обязана РЕШАТЬ. Если лучшая и худшая отличаются на шум,
+      // выбирать нечего, и вся линейка проводников — украшение.
+      if (best - worst < 0.15) {
+        holes.add('${boss.name}: стихия почти не меняет исход '
+            '(${(best * 100).round()} % против ${(worst * 100).round()} %) — '
+            'выбирать нечего');
+      }
+      final twin = answers[bestName];
+      if (twin != null) {
+        holes.add('${boss.name} и $twin берутся одной и той же стихией '
+            '($bestName) — две двери с одним ключом');
+      } else {
+        answers[bestName] = boss.name;
+      }
+
+      // «Проходим» решается ТОЛЬКО здесь, когда известны обе таблицы.
+      // Страж, которого не взять ни одной формой, но который сдаётся нужной
+      // стихии, — не стена, а вопрос «чем идти»: ровно то, ради чего стражи
+      // и заведены. Стеной он становится, если не проходит нигде.
+      final shapeClean = shapes[boss.id]!.contains('+');
+      if (!shapeClean && best < _cleanWin) {
+        holes.add('${boss.name}: его не проходит чисто ни одна сборка и ни '
+            'одна стихия — это не бой, а потолок');
+      }
+
+      final key = '${shapes[boss.id]}/$bestName';
+      final same = profiles[key];
+      if (same != null) {
+        holes.add('${boss.name} и $same неотличимы: ломают одни и те же '
+            'сборки и берутся одной стихией — это один босс, надетый дважды');
+      } else {
+        profiles[key] = boss.name;
+      }
+    }
+
+    print('');
+    print('Столбец — надетый «Проводник», клетка — остаток HP героя.');
+    print('Сборка одна и та же: меняется только стихия урона.');
+  }
+
+  print('');
+  if (holes.isEmpty) {
+    print('Все ${bosses.length} стражей опасны, проходимы и не похожи друг '
+        'на друга.');
+  } else {
+    print('ДЫРЫ (${holes.length}):');
+    for (final h in holes) {
+      print('  - $h');
+    }
+  }
+  _verdict('BOSSES', holes.length);
+}
+
+/// Эталонная сборка: форма урона плюс то, чем за эту форму платят.
+class _BossBuild {
+  const _BossBuild(this.what, {required this.stats, this.abilities = const []});
+
+  final String what;
+  final StatBlock stats;
+  final List<String> abilities;
+}
+
+/// Исход одного боя со стендом.
+class _BossFight {
+  const _BossFight({required this.killed, required this.heroDied,
+      required this.hpLeft});
+
+  final bool killed;
+  final bool heroDied;
+
+  /// Доля здоровья героя, оставшаяся к концу. Считается только у победы:
+  /// у поражения она и так ноль или близко.
+  final double hpLeft;
+}
+
+/// Четыре формы одной и той же силы.
+///
+/// Сборки строятся НЕ из выдуманных чисел, а из настоящего снаряжения,
+/// свёрнутого тем же `HeroProfile.aggregate`, которым пользуется спуск.
+/// Иначе таблица говорила бы про героя, которого в игре не бывает: первая
+/// версия стенда выдала эталону четырнадцать тысяч HP там, где у босса на
+/// этой глубине двести пятьдесят, и объявила всех четверых безобидными.
+///
+/// Отличаются они только формой: тот же урон автоатаки в секунду, разложенный
+/// по-разному — втрое чаще втрое слабее и наоборот. Сборка на активках платит
+/// иначе: её урон уходит в силу заклинаний и зависит от маны, и именно этим
+/// её ломает Пожиратель.
+List<_BossBuild> _bossBuilds(int depth) {
+  // Снаряжение по глубине — то же, что нашёл бы игрок, дошедший сюда.
+  final gear = Equipment();
+  final rng = Rng.stream(777, depth, 0, RngPurpose.lootRoll);
+  for (final kind in Equipment.slotKinds) {
+    final item = ItemFactory.roll(ilvl: depth, rng: rng, kind: kind);
+    gear.tryEquip(item, base: Tuning.heroBase, depth: depth);
+  }
+  final base = HeroProfile(gear: gear, abilities: const []).aggregate();
+
+  StatBlock shape({
+    double damage = 1.0,
+    double speed = 1.0,
+    double spell = 0.0,
+    double crit = 0.0,
+    double critMulti = 0.0,
+  }) =>
+      StatBlock(
+        maxHp: base.maxHp,
+        hpRegen: base.hpRegen,
+        maxMana: base.maxMana,
+        manaRegen: base.manaRegen,
+        armor: base.armor,
+        resistFire: base.resistFire,
+        resistCold: base.resistCold,
+        resistLightning: base.resistLightning,
+        resistVoid: base.resistVoid,
+        attackDamage: base.attackDamage * damage,
+        spellPower: base.attackDamage * spell,
+        attackSpeed: base.attackSpeed * speed,
+        critChance: crit,
+        critMulti: critMulti > 0.0 ? critMulti : base.critMulti,
+        leech: base.leech,
+      );
+
+  return [
+    _BossBuild('автоатака', stats: shape()),
+    _BossBuild('скорострел',
+        stats: shape(damage: 0.26, speed: 3.0, crit: 0.35, critMulti: 1.8)),
+    _BossBuild('тяжёлый', stats: shape(damage: 3.0, speed: 1 / 3)),
+    _BossBuild('активки',
+        stats: shape(damage: 0.15, spell: 1.6),
+        abilities: _casterLoadout),
+  ];
+}
+
+/// Один бой: герой [build] против единственного [boss] на эталонной глубине.
+///
+/// Глубина фиксирована: босс сравнивается со сборкой, а не с кривой. Сидов
+/// несколько, потому что криты и разброс урона решают исход на границе, и
+/// один прогон объявил бы победой то, что выигрывается в половине случаев.
+_BossFight _bossFight(EnemyArchetype boss, _BossBuild build, int depth,
+    {double hpMult = 1.0, double dpsMult = 1.0, RelicDef? wearing}) {
+  const seeds = 9;
+  var kills = 0;
+  var deaths = 0;
+  var hpLeft = 0.0;
+
+  for (var s = 0; s < seeds; s++) {
+    // Стихия героя берётся не из воздуха, а из надетой вещи: «Проводник»
+    // — единственный способ, которым игрок в этой игре меняет стихию урона
+    // целиком. Заодно в замер попадает и его плата — просевшее
+    // сопротивление той же стихии.
+    final rules = wearing == null
+        ? RelicRules.none
+        : RelicRules.from(_wearingGear(wearing, depth));
+
+    final bus = EventBus();
+    final mods = CombatModifiers();
+    final abilities =
+        AbilityRuntime.fromIds(build.abilities, modifiers: mods, rules: rules);
+    final triggers = TriggerRuntime(bus: bus, abilities: abilities, mods: mods)
+      ..configure(const []);
+
+    final hero = HeroState(build.stats);
+    final enemy = EnemyInstance.spawn(boss, depth,
+        hpMultiplier: hpMult, dpsMultiplier: dpsMult);
+    final runner = WaveRunner(
+      bus: bus,
+      depth: depth,
+      hero: hero,
+      enemies: [enemy],
+      rng: Rng(4242 + s * 7919),
+      abilities: abilities,
+      triggers: triggers,
+      rules: rules,
+    );
+
+    final ticks = (Tuning.waveTimeoutSeconds / Tuning.tickSeconds).round();
+    for (var i = 0; i < ticks && !runner.finished; i++) {
+      runner.tick();
+    }
+
+    if (hero.hp <= 0.0) {
+      deaths++;
+    } else if (enemy.hp <= 0.0) {
+      kills++;
+      hpLeft += hero.hp / build.stats.maxHp;
+    }
+  }
+
+  // Большинством: исход, который случается чаще половины прогонов, и есть
+  // ответ на вопрос «пройдёт ли эта сборка».
+  final killed = kills * 2 > seeds;
+  return _BossFight(
+    killed: killed,
+    heroDied: deaths * 2 > seeds,
+    hpLeft: kills == 0 ? 0.0 : hpLeft / kills,
+  );
+}
+
+
+/// Снаряжение, в котором надет ровно один реликт [def].
+Equipment _wearingGear(RelicDef def, int depth) {
+  final gear = Equipment();
+  final item = ItemFactory.roll(
+      ilvl: depth, rng: Rng.stream(31337, depth, 0, RngPurpose.lootRoll),
+      relic: def);
+  gear.tryEquip(item, base: Tuning.heroBase, depth: depth);
+  return gear;
 }

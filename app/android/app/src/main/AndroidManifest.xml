@@ -1,12 +1,31 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Android 13+. Спрашивается не на первом запуске, а после первой гибели
          наёмника: тогда вопрос осмысленный (docs/02-TECH.md §3). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Уведомление о гибели переживает перезагрузку телефона: спуск идёт
          по часам, а не по работающему процессу. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Рекламный идентификатор не собираем. Разрешение приходит СЛИЯНИЕМ из
+         манифеста firebase-analytics, поэтому убрать его можно только так —
+         тихо, без нашего участия оно оказалось бы в APK.
+
+         Это не формальность. AD_ID в манифесте означает строку «рекламный
+         идентификатор» в Play Data Safety, а с ней — обещание, которое игра
+         не выполняет: она не показывает рекламы и не знает, кто её запустил.
+         Аналитика видит игровое состояние (`docs/11-ANALYTICS.md` §5), и
+         устройство в ней различается идентификатором установки Firebase,
+         который умирает вместе с переустановкой. -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <!-- Имя бренда, а не переводимая строка: игра называется одинаково в
+         магазине, в трейлере и на рабочем столе. Ярлык кириллицей был
+         нечитаем для всех, кто не читает по-русски, — то есть для
+         большинства тех, кому игра и показывается. -->
     <application
-        android:label="Расселина"
+        android:label="Riftmark"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -31,6 +50,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- То же самое со стороны SDK: даже получив разрешение откуда-то
+             ещё, Analytics не станет читать рекламный идентификатор. Два
+             замка на одной двери — потому что первый снимается слиянием
+             манифестов чужой библиотеки, а этот читается самим SDK. -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

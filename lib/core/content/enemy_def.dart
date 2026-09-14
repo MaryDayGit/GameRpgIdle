@@ -66,6 +66,26 @@ class EnemyParser {
     );
   }
 
+  static const _guardianKeys = {
+    'id', 'ru', 'gender', 'role', 'boss', 'hpMult', 'dpsMult',
+    'attackSpeed', 'armorMult', 'damageType', 'resists', 'traits', 'phases',
+  };
+
+  /// Страж области: тот же босс, но в своём логове и в полную силу.
+  static EnemyArchetype parseGuardian(JsonNode node) {
+    node.checkKeys(_guardianKeys);
+
+    return _common(
+      node,
+      isBoss: true,
+      packMin: 1,
+      packMax: 1,
+      weight: 0.0,
+      phases: node.strList('phases'),
+      embodies: node.str('boss'),
+    );
+  }
+
   static EnemyArchetype _common(
     JsonNode node, {
     required bool isBoss,
@@ -73,6 +93,7 @@ class EnemyParser {
     required int packMax,
     required double weight,
     int everyFloors = 0,
+    String? embodies,
     List<String> phases = const [],
   }) {
     final attackSpeed = node.dbl('attackSpeed');
@@ -110,6 +131,7 @@ class EnemyParser {
       traits: node.enumList('traits', EnemyTrait.values).toSet(),
       everyFloors: everyFloors,
       phases: phases,
+      embodies: embodies,
     );
   }
 }

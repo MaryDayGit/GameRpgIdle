@@ -428,16 +428,16 @@
         "lightning": 45.0,
         "cold": -25.0
       },
-      "traits": [
-        "drainsMana",
-        "hardens"
-      ],
       "everyFloors": 15,
       "phases": [
         "Разряд по всей волне",
         "Глушение маны"
       ],
-      "gender": "masculine"
+      "gender": "masculine",
+      "traits": [
+        "drainsMana",
+        "hardens"
+      ]
     },
     {
       "id": "frost_patriarch",
@@ -451,14 +451,110 @@
         "cold": 50.0,
         "fire": -30.0
       },
-      "traits": [
-        "slowsHero",
-        "healsAllies"
-      ],
       "everyFloors": 25,
       "phases": [
         "Оковы стужи",
         "Зов ледяной стражи"
+      ],
+      "gender": "masculine",
+      "traits": [
+        "slowsHero",
+        "healsAllies"
+      ]
+    }
+  ],
+  "guardians": [
+    {
+      "id": "warden_ash",
+      "ru": "Владыка Пепельных залов",
+      "boss": "ash_lord",
+      "role": "Затянешь — не потушишь",
+      "hpMult": 14.0,
+      "dpsMult": 1.5,
+      "attackSpeed": 1.1,
+      "armorMult": 0.3,
+      "damageType": "fire",
+      "resists": {
+        "fire": 60.0,
+        "cold": -30.0
+      },
+      "traits": [
+        "rampUp",
+        "lifesteal"
+      ],
+      "phases": [
+        "Пепел поднимается",
+        "Жар нарастает"
+      ],
+      "gender": "masculine"
+    },
+    {
+      "id": "warden_void",
+      "ru": "Хозяин Пустотных нор",
+      "boss": "void_devourer",
+      "role": "Съедает ману и сопротивления",
+      "hpMult": 19.0,
+      "dpsMult": 1.6,
+      "attackSpeed": 0.55,
+      "armorMult": 0.4,
+      "damageType": "voidType",
+      "resists": {
+        "voidType": 60.0,
+        "lightning": -30.0
+      },
+      "traits": [
+        "drainsMana",
+        "shredResists"
+      ],
+      "phases": [
+        "Пустота смыкается"
+      ],
+      "gender": "masculine"
+    },
+    {
+      "id": "warden_storm",
+      "ru": "Владыка Грозового предела",
+      "boss": "storm_sovereign",
+      "role": "Отвечает на каждый удар",
+      "hpMult": 15.0,
+      "dpsMult": 1.5,
+      "attackSpeed": 1.8,
+      "armorMult": 0.6,
+      "damageType": "lightning",
+      "resists": {
+        "lightning": 60.0,
+        "voidType": -30.0
+      },
+      "traits": [
+        "reflects"
+      ],
+      "phases": [
+        "Разряд по всей волне",
+        "Небо падает"
+      ],
+      "gender": "masculine"
+    },
+    {
+      "id": "warden_frost",
+      "ru": "Патриарх Морозной тверди",
+      "boss": "frost_patriarch",
+      "role": "Замедляет и твердеет",
+      "hpMult": 11.0,
+      "dpsMult": 1.05,
+      "attackSpeed": 0.7,
+      "armorMult": 0.7,
+      "damageType": "cold",
+      "resists": {
+        "cold": 65.0,
+        "fire": -30.0
+      },
+      "traits": [
+        "slowsHero",
+        "hardens"
+      ],
+      "phases": [
+        "Лёд смыкается",
+        "Панцирь нарастает"
       ],
       "gender": "masculine"
     }

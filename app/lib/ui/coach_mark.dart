@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'strings.dart';
+import 'theme.dart';
 
 /// Метка на элементе экрана: место, куда обучение умеет показать пальцем.
 ///
@@ -325,12 +326,12 @@ class _Spotlight extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFE0A87A),
+                      color: RiftColors.warn,
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFC7643F).withValues(alpha: 0.45),
+                        color: RiftColors.ember.withValues(alpha: 0.45),
                         blurRadius: 18,
                         spreadRadius: 2,
                       ),
@@ -451,7 +452,7 @@ class _CardBody extends StatelessWidget {
   /// Куда указывает стрелка по горизонтали. `null` — стрелки нет.
   final double? arrowAt;
 
-  static const _accent = Color(0xFFC7643F);
+  static const _accent = RiftColors.ember;
 
   @override
   Widget build(BuildContext context) {
@@ -460,14 +461,14 @@ class _CardBody extends StatelessWidget {
         : _Arrow(up: arrowUp, at: arrowAt!, margin: 16);
 
     final card = Material(
-      color: const Color(0xFF23191A),
-      borderRadius: BorderRadius.circular(14),
+      color: RiftColors.lifted,
+      borderRadius: BorderRadius.circular(RiftSize.radius),
       elevation: 8,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _accent.withValues(alpha: 0.7)),
+          borderRadius: BorderRadius.circular(RiftSize.radius),
+          border: Border.all(color: _accent.withValues(alpha: 0.8), width: 1.5),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -486,26 +487,19 @@ class _CardBody extends StatelessWidget {
                     if (mark.total > 0)
                       Text(
                         S.tutorialProgress(mark.step, mark.total),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.2,
-                          color: Colors.white38,
+                        style: RiftText.overline.copyWith(
+                          color: RiftColors.ember,
                         ),
                       ),
                     const SizedBox(height: 4),
                     Text(
                       mark.title,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
+                      style: RiftText.title,
                     ),
                     const SizedBox(height: 6),
                     Text(
                       mark.text,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.35,
-                        color: Colors.white70,
-                      ),
+                      style: RiftText.body,
                     ),
                     // Задание, которому не на что указать, показывать заданием
                     // нельзя: игрок не найдёт того, чего на экране нет.
@@ -514,7 +508,7 @@ class _CardBody extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(Icons.touch_app_outlined,
-                              size: 16, color: Color(0xFFE0A87A)),
+                              size: 16, color: RiftColors.warn),
                           const SizedBox(width: 6),
                           // Задание переносится, а не обрезается: «Нажмите
                           // „Отправить“» при крупном системном шрифте шире
@@ -523,9 +517,9 @@ class _CardBody extends StatelessWidget {
                             child: Text(
                               hint,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFFE0A87A),
+                                color: RiftColors.warn,
                               ),
                             ),
                           ),
@@ -559,11 +553,11 @@ class _CardBody extends StatelessWidget {
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       visualDensity: VisualDensity.compact,
-                      foregroundColor: Colors.white38,
+                      foregroundColor: RiftColors.inkFaint,
                     ),
                     child: Text(
                       S.tutorialSkip,
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(fontSize: 12.5),
                     ),
                   ),
                 if (mark.onNext case final next?)
@@ -639,7 +633,7 @@ class _ArrowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFFC7643F);
+    final paint = Paint()..color = RiftColors.ember;
     final path = Path();
     if (up) {
       path

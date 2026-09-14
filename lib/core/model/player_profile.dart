@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../balance/curves.dart';
 import '../content/ability_def.dart';
 import '../content/content_pack.dart';
@@ -51,10 +53,19 @@ enum ContractState {
 /// [seconds] = `null`, пока он всё ещё стоит: сколько простоит — зависит от
 /// того, когда придёт игрок, и знать это заранее нельзя.
 class ForkPause {
-  ForkPause(this.startUtc, [this.seconds]);
+  ForkPause(this.startUtc, [this.seconds, this.attendedSeconds = 0.0]);
 
   final DateTime startUtc;
   double? seconds;
+
+  /// Сколько из этой остановки прошло НА ГЛАЗАХ У ИГРОКА: секунды, набранные,
+  /// пока игра была открыта.
+  ///
+  /// Хранится отдельно от [seconds] и переживает сохранение, потому что
+  /// терпение наёмника отмеряется по-разному присутствующему и отсутствующему
+  /// (`Tuning.forkWaitSeconds` против `Tuning.forkWaitAwaySeconds`), а
+  /// «игра была открыта» из разницы дат не восстановить.
+  double attendedSeconds;
 
   bool get unfinished => seconds == null;
 }
@@ -208,6 +219,47 @@ class Contract {
   DateTime? get forkArrivedAtUtc =>
       pauses.isNotEmpty && pauses.last.unfinished ? pauses.last.startUtc : null;
 
+  /// Текущая остановка — та, что ещё идёт. `null`, если наёмник не стоит.
+  ForkPause? get _standing =>
+      pauses.isNotEmpty && pauses.last.unfinished ? pauses.last : null;
+
+  /// Сколько из текущего стояния прошло с открытой игрой.
+  double get forkAttendedSeconds => _standing?.attendedSeconds ?? 0.0;
+
+  /// Засчитывает [seconds] текущего стояния как прошедшие С ИГРОКОМ.
+  ///
+  /// Зовётся часами приложения, пока игра на экране. Не «время с прошлого
+  /// кадра» вообще: шаг, перескочивший через сворачивание приложения, сюда не
+  /// попадает — иначе восемь часов в фоне засчитались бы наёмнику как восемь
+  /// часов при игроке (`GameController.tick`).
+  void attendFork(double seconds) {
+    final pause = _standing;
+    if (pause == null || seconds <= 0) return;
+    pause.attendedSeconds += seconds;
+  }
+
+  /// Сколько наёмник ещё простоит на этой развилке, прежде чем решит сам.
+  ///
+  /// Два срока сразу, и берётся меньший: [Tuning.forkWaitSeconds] времени с
+  /// игроком и [Tuning.forkWaitAwaySeconds] без него. Присутствующий видит
+  /// привычный сорокапятисекундный отсчёт; отсутствующему отмерено столько,
+  /// чтобы он успел прийти по уведомлению (`docs/02-TECH.md` §3).
+  Duration forkWaitLeftAt(DateTime now) {
+    final arrived = forkArrivedAtUtc;
+    if (arrived == null) return Duration.zero;
+
+    final standing =
+        now.toUtc().difference(arrived).inMilliseconds / 1000.0;
+    final attended = forkAttendedSeconds;
+    final away = standing - attended;
+
+    final left = math.min(
+      Tuning.forkWaitSeconds - attended,
+      Tuning.forkWaitAwaySeconds - away,
+    );
+    return left <= 0 ? Duration.zero : Duration(seconds: left.ceil());
+  }
+
   /// Сколько всего простояно за спуск. Для сохранения и замеров.
   double get waitedSeconds =>
       pauses.fold(0.0, (sum, p) => sum + (p.seconds ?? 0.0));
@@ -358,8 +410,10 @@ class PlayerProfile {
     int maxDepthEver = 0,
     int brandRank = 0,
     Map<int, int>? bestDepthByBrand,
+    Iterable<int>? recentDepths,
     QuestLog? quests,
   })  : _maxDepthEver = maxDepthEver,
+        recentDepths = [...?recentDepths],
         bestDepthByBrand = {...?bestDepthByBrand},
         quests = quests ?? QuestLog(),
         _brandRank = brandRank,
@@ -438,6 +492,34 @@ class PlayerProfile {
 
   /// Доступен ли разлом в момент [now].
   bool riftAvailable(DateTime now) => riftDoneOn != DailyRift.dayOf(now);
+
+  /// Открытые достижения: идентификатор → когда открыто (UTC).
+  ///
+  /// Пока в игре нет ни одного достижения, и поле заведено ПУСТЫМ намеренно
+  /// — по тому же правилу, что и цепочка миграций: место в формате стоит
+  /// ничего, а его отсутствие стоит миграции, придуманной задним числом уже
+  /// поверх существующих сейвов.
+  ///
+  /// **Время, а не флаг.** «Открыто» — это ответ на вопрос «да или нет»,
+  /// а «открыто 3 сентября» отвечает ещё и на «в каком порядке» и «на каком
+  /// спуске». Первое достижение, про которое захочется спросить «его берут
+  /// до или после первой стены», уже не сможет ответить, если хранился флаг.
+  ///
+  /// **Здесь, в профиле, — значит сезонное.** Профиль обнуляется вместе с
+  /// сезоном (`save/season.dart`), и лежащее в нём достижение обнулится
+  /// тоже. Это верно для «взять 50 этажей в сезоне» и неверно для «сыграть
+  /// тысячу спусков за всё время»: вечным достижениям место в документе
+  /// аккаунта, а не в сейве сезона. Разделение важно завести раньше первого
+  /// достижения — потом переносить придётся вместе с игроками.
+  final Map<String, DateTime> achievements = {};
+
+  /// Открывает достижение. Повторное открытие ничего не меняет: время
+  /// ПЕРВОГО раза — это и есть то, что хранится.
+  bool unlockAchievement(String id, DateTime nowUtc) {
+    if (achievements.containsKey(id)) return false;
+    achievements[id] = nowUtc.toUtc();
+    return true;
+  }
 
   /// Добыча, ждущая разбора: игрок ещё не решил, что с ней делать.
   ///
@@ -755,6 +837,39 @@ class PlayerProfile {
   int get maxDepthEver => _maxDepthEver;
   int _maxDepthEver;
 
+  /// Глубины последних закрытых спусков, свежий — в конце.
+  ///
+  /// Заведено ради одной цены — задатка наёмника, — но чинит не цену, а
+  /// **храповик**. Задаток задуман как сток, растущий вместе с доходом
+  /// ([Curves.hireCostScale]), и это верно ровно до первого неудачного рана.
+  /// Дальше рекорд, который не умеет снижаться, держит цену на пике, а доход
+  /// падает вместе с достигнутой глубиной — экспоненциально. Замер кампании:
+  /// пик 133 этажа на 21-м контракте, потом **обвал до 63 и ровная линия на
+  /// двадцать ранов вперёд**, одинаково на трёх сидах. Разрыв на этих числах
+  /// — множитель найма 25× против дохода, упавшего в 83 раза.
+  ///
+  /// Для игрока это выглядит хуже, чем «цели кончились»: его собственные
+  /// числа идут вниз, и выхода из этого нет — рекорд не снижается никогда.
+  final List<int> recentDepths;
+
+  /// Сколько спусков помнится. Пять — потому что решение здесь принимает
+  /// МЕДИАНА (см. [hireDepth]), а на пяти она уже устойчива к одному
+  /// случайному провалу и ещё подвижна к настоящей просадке.
+  static const recentRuns = 5;
+
+  /// Глубина, по которой считается задаток: медиана последних спусков.
+  ///
+  /// Не рекорд — он и есть храповик. Не последний ран — тогда один провал
+  /// обваливал бы цену, и «слить спуск нарочно, чтобы купить Легенду дёшево»
+  /// стало бы выгодным ходом. Медиана берёт и то и другое: один сорванный ран
+  /// её не двигает, а три из пяти — двигают, и три сорванных рана стоят
+  /// дороже, чем экономия на задатке.
+  int get hireDepth {
+    if (recentDepths.isEmpty) return 0;
+    final sorted = [...recentDepths]..sort();
+    return sorted[sorted.length ~/ 2];
+  }
+
   bool get hasUncollectedHaul =>
       contracts.any((c) => c.state == ContractState.awaitingCollection);
 
@@ -815,18 +930,40 @@ class PlayerProfile {
   /// весь спуск дал 1 ч 40 мин простоя за двадцать спусков — и при этом
   /// вовлечённый игрок исчерпывал бы его раньше отсутствующего.
   ///
-  /// Так отсутствие стоит ровно 45 секунд за спуск, а присутствие не стоит
-  /// ничего: наказывать за отсутствие в idle-игре нельзя, можно только
-  /// вознаграждать присутствие.
+  /// Сроков два, и кончиться должен любой из них. Присутствующему отмерено
+  /// [Tuning.forkWaitSeconds] — сорок пять секунд ЕГО времени, тех, что он
+  /// провёл в открытой игре. Отсутствующему — [Tuning.forkWaitAwaySeconds]
+  /// настенных, и это не щедрость, а условие работоспособности уведомления:
+  /// оно зовёт именно к развилке, а неточный будильник Android доставляет его
+  /// минутами позже. Сорок пять секунд на всех означало, что пришедший по
+  /// зову не заставал на развилке никого и читал в игре другую подсказку —
+  /// ровно это и сообщила проба.
+  ///
+  /// Присутствие по-прежнему не стоит ничего: пока игрок здесь, срок
+  /// отсутствия не идёт, и наоборот.
   bool _expireFork(Contract contract, DateTime utc) {
     final arrived = contract.forkArrivedAtUtc;
     if (arrived == null) return false;
 
-    final waiting = utc.difference(arrived).inMilliseconds / 1000.0;
-    if (waiting < Tuning.forkWaitSeconds) return false;
+    final standing = utc.difference(arrived).inMilliseconds / 1000.0;
+    final attended = contract.forkAttendedSeconds;
+    final away = standing - attended;
+
+    // Сколько наёмник в итоге простоял. Не разница дат: срок мог кончиться
+    // задолго до того, как игра открылась и это заметила, а спуск считается
+    // от длины простоя — записав сюда лишнее, мы отодвинули бы гибель на всё
+    // время, что игрок не заходил.
+    final double waited;
+    if (attended >= Tuning.forkWaitSeconds) {
+      waited = attended;
+    } else if (away >= Tuning.forkWaitAwaySeconds) {
+      waited = attended + Tuning.forkWaitAwaySeconds;
+    } else {
+      return false;
+    }
 
     contract
-      ..pauses.last.seconds = Tuning.forkWaitSeconds
+      ..pauses.last.seconds = waited
       ..forkWaitingSpent = true
       ..state = ContractState.descending;
 
@@ -849,7 +986,7 @@ class PlayerProfile {
   double hireCostOf(Mercenary m) =>
       m.id == _volunteer?.id
           ? 0.0
-          : Roster.hireCost(m.rank, maxDepthEver: maxDepthEver);
+          : Roster.hireCost(m.rank, depth: hireDepth);
 
   // --- Доброволец -----------------------------------------------------------
 
@@ -1034,22 +1171,7 @@ class PlayerProfile {
   /// [pause] = `false` доводит спуск до конца по приказу: так добирается ран,
   /// у которого кончился бюджет ожидания.
   void _simulateSegment(Contract contract, {bool pause = true}) {
-    final profile = contract.replayProfile();
-
-    contract.result = DescentSimulator(
-      profile: profile,
-      seed: contract.seed,
-      brandRank: contract.brandRank,
-      backpackCapacityOverride: contract.mercenary.backpackSlots,
-      salvageRate: contract.outpost.salvageRate,
-      outpostLootQuality: contract.outpost.lootQuality,
-      outpostLootQuantity: contract.outpost.lootQuantity,
-      restHealBonus: contract.outpost.restHealBonus,
-      forkPolicy: contract.forkPolicy,
-      forkChoices: List.of(contract.forkChoices),
-      pauseAtUnchosenFork: pause,
-      riftModifier: contract.riftModifier,
-    ).run();
+    contract.result = _runDescent(contract, pause: pause);
 
     // Конец отрезка по настенным часам. Для отрезка, упёршегося в развилку,
     // это момент, когда наёмник до неё дойдёт; для последнего — момент
@@ -1060,6 +1182,67 @@ class PlayerProfile {
           ((contract.result!.totalSeconds + contract.waitedSeconds) * 1000)
               .round(),
     ));
+  }
+
+  /// Сам прогон. Отдельно от [_simulateSegment], потому что спуск считают
+  /// дважды и по разным поводам: один раз — чтобы записать в контракт, другой
+  /// — чтобы заглянуть вперёд, ничего не трогая ([projectUnattendedEnd]).
+  RunResult _runDescent(Contract contract, {required bool pause}) =>
+      DescentSimulator(
+        profile: contract.replayProfile(),
+        seed: contract.seed,
+        brandRank: contract.brandRank,
+        backpackCapacityOverride: contract.mercenary.backpackSlots,
+        salvageRate: contract.outpost.salvageRate,
+        outpostLootQuality: contract.outpost.lootQuality,
+        outpostLootQuantity: contract.outpost.lootQuantity,
+        restHealBonus: contract.outpost.restHealBonus,
+        forkPolicy: contract.forkPolicy,
+        forkChoices: List.of(contract.forkChoices),
+        pauseAtUnchosenFork: pause,
+        riftModifier: contract.riftModifier,
+      ).run();
+
+  /// Чем спуск кончится, если игрок на развилку так и не придёт: когда и на
+  /// каком этаже. `null` — впереди развилки нет, конец отрезка и есть конец
+  /// спуска, и заглядывать некуда.
+  ///
+  /// Нужно ровно для одного: поставить уведомление о гибели ЗАРАНЕЕ. Пока
+  /// приложение закрыто, игра не считает ничего и переставить будильник
+  /// некому — а отрезок до развилки кончается раньше, чем спуск. Без этого
+  /// взгляда вперёд игрок, пропустивший развилку, не получал о спуске больше
+  /// ни одной вести: наёмник доходил и погибал в тишине.
+  ///
+  /// Смотреть вперёд можно потому, что решение отсутствующего известно
+  /// заранее: его принимает приказ, а приказ — чистая функция от сида и
+  /// глубины (`ForkChooser`). Придёт игрок и решит иначе — уведомление
+  /// переставят по факту решения.
+  ({DateTime endsAtUtc, int depth})? projectUnattendedEnd(Contract contract) {
+    final result = contract.result;
+    if (result == null || !result.awaitingFork) return null;
+
+    final projected = _runDescent(contract, pause: false);
+    final standing = contract.forkAttendedSeconds + Tuning.forkWaitAwaySeconds;
+
+    return (
+      endsAtUtc: contract.startedAtUtc.add(Duration(
+        milliseconds: ((projected.totalSeconds +
+                    contract.waitedSeconds +
+                    standing) *
+                1000)
+            .round(),
+      )),
+      depth: projected.maxDepth,
+    );
+  }
+
+  /// Засчитывает [seconds] стояния всем, кто сейчас на развилке, как время,
+  /// проведённое с игроком. Зовётся часами приложения, пока игра на экране.
+  void attendForks(double seconds) {
+    if (seconds <= 0) return;
+    for (final contract in contracts) {
+      if (contract.state == ContractState.atFork) contract.attendFork(seconds);
+    }
   }
 
   /// Решение игрока на развилке: [option] — индекс пути в `Fork.options`.
@@ -1202,6 +1385,13 @@ class PlayerProfile {
     }
 
     if (result.maxDepth > _maxDepthEver) _maxDepthEver = result.maxDepth;
+
+    // Память о последних спусках: по ней живёт цена найма, и потому она
+    // пополняется здесь же, где рекорд, — на закрытии контракта.
+    recentDepths.add(result.maxDepth);
+    if (recentDepths.length > recentRuns) {
+      recentDepths.removeRange(0, recentDepths.length - recentRuns);
+    }
 
     // Рекорд ранга — то, чем открывается следующая ступень лестницы.
     final atBrand = contract.brandRank;
@@ -1443,7 +1633,24 @@ class PlayerProfile {
     // а базовые статы у него дело наживное (Кузница углубляет). Мерить его
     // ilvl'ом значило бы продавать чейз-предмет, найденный неглубоко, —
     // ровно ту находку, ради которой игра и играется.
-    if (!incoming.isRelic && stash[victim].ilvl >= incoming.ilvl) return false;
+    //
+    // Привилегия у ПРАВИЛА, а не у предмета. Реликт, чьего правила в сундуке
+    // ещё нет, стоит слота при любом уровне — это и есть защита чейза. Лишняя
+    // копия правила, которое уже лежит, никакой привилегии не имеет и ведёт
+    // себя как обычная вещь.
+    //
+    // Разница не косметическая: пока лишняя копия входила без сравнения
+    // уровней, она и вытесненная ею вещь менялись местами до бесконечности —
+    // вытесненный возвращается в разбор, вытесняет обидчика обратно, и так
+    // всегда. Разбор добычи при этом не падает и не врёт, он просто не
+    // заканчивается: кампания вставала намертво на восьмом контракте.
+    final loser = stash[victim];
+    final chase = incoming.isRelic && _relicRuleMissing(incoming);
+    if (loser.isRelic) {
+      if (incoming.ilvl <= loser.ilvl) return false;
+    } else if (!chase && loser.ilvl >= incoming.ilvl) {
+      return false;
+    }
 
     pendingLoot.add(stash.removeAt(victim));
     return keepLoot(incoming);
@@ -1460,10 +1667,60 @@ class PlayerProfile {
     int? worst;
     for (var i = 0; i < stash.length; i++) {
       final item = stash[i];
-      if (item.isRelic) continue;
+      if (item.isRelic && !_isSpareRelic(i)) continue;
       if (kind != null && item.kind != kind) continue;
       if (worst == null || item.ilvl < stash[worst].ilvl) worst = i;
     }
     return worst;
+  }
+
+  /// Сколько копий одного реликта имеет смысл держать: столько, сколько у
+  /// его вида слотов. Колец два — значит и одинаковых колец можно надеть два.
+  int _relicCopiesWanted(Item item) =>
+      Equipment.slotKinds.where((k) => k == item.kind).length;
+
+  /// Нет ли правила этого реликта в сундуке вовсе.
+  ///
+  /// Именно правило и есть чейз: второй «Пепельный завет» не добавляет игре
+  /// ничего, кроме занятой клетки, — а первый меняет сборку целиком.
+  bool _relicRuleMissing(Item incoming) {
+    final id = incoming.relicId;
+    if (id == null) return false;
+    final have = stash.where((i) => i.relicId == id).length;
+    return have < _relicCopiesWanted(incoming);
+  }
+
+  /// Лишний ли это реликт: такой же уже есть, и не хуже.
+  ///
+  /// Правило «реликты не вытесняются никогда» защищало чейз-предмет и
+  /// оборачивалось ловушкой. Реликт падает примерно раз за спуск, и за
+  /// двадцать спусков сундук забивается ими ЦЕЛИКОМ: замер кампании — 100 из
+  /// 100 слотов, ни одной обычной вещи. Дальше вытеснять нечего, и любая
+  /// находка с глубины рекорда просто продаётся: сборка замирает на ilvl 115
+  /// при рекорде 131, а глубина обваливается вдвое и не возвращается.
+  ///
+  /// Правило поэтому уточняется, а не отменяется: неповторимо ПРАВИЛО, а не
+  /// экземпляр. Второй «Пепельный завет» с глубины 40 при уже лежащем с
+  /// глубины 115 — не находка, а занятая клетка. Копий держится ровно
+  /// столько, сколько слотов у этого вида: колец два, значит и одинаковых
+  /// колец можно носить два.
+  bool _isSpareRelic(int index) {
+    final item = stash[index];
+    final id = item.relicId;
+    if (id == null) return false;
+
+    final slots = _relicCopiesWanted(item);
+    var betterOrEqual = 0;
+    for (var i = 0; i < stash.length; i++) {
+      if (i == index) continue;
+      final other = stash[i];
+      if (other.relicId != id) continue;
+      // Равные по уровню считаются в пользу того, что лежит раньше: иначе две
+      // одинаковые вещи объявляли бы лишними друг друга и вытеснялись обе.
+      if (other.ilvl > item.ilvl || (other.ilvl == item.ilvl && i < index)) {
+        betterOrEqual++;
+      }
+    }
+    return betterOrEqual >= slots;
   }
 }

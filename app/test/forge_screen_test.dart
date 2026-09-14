@@ -12,6 +12,7 @@ import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/forge_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Крафт проверяется через экран: правила уже покрыты тестами ядра, здесь
 /// важно, что игрок может до них дотянуться и что операция меняет состояние,
@@ -78,7 +79,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: ForgeScreen(controller: controller),
     ));
     await tester.pump();

@@ -40,6 +40,11 @@ class SaveCodec {
         'bestDepthByBrand': {
           for (final e in p.bestDepthByBrand.entries) '${e.key}': e.value,
         },
+        // Память о последних спусках. В сейве, а не только в памяти игры,
+        // потому что по ней считается задаток: без записи каждый перезапуск
+        // обнулял бы цену найма до единицы, и «закрыть игру перед покупкой
+        // Легенды» стало бы самым выгодным ходом в ней.
+        'recentDepths': p.recentDepths,
         // Задания: что закрыто и сколько всего пройдено. Счётчики истории
         // нигде больше не живут — профиль хранит состояние, а не прошлое.
         'quests': {
@@ -61,6 +66,13 @@ class SaveCodec {
         'riftBestDepth': p.riftBestDepth,
         'shards': [for (final shard in p.shards) encodeShard(shard)],
         'contracts': [for (final c in p.contracts) encodeContract(c)],
+        // Достижения: когда открыто, а не «открыто». Время нельзя добавить
+        // задним числом — флаг, поставленный год назад, не помнит, когда его
+        // поставили.
+        'achievements': {
+          for (final e in p.achievements.entries)
+            e.key: e.value.toUtc().toIso8601String(),
+        },
       };
 
   static PlayerProfile decodeProfile(
@@ -79,6 +91,13 @@ class SaveCodec {
       // Сейвы до лестницы поля не знают, и это правда: они играли на нулевом
       // ранге, и доказывать им было нечего.
       bestDepthByBrand: _intMap(j['bestDepthByBrand']),
+      // Сейвы до этого поля отдают пустую память — то есть цену найма как у
+      // новичка. Это правда мягче к игроку, чем правда: он приходит с
+      // рекордом, но игра не знает, что он сейчас может. Первый же закрытый
+      // спуск это исправит, а вот обратное правило — «нет записи, значит
+      // считаем по рекорду» — вернуло бы ровно тот храповик, ради которого
+      // поле и заведено.
+      recentDepths: _ints(j['recentDepths']),
       // Сейвы до заданий журнала не знают, и это правда: у них всё было
       // открыто древом Эха. Пустой журнал вернёт их к стартовому набору —
       // зато цепочки будут проходиться заново и в правильном порядке.
@@ -92,6 +111,15 @@ class SaveCodec {
     profile
       ..riftDoneOn = j['riftDoneOn'] == null ? null : _int(j['riftDoneOn'])
       ..riftBestDepth = _int(j['riftBestDepth']);
+
+    // Достижение с неразобранным временем не выбрасывается: открытое остаётся
+    // открытым, а дата — это подробность. Отобрать у игрока значок из-за
+    // испорченной строки было бы худшим из двух исходов.
+    _map(j['achievements']).forEach((id, raw) {
+      if (id.isEmpty) return;
+      profile.achievements[id] =
+          DateTime.tryParse('$raw')?.toUtc() ?? DateTime.utc(1970);
+    });
 
     for (final raw in _list(j['pendingLoot'])) {
       final item = decodeItem(_map(raw), issues, 'pendingLoot');
@@ -390,6 +418,10 @@ class SaveCodec {
             {
               'at': pause.startUtc.toUtc().toIso8601String(),
               if (pause.seconds != null) 'seconds': pause.seconds,
+              // Сколько из остановки прошло при игроке. Без этого числа
+              // наёмник, застигнутый сохранением на развилке, после загрузки
+              // получал бы отсчёт заново — и стоял бы дольше отмеренного.
+              if (pause.attendedSeconds > 0) 'attended': pause.attendedSeconds,
             },
         ],
         'outpost': {
@@ -445,6 +477,10 @@ class SaveCodec {
       contract.pauses.add(ForkPause(
         at,
         pause['seconds'] == null ? null : _double(pause['seconds']),
+        // Сейвы до срока отсутствия поля не знают: ноль означает «всё
+        // стояние прошло без игрока», и для старого сейва это верно — там
+        // другого срока и не было.
+        _double(pause['attended']),
       ));
     }
 
@@ -623,6 +659,14 @@ class SaveCodec {
     return null;
   }
 }
+
+/// Список целых из сейва. Правило то же, что у строк: чужое выпадает, а не
+/// роняет открытие.
+List<int> _ints(Object? raw) => [
+      if (raw is List)
+        for (final v in raw)
+          if (v is int) v else if (v is num) v.round(),
+    ];
 
 /// Список строк из сейва. Чужие типы просто выпадают: сейв с мусором в списке
 /// узлов должен открыться, потеряв мусор, а не отказаться открываться.

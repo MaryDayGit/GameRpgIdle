@@ -1,4 +1,4 @@
-# rift_app · Android-клиент «Расселины»
+# rift_app · Android-клиент Riftmark
 
 Flutter (UI/UX) + Flame (боевая сцена) поверх пакета `rift` — чистого
 Dart-ядра, лежащего в корне репозитория и подключённого по пути (`path: ..`).

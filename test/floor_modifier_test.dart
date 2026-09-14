@@ -14,6 +14,8 @@ import 'package:rift/core/sim/fork.dart';
 import 'package:rift/core/sim/loot.dart';
 import 'package:rift/core/sim/rng.dart';
 import 'package:rift/core/sim/triggers.dart';
+import 'package:rift/core/content/floor_modifier_def.dart';
+import 'package:rift/core/model/lang.dart';
 import 'package:test/test.dart';
 
 import '../tool/content_io.dart';
@@ -46,6 +48,22 @@ RunResult _run({int seed = 42, int floorCap = 40, double power = 3.0}) =>
     ).run(floorCap: floorCap);
 
 void main() {
+  test('третий путь называется на языке игры, а не по-русски всегда', () {
+    // Найдено на съёмке трейлера: в английской сборке путь назывался
+    // «Abundance и Swelter» — русский союз посреди английского названия.
+    // Составное имя собирается склейкой, и склейка про язык не знала.
+    const a = FloorModifierDef(
+        id: 'a', name: 'Swelter', minus: '', plus: '', effects: {});
+    const b = FloorModifierDef(
+        id: 'b', name: 'Abundance', minus: '', plus: '', effects: {});
+
+    Lang.current = Lang.en;
+    expect(FloorModifierDef.combine(a, b).name, 'Swelter and Abundance');
+
+    Lang.current = Lang.ru;
+    expect(FloorModifierDef.combine(a, b).name, 'Swelter и Abundance');
+  });
+
   setUp(() => loadContentFromDisk().apply());
 
   group('развилка', () {

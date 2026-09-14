@@ -8,6 +8,7 @@ import 'package:rift/core/sim/fork_cost.dart';
 import '../state/game_controller.dart';
 import 'format.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Развилка: где наёмник стоит и куда его послать.
 ///
@@ -51,19 +52,48 @@ class ForkCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          // Этаж, на который он ВОЙДЁТ, а не тот, что позади: выбранный
-          // путь действует начиная с него. `currentFloorAt` показывал бы
-          // пройденный — «остановился у этажа 1», стоя перед третьим.
-          S.forkStanding(
-            she: she,
-            floor: contract.result!.maxDepth + 1,
-            waiting: left.inSeconds > 0
-                ? S.forkWaitsMore(duration(left))
-                : S.forkWaitsNoMore,
-            order: contract.forkPolicy.title.toLowerCase(),
+        // Ожидание — плашкой с часами, и она теплеет к концу. Строкой
+        // серого текста оно терялось, а это единственное в карточке, что
+        // торопит: не ответите — наёмник решит сам.
+        Container(
+          padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+          decoration: BoxDecoration(
+            color: (left.inSeconds <= 15 ? RiftColors.warn : RiftColors.info)
+                .withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+            border: Border.all(
+              color: (left.inSeconds <= 15 ? RiftColors.warn : RiftColors.info)
+                  .withValues(alpha: 0.4),
+            ),
           ),
-          style: const TextStyle(fontSize: 12, color: Colors.white60),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.hourglass_bottom_rounded,
+                  size: 18,
+                  color: left.inSeconds <= 15
+                      ? RiftColors.warn
+                      : RiftColors.info),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  // Этаж, на который он ВОЙДЁТ, а не тот, что позади:
+                  // выбранный путь действует начиная с него.
+                  // `currentFloorAt` показывал бы пройденный — «остановился
+                  // у этажа 1», стоя перед третьим.
+                  S.forkStanding(
+                    she: she,
+                    floor: contract.result!.maxDepth + 1,
+                    waiting: left.inSeconds > 0
+                        ? S.forkWaitsMore(duration(left))
+                        : S.forkWaitsNoMore,
+                    order: contract.forkPolicy.title.toLowerCase(),
+                  ),
+                  style: RiftText.small.copyWith(color: RiftColors.ink),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -77,8 +107,8 @@ class ForkCard extends StatelessWidget {
                       : '${S.forkHealth(she: she, left: percent(worst))}'
                           '${S.forkHealthNearlyOut(she: she)}',
           style: TextStyle(
-            fontSize: 12,
-            color: worst > 0.35 ? Colors.white38 : Colors.orangeAccent,
+            fontSize: 13.5,
+            color: worst > 0.35 ? RiftColors.inkFaint : RiftColors.bad,
           ),
         ),
         const SizedBox(height: 12),
@@ -95,16 +125,24 @@ class ForkCard extends StatelessWidget {
         // а то, чего наёмник не сделает без игрока. Если он выглядит как
         // два соседних, награда за присутствие превращается в третью
         // одинаковую кнопку.
-        Text(
-          // Раньше здесь было «один он на такое не пойдёт»: третий путь
-          // задумывался как ставка с двойной платой. Платы у него больше
-          // нет — платой служит присутствие, — и подпись обязана говорить
-          // именно это.
-          S.forkBoldOnlyWhilePresent,
-          style: TextStyle(
-            fontSize: 11,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+        Row(
+          children: [
+            const Icon(Icons.auto_awesome, size: 16, color: RiftColors.gold),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                // Раньше здесь было «один он на такое не пойдёт»: третий путь
+                // задумывался как ставка с двойной платой. Платы у него
+                // больше нет — платой служит присутствие, — и подпись обязана
+                // говорить именно это.
+                S.forkBoldOnlyWhilePresent,
+                style: RiftText.caption.copyWith(
+                  color: RiftColors.gold,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         _ForkOption(
@@ -140,14 +178,22 @@ class _ForkOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
-
     return OutlinedButton(
       onPressed: onPick,
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        side: bold ? BorderSide(color: accent) : null,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        // Третий путь — золотой рамкой на тёплой подложке: он не «ещё один
+        // вариант», а награда за то, что игрок пришёл.
+        backgroundColor: bold
+            ? RiftColors.gold.withValues(alpha: 0.08)
+            : RiftColors.raised,
+        side: BorderSide(
+          color: bold
+              ? RiftColors.gold.withValues(alpha: 0.75)
+              : RiftColors.lineStrong,
+          width: bold ? 1.5 : 1,
+        ),
         // Прямоугольник со скруглением, а не «стадион» из темы: у стадиона
         // края — полуокружности, и многострочный текст вылезал за них
         // углами. Кнопка в теме рассчитана на одну короткую строку, а здесь
@@ -160,26 +206,37 @@ class _ForkOption extends StatelessWidget {
         children: [
           Text(
             modifier.name,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            style: RiftText.heading.copyWith(
+              color: bold ? RiftColors.gold : RiftColors.ink,
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            modifier.minus,
-            style: const TextStyle(fontSize: 12, color: Colors.orangeAccent),
+          const SizedBox(height: 6),
+          // Плата первой и со знаком: развилка — это размен, и минус не
+          // имеет права читаться мельче плюса.
+          // У третьего пути платы нет — и это его награда, а не оговорка:
+          // «Платы нет» красным со знаком минус читалось как штраф.
+          _Effect(
+            icon: modifier.penalties.isEmpty
+                ? Icons.check_circle_outline
+                : Icons.remove_circle_outline,
+            text: modifier.minus,
+            color: modifier.penalties.isEmpty ? RiftColors.gold : RiftColors.bad,
           ),
-          Text(
-            modifier.plus,
-            style: const TextStyle(fontSize: 12, color: Colors.lightGreenAccent),
+          const SizedBox(height: 2),
+          _Effect(
+            icon: Icons.add_circle_outline,
+            text: modifier.plus,
+            color: RiftColors.good,
           ),
           if (cost.text case final text?) ...[
             const SizedBox(height: 4),
             Text(
               cost.harmless ? '$text ${S.forkCostHarmless}' : text,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12.5,
                 color: cost.harmless
-                    ? Colors.lightGreenAccent.withValues(alpha: 0.75)
-                    : Colors.white38,
+                    ? RiftColors.good.withValues(alpha: 0.75)
+                    : RiftColors.inkFaint,
               ),
             ),
           ],
@@ -187,4 +244,32 @@ class _ForkOption extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// Строка платы или награды: значок и текст одного цвета.
+class _Effect extends StatelessWidget {
+  const _Effect({required this.icon, required this.text, required this.color});
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 15, color: color),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: RiftText.small.copyWith(color: color, height: 1.3),
+            ),
+          ),
+        ],
+      );
 }

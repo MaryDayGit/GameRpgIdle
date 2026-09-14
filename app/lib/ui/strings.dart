@@ -67,6 +67,89 @@ class S {
         'A short buzz when something lands',
       ).text;
 
+  static String get settingsAnalytics =>
+      const Phrase('Статистика игры', 'Gameplay stats').text;
+
+  // Подпись говорит, ЧТО уходит, а не «помогите нам стать лучше». Игрок
+  // выключает то, чего не понимает, а «на какой глубине погиб» понятно.
+  static String get settingsAnalyticsAbout => const Phrase(
+        'Обезличенно: глубина, сборка, что убило. Ничего о вас',
+        'Anonymous: depth, build, what killed you. Nothing about you',
+      ).text;
+
+  // --- Аккаунт ---------------------------------------------------------------
+
+  static String get accountTitle =>
+      const Phrase('Сохранение в облаке', 'Cloud save').text;
+
+  // Подпись говорит, что игрок ПОТЕРЯЕТ без привязки, а не «войдите в
+  // аккаунт». Вход — это цена; сорок этажей, пережившие переустановку, —
+  // это то, за что её платят.
+  static String get accountAnonymousAbout => const Phrase(
+        'Прогресс живёт только на этом телефоне. Переустановка сотрёт его',
+        'Progress lives on this phone only. Reinstalling wipes it',
+      ).text;
+
+  static String get accountOfflineAbout => const Phrase(
+        'Нет связи с сервером. Игра идёт, сохранение — на телефоне',
+        'No server connection. The game runs, the save stays on the phone',
+      ).text;
+
+  static String get accountLinkedAbout => const Phrase(
+        'Прогресс переживёт переустановку и переезд на другой телефон',
+        'Progress survives a reinstall and a move to another phone',
+      ).text;
+
+  static String get accountLink =>
+      const Phrase('Привязать Google', 'Link Google').text;
+
+  static String get accountSignOut => const Phrase('Выйти', 'Sign out').text;
+
+  static String get accountLinkFailed => const Phrase(
+        'Не удалось привязать. Попробуйте позже',
+        'Could not link. Try again later',
+      ).text;
+
+  static String get accountLinkedNow => const Phrase(
+        'Готово: прогресс уехал в облако',
+        'Done: progress is in the cloud',
+      ).text;
+
+  static String get accountAlreadyInUse => const Phrase(
+        'Под этим Google уже есть сохранение',
+        'This Google account already has a save',
+      ).text;
+
+  // --- Расхождение сохранений ------------------------------------------------
+
+  static String get syncConflictTitle =>
+      const Phrase('Два сохранения', 'Two saves').text;
+
+  // Вопрос задан про ВЫБОР, а не про ошибку: расхождение — это нормальное
+  // следствие игры на двух устройствах, и пугать им незачем. Пугает другое —
+  // то, что одно из двух не переживёт ответа, и об этом сказано прямо.
+  static String get syncConflictAbout => const Phrase(
+        'Здесь и в облаке лежат разные сохранения. Выберите, какое оставить '
+            '— второе будет перезаписано',
+        'This phone and the cloud hold different saves. Pick the one to keep '
+            '— the other will be overwritten',
+      ).text;
+
+  static String get syncThisPhone =>
+      const Phrase('На этом телефоне', 'On this phone').text;
+
+  static String get syncCloud => const Phrase('В облаке', 'In the cloud').text;
+
+  /// Сводка сохранения: рекорд, спуски, Застава. Одной строкой, потому что
+  /// выбирают именно по ней — дата у idle-игры почти всегда одна и та же.
+  static String syncSummary(int depth, int runs, int outpost) => Phrase(
+        'Рекорд $depth · спусков $runs · Застава $outpost',
+        'Record $depth · runs $runs · Outpost $outpost',
+      ).text;
+
+  static String syncSeen(String when) =>
+      Phrase('Были здесь $when', 'Last seen $when').text;
+
   // --- Обучение --------------------------------------------------------------
 
   static String get settingsTutorial =>
@@ -179,10 +262,9 @@ class S {
 
   static String echoTreeAbout(int bought, int total) => Lang.current == Lang.ru
       ? 'Куплено ${plural(bought, "узел", "узла", "узлов")} из $total. '
-          'Цена растёт от числа купленных, поэтому дешёвой ветки нет.'
+          'Каждый купленный узел дорожает следующий.'
       : '${pluralEn(bought, "node")} of $total bought. '
-          'Every one you take pushes up the price of the next, so no branch '
-          'stays cheap.';
+          'Each purchase raises the price of the next.';
 
   // --- Дерево пассивок -------------------------------------------------------
 
@@ -295,10 +377,10 @@ class S {
       : 'Stash · ${outOf(total, slots)}';
 
   static String get stashFull => const Phrase(
-        'Сундук полон: всё, что не влезет из новой добычи, уйдёт в золото. '
-            'Переплавьте лишнее или поднимите Хранилище.',
-        'The stash is full: whatever will not fit from the next haul turns '
-            'to gold. Melt down the surplus, or upgrade the Vault.',
+        'Сундук полон — лишняя добыча уйдёт в золото. Переплавьте ненужное '
+            'или улучшите Хранилище.',
+        'The stash is full — extra loot turns to gold. Melt what you do not '
+            'need or upgrade the Vault.',
       ).text;
 
   static String get stashEmpty => const Phrase(
@@ -348,9 +430,8 @@ class S {
   }
 
   static String get stashNobodyToEquip => const Phrase(
-        'Надеть некому: наёмник в бездне, и снаряжение заперто до его гибели.',
-        'No one to equip: your mercenary is down in the abyss, and their gear '
-            'is locked until they fall.',
+        'Надеть некому: наёмник внизу, снаряжение заперто.',
+        'No one to equip: your mercenary is below, gear locked.',
       ).text;
 
   static String get equip => const Phrase('Надеть', 'Equip').text;
@@ -364,9 +445,8 @@ class S {
       Lang.current == Lang.ru ? 'Переплавить · $gold' : 'Salvage · $gold';
 
   static String get salvageAbout => const Phrase(
-        'Переплавка сжигает вещь в золото. Сколько выйдет — дело Алтаря.',
-        'Salvaging burns the item down to gold. How much you get is the '
-            'Altar’s business.',
+        'Переплавка превращает вещь в золото. Сколько — решает Алтарь.',
+        'Salvage turns the item into gold. The Altar decides how much.',
       ).text;
 
   // --- Разбор добычи ---------------------------------------------------------
@@ -419,9 +499,12 @@ class S {
   static String journalTitle(String merc) =>
       Lang.current == Lang.ru ? 'Спуск: $merc' : 'Descent: $merc';
 
-  static String journalFinds(int count, int capacity) => Lang.current == Lang.ru
-      ? 'Находки · ${outOf(count, capacity)}'
-      : 'Finds · ${outOf(count, capacity)}';
+  /// Вместимость показывается, только пока в неё укладываются: наёмник
+  /// несёт наверх всё найденное, и «15 из 10» читалось ошибкой счёта.
+  static String journalFinds(int count, int capacity) {
+    final amount = count > capacity ? '$count' : outOf(count, capacity);
+    return Lang.current == Lang.ru ? 'Находки · $amount' : 'Finds · $amount';
+  }
 
   static String get journalNothingNew => const Phrase(
         'Ничего нового наверх не приехало.',
@@ -595,8 +678,8 @@ class S {
   static String get battleWaveShort => const Phrase('Волна', 'Wave').text;
 
   static String get battleWatching => const Phrase(
-        'Вы только смотрите. Сборка заперта до конца контракта.',
-        'You are only watching. The build is locked until the contract ends.',
+        'Вы наблюдаете: сборка заперта до конца спуска.',
+        'Watching only: the build is locked until the descent ends.',
       ).text;
 
   static String battlePath(int floors) => Lang.current == Lang.ru
@@ -801,7 +884,11 @@ class S {
 
   // --- Застава ---------------------------------------------------------------
 
-  static String get gameTitle => const Phrase('Расселина', 'The Rift').text;
+  /// Название игры. `Phrase.same`, а не пара форм: имя не переводится —
+  /// игрок ищет в магазине и в отзывах ровно одно слово. Расселина как
+  /// МЕСТО при этом остаётся русской в русских текстах: «расселина
+  /// разошлась надвое» — это художественный текст, а не заголовок.
+  static String get gameTitle => const Phrase.same('Riftmark').text;
   static String get outpostTitle => const Phrase('Застава', 'Outpost').text;
   static String get gotIt => const Phrase('Понятно', 'Got it').text;
   static String get fine => const Phrase('Хорошо', 'Fine').text;
@@ -1127,8 +1214,8 @@ class S {
       const Phrase('Характеристики', 'Statistics').text;
 
   static String get statsTapHint => const Phrase(
-        'Нажмите, чтобы посмотреть сопротивления, ману и остальное',
-        'Tap to see resistances, mana and the rest',
+        'Все характеристики — по нажатию',
+        'Tap for all stats',
       ).text;
 
   static String get buildLocked => const Phrase(
@@ -1138,11 +1225,10 @@ class S {
       ).text;
 
   static String gearSlotHint(int stashed) => Lang.current == Lang.ru
-      ? 'Нажмите на слот, чтобы надеть предмет из сундука ($stashed). '
-          'Что наденете — то и уйдёт вниз; пустые слоты наёмник заполнит сам.'
-      : 'Tap a slot to equip something from the stash ($stashed). What you '
-          'put on is what goes down. Anything left empty they will fill from '
-          'the stash themselves.';
+      ? 'Нажмите на слот, чтобы надеть вещь из сундука ($stashed). '
+          'Пустые слоты наёмник заполнит сам.'
+      : 'Tap a slot to equip from the stash ($stashed). '
+          'Empty slots they fill themselves.';
 
   static String get gearLockedNote => const Phrase(
         'Наёмник ушёл вот с этим.',
@@ -1151,6 +1237,16 @@ class S {
 
   static String get forkOrderTitle =>
       const Phrase('Приказ на развилку', 'Standing order at forks').text;
+
+  /// Приказ — это то, что наёмник сделает БЕЗ игрока. На пробе игрок прочитал
+  /// «кидает монетку на каждой развилке» как «игра решит всё сама» — и потом
+  /// не понял, зачем уведомление зовёт его выбирать путь.
+  static String get forkOrderAbout => const Phrase(
+        'Действует, только пока вас нет. Придёте на развилку сами — '
+            'выберете путь, и откроется третий.',
+        'Applies only while you are away. Reach the fork yourself and you '
+            'pick the path — the third one included.',
+      ).text;
 
   static String get whatIsWorn => const Phrase('Что надето', 'What is worn').text;
 
@@ -1180,15 +1276,13 @@ class S {
   }
 
   static String get manaEnough => const Phrase(
-        'Маны хватает — простаивать не придётся.',
-        'Mana holds up — nothing will be left standing idle.',
+        'Маны хватает на всё.',
+        'Mana covers everything.',
       ).text;
 
   static String get manaShort => const Phrase(
-        'Расход выше восстановления — в долгом бою умения начнут простаивать. '
-            'Запас маны держит первые секунды.',
-        'Drain outruns regeneration — in a long fight abilities start '
-            'standing idle. The pool covers the opening seconds, no more.',
+        'Расход выше восстановления: в долгом бою умения будут простаивать.',
+        'Drain outruns regen: in a long fight abilities will sit idle.',
       ).text;
 
   static String abilityActive(String cooldown, String mana) =>
@@ -1204,12 +1298,10 @@ class S {
       const Phrase('Пассивное', 'Passive').text;
 
   static String get noTagMultipliers => const Phrase(
-        'Множителей по тегам пока нет. Они приходят с вещей, из дерева '
-            'пассивок и от черты наёмника — и работают только на умениях с '
-            'этим тегом.',
-        'No tag multipliers yet. They come off items, the passive tree and '
-            'the mercenary’s own trait — and count only on abilities carrying '
-            'that tag.',
+        'Множителей по тегам пока нет. Их дают вещи, пассивки и черта '
+            'наёмника.',
+        'No tag multipliers yet. Items, passives and the mercenary’s trait '
+            'grant them.',
       ).text;
 
   static String get tagDamageTitle =>
@@ -1804,12 +1896,10 @@ class S {
       : 'Shards · ${outOf(held, capacity)}';
 
   static String get shardsEmptyAbout => const Phrase(
-        'Осколок помнит, насколько удачно выпало свойство, а не само число. '
-            'Поэтому он не стареет: его можно переносить на всё более '
-            'глубокие вещи. Разберите вещь, чтобы получить первый.',
-        'A shard remembers how well a property rolled, not the number itself. '
-            'That is why it never goes stale: it can be moved onto ever '
-            'deeper items. Break an item down to get your first.',
+        'Осколок хранит удачу свойства, а не число, — поэтому не устаревает. '
+            'Разберите вещь, чтобы получить первый.',
+        'A shard keeps how lucky a roll was, not the number — so it never '
+            'goes stale. Break an item down to get your first.',
       ).text;
 
   static String stashHeader(int held, int capacity) => Lang.current == Lang.ru

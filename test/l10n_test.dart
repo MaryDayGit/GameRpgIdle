@@ -194,4 +194,19 @@ void main() {
     expect(Lang.byCode('kl'), Lang.ru);
     expect(Lang.byCode(null), Lang.ru);
   });
+
+  test('тег системной локали обрезается до языка', () {
+    // Телефон называет локаль целиком — со страной, кодировкой и вариантом.
+    // Игре нужен только язык: `ru_RU` и `ru-Cyrl-BY` — один и тот же русский,
+    // и сравнение целой строки с кодом не нашло бы ни того, ни другого.
+    expect(Lang.byTag('ru'), Lang.ru);
+    expect(Lang.byTag('ru_RU'), Lang.ru);
+    expect(Lang.byTag('ru_RU.UTF-8'), Lang.ru);
+    expect(Lang.byTag('EN-us'), Lang.en);
+
+    // Язык, которого в игре нет, — это `null`, а не русский: ответ «не знаю»
+    // нужен вызывающему, чтобы перебрать остальные предпочтения телефона.
+    expect(Lang.byTag('pt_BR'), isNull);
+    expect(Lang.byTag(''), isNull);
+  });
 }

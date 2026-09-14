@@ -30,6 +30,7 @@ class ContentPack {
     required this.tuning,
     required this.enemies,
     required this.bosses,
+    required this.guardians,
     required this.abilities,
     required this.statAffixes,
     required this.triggerAffixes,
@@ -45,6 +46,9 @@ class ContentPack {
   final TuningConfig tuning;
   final List<EnemyArchetype> enemies;
   final List<EnemyArchetype> bosses;
+
+  /// Стражи областей: те же боссы, но в своём логове и в полную силу.
+  final List<EnemyArchetype> guardians;
   final List<AbilityDef> abilities;
   final List<StatAffixDef> statAffixes;
   final List<TriggerAffixDef> triggerAffixes;
@@ -155,7 +159,8 @@ class ContentPack {
     _current = this;
     Curves.configure(curves);
     Tuning.configure(tuning);
-    Bestiary.configure(enemies: enemies, bosses: bosses);
+    Bestiary.configure(
+        enemies: enemies, bosses: bosses, guardians: guardians);
   }
 
   /// Разбирает и проверяет весь контент. Бросает [ContentException] со ВСЕМ
@@ -218,13 +223,17 @@ class ContentPack {
 
     // --- enemies.json --------------------------------------------------------
     final enemiesRoot = root('enemies');
-    enemiesRoot.checkKeys({'version', 'enemies', 'bosses'});
+    enemiesRoot.checkKeys({'version', 'enemies', 'bosses', 'guardians'});
     final enemies = [
       for (final n in enemiesRoot.children('enemies'))
         EnemyParser.parseEnemy(n),
     ];
     final bosses = [
       for (final n in enemiesRoot.children('bosses')) EnemyParser.parseBoss(n),
+    ];
+    final guardians = [
+      for (final n in enemiesRoot.children('guardians'))
+        EnemyParser.parseGuardian(n),
     ];
 
     // --- остальные файлы -----------------------------------------------------
@@ -283,7 +292,12 @@ class ContentPack {
     _checkTreeLayout(issues, passiveTree);
 
     // --- перекрёстные проверки ----------------------------------------------
-    _uniqueIds(issues, 'enemies', [...enemies, ...bosses].map((e) => e.id));
+    // Стражи считаются вместе со всеми: `frost_warden` уже занят обычным
+    // мобом («Ледяной страж»), и страж с тем же идентификатором молча
+    // одолжил бы у него силуэт. Это ровно тот класс ошибки, который видно
+    // только на экране и никогда — в тестах.
+    _uniqueIds(issues, 'enemies',
+        [...enemies, ...bosses, ...guardians].map((e) => e.id));
     _uniqueIds(issues, 'abilities', abilities.map((a) => a.id));
     _uniqueIds(issues, 'affixes_stat', statAffixes.map((a) => a.id));
     _uniqueIds(issues, 'affixes_trigger', triggerAffixes.map((a) => a.id));
@@ -476,15 +490,52 @@ class ContentPack {
     // Одновременно надеть два реликта на один слот нельзя физически, так что
     // «два взаимоисключающих правила без указания, какое сильнее» здесь не
     // возникает.
+    //
+    // Считается ОБЩИЙ пул, а не все реликты подряд: реликт с источником
+    // падает только со своего босса, и слот, у которого не осталось ничего
+    // без источника, закрыт для всех, кто до этого босса ещё не дошёл.
     final byKind = <GearKind, int>{};
     for (final r in relics) {
+      if (r.source != null) continue;
       byKind[r.kind] = (byKind[r.kind] ?? 0) + 1;
     }
     for (final kind in GearKind.values) {
       if ((byKind[kind] ?? 0) == 0) {
         issues.add('relics',
-            'для ${kind.name} нет ни одного реликта — сборка вокруг этого '
-            'слота не сможет получить правило');
+            'для ${kind.name} нет ни одного реликта общего пула — сборка '
+            'вокруг этого слота не сможет получить правило иначе как с босса');
+      }
+    }
+
+    // Страж обязан воплощать существующего босса и быть у босса один:
+    // «тот же босс в своём логове» — это отношение один к одному, и вторая
+    // запись означала бы, что игра сама не знает, кто там стоит.
+    final embodied = <String>{};
+    for (final g in guardians) {
+      final boss = g.embodies;
+      if (boss == null) continue;
+      if (!bosses.any((b) => b.id == boss)) {
+        issues.add('guardians.${g.id}.boss', 'нет такого босса: «$boss»');
+      } else if (!embodied.add(boss)) {
+        issues.add('guardians.${g.id}.boss',
+            'у босса «$boss» уже есть страж');
+      }
+      if (g.traits.isEmpty) {
+        issues.add('guardians.${g.id}.traits',
+            'страж без повадок — мешок с HP: перед таким боссом нечего '
+            'решать, кроме «хватит ли урона»');
+      }
+    }
+
+    // Источник — это адрес, по которому игрок пойдёт за вещью. Адрес,
+    // указывающий в никуда, означает реликт, который не выпадет НИКОГДА: та
+    // же беда, что и `break` по первому совпадению в розыгрыше, только
+    // заведённая контентом. Поэтому не предупреждение, а отказ.
+    for (final r in relics) {
+      final source = r.source;
+      if (source == null) continue;
+      if (!bosses.any((b) => b.id == source)) {
+        issues.add('relics.${r.id}.source', 'нет такого босса: «$source»');
       }
     }
 
@@ -518,6 +569,7 @@ class ContentPack {
       tuning: tuning,
       enemies: enemies,
       bosses: bosses,
+      guardians: guardians,
       abilities: abilities,
       statAffixes: statAffixes,
       triggerAffixes: triggerAffixes,
@@ -616,7 +668,8 @@ class ContentPack {
     'tickSeconds', 'wavesPerFloor', 'wavesPerBossFloor',
     'restSecondsBetweenFloors', 'restHealFraction', 'waveTimeoutSeconds',
     'stallCheckSeconds', 'stallProgressThreshold', 'abilitySlots',
-    'forkEveryFloors', 'forkWaitSeconds', 'boldForkLootBonus',
+    'forkEveryFloors', 'forkWaitSeconds', 'forkWaitAwaySeconds',
+    'boldForkLootBonus',
     'boldForkRarityBonus', 'boldForkEchoBonus', 'sellBonus',
     'spellReferenceRate',
     'chillSeconds',
@@ -624,7 +677,8 @@ class ContentPack {
 
   static const _lootKeys = {
     'chestItemChance', 'onboardingFloors', 'onboardingChestItemChance',
-    'bossItems', 'bigBossItems', 'relicPityFloors', 'percentileMin',
+    'bossItems', 'bigBossItems', 'relicPityFloors', 'bossRelicChance',
+    'percentileMin',
     'percentileMax', 'extractionPercentilePenalty', 'twoHandedRollBonus',
     'twoHandedChance',
     'rarityWeights', 'affixSlotsByRarity', 'maxTriggerAffixesPerItem',

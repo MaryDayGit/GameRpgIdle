@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'help_content.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Справка: оглавление и разделы.
 ///
@@ -33,17 +34,19 @@ class HelpScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 32),
         itemCount: helpSections.length,
         separatorBuilder: (_, _) =>
-            const Divider(height: 1, color: Colors.white10),
+            const Divider(height: 1, color: RiftColors.line),
         itemBuilder: (context, i) {
           final section = helpSections[i];
           return ListTile(
-            title: Text(section.title,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600)),
-            subtitle: Text(section.summary,
-                style: const TextStyle(fontSize: 12, color: Colors.white54)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            title: Text(section.title, style: RiftText.heading),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(section.summary, style: RiftText.small),
+            ),
             trailing:
-                const Icon(Icons.chevron_right, size: 18, color: Colors.white38),
+                const Icon(Icons.chevron_right, size: 22, color: RiftColors.inkFaint),
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
               builder: (_) => _SectionScreen(section: section),
             )),
@@ -70,10 +73,9 @@ class _SectionScreen extends StatelessWidget {
             if (block.heading.isNotEmpty) ...[
               Text(
                 block.heading,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFE0A87A),
+                style: RiftText.title.copyWith(
+                  fontSize: 17,
+                  color: RiftColors.ember,
                 ),
               ),
               const SizedBox(height: 8),
@@ -81,8 +83,7 @@ class _SectionScreen extends StatelessWidget {
             for (final line in block.lines) ...[
               Text(
                 line,
-                style: const TextStyle(
-                    fontSize: 14, height: 1.45, color: Colors.white70),
+                style: RiftText.body.copyWith(fontSize: 15.5, height: 1.5),
               ),
               const SizedBox(height: 10),
             ],

@@ -15,7 +15,8 @@
       "params": {
         "maxStacks": 5,
         "directFirePenalty": 0.5
-      }
+      },
+      "source": "ash_lord"
     },
     {
       "id": "split_counterweight",
@@ -81,7 +82,8 @@
       "effect": "eternalCurse",
       "params": {
         "uncursedPenalty": 0.6
-      }
+      },
+      "source": "void_devourer"
     },
     {
       "id": "charm_of_silence",
@@ -136,7 +138,8 @@
       "effect": "armorIntoResist",
       "params": {
         "resistAll": 45.0
-      }
+      },
+      "source": "frost_patriarch"
     },
     {
       "id": "glass_crown",
@@ -189,7 +192,8 @@
       "params": {
         "cooldownMultiplier": 0.5,
         "manaCostMultiplier": 2.0
-      }
+      },
+      "source": "storm_sovereign"
     },
     {
       "id": "ember_conduit",
@@ -201,7 +205,8 @@
         "element": "fire",
         "damageBonus": 0.3,
         "resistPenalty": 50.0
-      }
+      },
+      "source": "ash_lord"
     },
     {
       "id": "rime_conduit",
@@ -213,7 +218,8 @@
         "element": "cold",
         "damageBonus": 0.3,
         "resistPenalty": 50.0
-      }
+      },
+      "source": "frost_patriarch"
     },
     {
       "id": "storm_conduit",
@@ -225,7 +231,8 @@
         "element": "lightning",
         "damageBonus": 0.3,
         "resistPenalty": 50.0
-      }
+      },
+      "source": "storm_sovereign"
     },
     {
       "id": "void_conduit",
@@ -237,7 +244,8 @@
         "element": "voidType",
         "damageBonus": 0.3,
         "resistPenalty": 50.0
-      }
+      },
+      "source": "void_devourer"
     },
     {
       "id": "tireless_boots",

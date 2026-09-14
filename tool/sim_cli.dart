@@ -6,6 +6,8 @@ import 'package:rift/core/content/content_pack.dart';
 
 import 'package:rift/core/model/build_power.dart';
 import 'package:rift/core/model/equipment.dart';
+import 'package:rift/core/model/item.dart';
+import 'package:rift/core/sim/crafting.dart';
 import 'package:rift/core/model/gear.dart';
 import 'package:rift/core/model/hero.dart';
 import 'package:rift/core/model/mercenary.dart';
@@ -1036,17 +1038,86 @@ PlayerProfile _playCampaign(
       // Заставу и на следующем ране идёт вниз Оборванцем.
       while (player.gold -
                   Roster.hireCost(MercRank.blade,
-                      maxDepthEver: player.maxDepthEver) >
+                      depth: player.hireDepth) >
               player.outpost.upgradeCost(b) &&
           player.canUpgradeBuilding(b)) {
         if (!player.upgradeBuilding(b)) break;
       }
     }
 
+    // 5. Остаток золота — в Кузницу.
+    //
+    // Перекат аффикса и есть тот бесконечный сток, ради которого он задуман
+    // (GDD §6.3): цена растёт как доход (`itemScale(ilvl)`) и умножается на
+    // 1.6 за каждый повторный перекат того же аффикса. До этой правки
+    // балансировщик не крафтил ВООБЩЕ — тратил только на Заставу и задаток,
+    // — и потому «золоту некуда деться» было свойством автоматики, а не
+    // игры: на 45-м контракте в кошельке лежало 1.2 миллиона при пустом
+    // списке трат.
+    _craft(player, Rng(o.seed + i * 104729));
+
     onRun?.call(i, player, merc, result, brand);
   }
 
   return player;
+}
+
+/// Тратит излишек золота на перекат худших аффиксов.
+///
+/// Играет как человек, у которого деньги есть: чинит самое слабое место
+/// сборки, а не перекатывает подряд. «Самое слабое» — наименьший перцентиль
+/// на предмете, который пойдёт вниз: очередь снаряжения жадно берёт лучшее по
+/// уровню, значит и крафтить надо его.
+///
+/// Резерв на задаток остаётся всегда: игрок, спустивший всё до копейки и
+/// ушедший вниз Оборванцем, — это не бережливость, а другая игра.
+void _craft(PlayerProfile player, Rng rng) {
+  final reserve = Roster.hireCost(MercRank.legend, depth: player.hireDepth);
+
+  // Потолок на ран: без него прогон кампании упирается не в баланс, а в
+  // время. Двадцать перекатов — заведомо больше, чем успевает человек между
+  // спусками, и этого хватает, чтобы увидеть, поглощает ли сток доход.
+  // Сперва реликты: углубление поднимает УРОВЕНЬ вещи до рекорда, то есть
+  // возвращает в строй правило, которое игрок уже добыл. Перекат по
+  // сравнению с этим — шлифовка: он двигает перцентиль внутри диапазона
+  // 0.70–1.00, и купить на него больше 30 % значения одного аффикса нельзя
+  // ни за какие деньги.
+  for (var step = 0; step < 12; step++) {
+    Item? target;
+    var cheapest = double.infinity;
+    for (final item in player.stash) {
+      if (!Crafting.canDeepen(item, player.maxDepthEver)) continue;
+      final cost = Crafting.deepenCost(item);
+      if (cost >= cheapest) continue;
+      if (player.gold - cost < reserve) continue;
+      cheapest = cost;
+      target = item;
+    }
+    if (target == null) break;
+    if (player.deepenRelic(target) == null) break;
+  }
+
+  for (var step = 0; step < 20; step++) {
+    final queue = [...player.stash]..sort((a, b) => b.ilvl.compareTo(a.ilvl));
+    final candidates = queue.take(Equipment.slotCount).toList();
+
+    Item? bestItem;
+    var bestIndex = -1;
+    var worstRoll = 1.0;
+    for (final item in candidates) {
+      for (var a = 0; a < item.affixes.length; a++) {
+        final roll = item.affixes[a];
+        if (roll.percentile >= worstRoll) continue;
+        if (player.gold - Crafting.rerollCost(item, a) < reserve) continue;
+        worstRoll = roll.percentile;
+        bestItem = item;
+        bestIndex = a;
+      }
+    }
+
+    if (bestItem == null || bestIndex < 0) return;
+    if (player.rerollAffix(bestItem, bestIndex, rng) == null) return;
+  }
 }
 
 /// Сравнение стратегий на развилках по МНОГИМ сидам.
@@ -1164,6 +1235,21 @@ void _runCampaign(_Options o) {
   print('Узлов древа Эха         : ${player.tree.nodesBought}');
   print('Сундук Заставы          : ${player.stash.length}/${player.outpost.stashSlots}');
   print('Павших наёмников        : ${player.roster.fallen.length}');
+
+  // Разбор сундука. Заведён после того, как замер показал обвал глубины
+  // вдвое ровно на том контракте, где сундук перестаёт расти: общее число
+  // вещей об этом не говорит НИЧЕГО, а состав — говорит. Реликты не
+  // вытесняются никогда (`_displaceWorse`), и если ими занят весь сундук,
+  // новая находка с глубины рекорда просто продаётся.
+  final relics = player.stash.where((i) => i.isRelic).length;
+  final best = [...player.stash]..sort((a, b) => b.ilvl.compareTo(a.ilvl));
+  final top = best.take(Equipment.slotCount).toList();
+  final topIlvl = top.isEmpty
+      ? 0
+      : (top.fold<int>(0, (a, i) => a + i.ilvl) / top.length).round();
+  print('  из них реликтов         : $relics');
+  print('  средний ilvl сборки     : $topIlvl '
+      '(рекорд глубины ${player.maxDepthEver})');
   print('');
   _row(['постройка', 'уровень', 'эффект']);
   _rule(3);

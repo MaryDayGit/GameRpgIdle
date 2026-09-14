@@ -16,6 +16,7 @@ import 'fork_card.dart';
 import '../state/game_controller.dart';
 import 'format.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Что происходит в бездне прямо сейчас.
 ///
@@ -69,8 +70,17 @@ class _BattleScreenState extends State<BattleScreen>
   /// текст, который не изменился. Именно это и ощущалось как рывки.
   static const _rebuildEvery = Duration(milliseconds: 100);
 
+  /// Этаж на прошлом кадре. По его смене звучит отметка шага вниз.
+  int? _lastDepth;
+
   void _onFrame(Duration elapsed) {
     _replay.seekToTime(widget.controller.now);
+
+    final depth = _replay.snapshot.depth;
+    if (_lastDepth != null && depth > _lastDepth!) {
+      widget.controller.feedback.play(Sfx.floor);
+    }
+    _lastDepth = depth;
 
     if (elapsed - _lastRebuild < _rebuildEvery) return;
     _lastRebuild = elapsed;
@@ -123,16 +133,30 @@ class _BattleScreenState extends State<BattleScreen>
     final feedback = widget.controller.feedback;
     switch (beat.kind) {
       case BeatKind.enemyHit:
-        feedback.play(beat.crit ? Sfx.crit : Sfx.hit);
+        // Крит перебивает стихию: он про СИЛУ удара, и слышать его важнее.
+        // Иначе самый заметный момент боя звучал бы как обычное попадание,
+        // только другого цвета.
+        feedback.play(beat.crit ? Sfx.crit : sfxForDamage(beat.type));
       case BeatKind.enemyDied:
-        feedback.play(Sfx.kill);
+        // Босс падает тяжело и победно: его смерть — главное событие волны,
+        // и звучать тем же «пух», что падальщик, ей нельзя.
+        if (bossWave) {
+          feedback.play(Sfx.bossDown, bump: Bump.heavy);
+        } else {
+          feedback.play(Sfx.kill);
+        }
       case BeatKind.heroHurt:
         feedback.play(Sfx.hurt, bump: Bump.light);
       case BeatKind.heroDied:
         feedback.play(Sfx.death, bump: Bump.heavy);
-      case BeatKind.waveStarted:
-      case BeatKind.heroSwing:
       case BeatKind.heroCast:
+        feedback.play(Sfx.cast);
+      case BeatKind.waveStarted:
+        // Рык — только на боссовой волне: на каждой он был бы метрономом.
+        if (bossWave) {
+          feedback.play(Sfx.boss, bump: Bump.medium);
+        }
+      case BeatKind.heroSwing:
         break;
     }
   }
@@ -244,8 +268,12 @@ class _BattleScreenState extends State<BattleScreen>
                             : S.battleFloor(snapshot.depth,
                                 boss: !atFork && snapshot.isBossWave),
 
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w600),
+                        style: RiftText.display.copyWith(
+                          fontSize: 24,
+                          color: !finished && !atFork && snapshot.isBossWave
+                              ? RiftColors.ember
+                              : RiftColors.ink,
+                        ),
                       ),
                       Text(
                         atFork
@@ -261,18 +289,24 @@ class _BattleScreenState extends State<BattleScreen>
                                 : '${S.battleWave(snapshot.waveIndex)}'
                                     '/${snapshot.waveCount}'
                                     ' · ${snapshot.enemyName}',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.white54),
+                        style: RiftText.small,
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  clock(snapshot.totalSeconds),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.white54,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                // Часы — плашкой: это единственное, что в шапке меняется
+                // каждую секунду, и на голом фоне цифры прыгали.
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: RiftColors.raised,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: RiftColors.line),
+                  ),
+                  child: Text(
+                    clock(snapshot.totalSeconds),
+                    style: RiftText.number.copyWith(color: RiftColors.inkMuted),
                   ),
                 ),
               ],
@@ -303,7 +337,14 @@ class _BattleScreenState extends State<BattleScreen>
                     _Bar(
                       label: S.battleMercHp,
                       value: heroHpFraction,
-                      color: const Color(0xFF7FB069),
+                      // Здоровье краснеет по мере убыли: полоска одного цвета
+                      // сообщала только длину, а «пора ли отзывать» — это
+                      // вопрос о цвете, который видно боковым зрением.
+                      color: heroHpFraction > 0.5
+                          ? RiftColors.health
+                          : heroHpFraction > 0.25
+                              ? RiftColors.warn
+                              : RiftColors.bad,
                     ),
                     const SizedBox(height: 8),
                     _Bar(
@@ -314,8 +355,8 @@ class _BattleScreenState extends State<BattleScreen>
                           ? snapshot.restProgress
                           : snapshot.waveProgress,
                       color: snapshot.resting
-                          ? const Color(0xFF5E7E92)
-                          : const Color(0xFFC7643F),
+                          ? RiftColors.info
+                          : RiftColors.ember,
                     ),
                     const SizedBox(height: 16),
                     _BattleLog(lines: _log),
@@ -346,7 +387,7 @@ class _BattleScreenState extends State<BattleScreen>
                     const SizedBox(height: 12),
                     Text(
                       S.battleWatching,
-                      style: const TextStyle(fontSize: 12, color: Colors.white38),
+                      style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -374,28 +415,17 @@ class _Bar extends StatelessWidget {
         // Доля, а не 96 точек: «HP наёмника» при крупном системном шрифте
         // шире, и подпись обрезалась бы ровно посередине слова.
         SizedBox(
-          width: 96,
-          child: Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.white54)),
+          width: 104,
+          child: Text(label, style: RiftText.small),
         ),
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: value.clamp(0.0, 1.0),
-              minHeight: 6,
-              color: color,
-            ),
-          ),
+          child: _GlowBar(value: value.clamp(0.0, 1.0), color: color),
         ),
         SizedBox(
-          width: 44,
+          width: 52,
           child: Text(percent(value),
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 11,
-                fontFeatures: [FontFeature.tabularFigures()],
-              )),
+              style: RiftText.number.copyWith(color: color)),
         ),
       ],
     );
@@ -424,9 +454,12 @@ class _BattleLog extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(
-                    alpha: (1.0 - i / lines.length).clamp(0.25, 0.85)),
+                fontSize: i == 0 ? 14.5 : 13.5,
+                fontWeight: i == 0 ? FontWeight.w600 : FontWeight.normal,
+                // Свежая строка — основным цветом, старые тают к третичному,
+                // но не ниже него: лента обязана читаться целиком.
+                color: Color.lerp(RiftColors.ink, RiftColors.inkFaint,
+                    (i / lines.length).clamp(0.0, 1.0)),
               ),
             ),
           ),
@@ -457,7 +490,7 @@ class _Forecast extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(S.battlePath(floors.length),
-            style: const TextStyle(fontSize: 12, color: Colors.white38)),
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint)),
         const SizedBox(height: 6),
         for (final (i, floor) in floors.indexed)
           Padding(
@@ -470,10 +503,10 @@ class _Forecast extends StatelessWidget {
                   child: Text(
                     '${floor.depth}',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 13.5,
                       color: floor.boss == null
-                          ? Colors.white38
-                          : const Color(0xFFC7643F),
+                          ? RiftColors.inkFaint
+                          : RiftColors.ember,
                       fontWeight: floor.boss == null
                           ? FontWeight.normal
                           : FontWeight.w600,
@@ -484,8 +517,8 @@ class _Forecast extends StatelessWidget {
                     floor.depth == currentDepth
                         ? S.battleNow(_describe(floor, i))
                         : _describe(floor, i),
-                    style: const TextStyle(fontSize: 12,
-                        color: Colors.white70))),
+                    style: const TextStyle(fontSize: 13.5,
+                        color: RiftColors.ink))),
               ],
             ),
           ),
@@ -519,4 +552,57 @@ class _Forecast extends StatelessWidget {
 
     return parts.join(' · ');
   }
+}
+
+
+/// Полоска боя: толще прежней, со скруглённым краем и свечением заполнения.
+///
+/// Системная полоска в шесть точек читалась ниткой: на телефоне в руке она
+/// сливалась с разделителем, и здоровье приходилось искать. Здесь толщина,
+/// дорожка поверхности и отсвет цвета заполнения — длину видно боковым
+/// зрением, а цвет сообщает, пора ли вмешиваться.
+class _GlowBar extends StatelessWidget {
+  const _GlowBar({required this.value, required this.color});
+
+  final double value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 12,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: RiftColors.raised,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: RiftColors.line),
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: value,
+              heightFactor: 1,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.lerp(color, Colors.white, 0.25)!,
+                      color,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.45),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }

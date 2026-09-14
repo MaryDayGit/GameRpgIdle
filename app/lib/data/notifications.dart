@@ -19,12 +19,18 @@ abstract class DeathNotifier {
   /// решения. Уведомление о гибели в этот момент было бы прямой ложью, а
   /// шторка уведомлений — единственное место, где игрок читает игру, не
   /// открывая её.
+  ///
+  /// [expiresAfter] — срок жизни самого уведомления в шторке. Нужен развилке
+  /// и только ей: «выберите путь, пока он ждёт» перестаёт быть правдой в ту
+  /// секунду, когда наёмник пошёл дальше, а висящее после этого уведомление
+  /// зовёт игрока туда, где уже ничего нет. Проба поймала ровно это.
   Future<void> scheduleContractEvent({
     required int id,
     required DateTime whenUtc,
     required String mercName,
     required int depth,
     required bool atFork,
+    Duration? expiresAfter,
   });
 
   Future<void> cancel(int id);
@@ -44,6 +50,7 @@ class NoDeathNotifier implements DeathNotifier {
     required String mercName,
     required int depth,
     required bool atFork,
+    Duration? expiresAfter,
   }) async {}
 
   @override
@@ -101,6 +108,7 @@ class LocalDeathNotifier implements DeathNotifier {
     required String mercName,
     required int depth,
     required bool atFork,
+    Duration? expiresAfter,
   }) async {
     if (!_ready) return;
 
@@ -129,6 +137,10 @@ class LocalDeathNotifier implements DeathNotifier {
           channelDescription: S.notificationChannelAbout,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
+          // Система сама убирает уведомление, когда звать уже некуда.
+          // Считать это в приложении нельзя: пока игра закрыта, считать
+          // некому — а именно тогда уведомление и висит.
+          timeoutAfter: expiresAfter?.inMilliseconds,
         ),
       ),
       // Неточный будильник намеренно: точный требует отдельного разрешения,

@@ -310,15 +310,22 @@ void main() {
       expect(contract.pendingFork, isNotNull);
       expect(contract.pendingFork!.options, hasLength(2));
 
+      // Сорока пяти секунд отсутствующему мало: это срок для того, кто
+      // смотрит на экран. Игры на экране нет — значит, идёт срок отсутствия.
+      p.refreshContracts(
+          atFork.add(Duration(seconds: Tuning.forkWaitSeconds.round() + 1)));
+      expect(contract.atFork, isTrue,
+          reason: 'уведомление ещё в пути — уходить рано');
+
       // Не дождавшись, наёмник перестаёт стоять и идёт дальше сам. Спуск при
       // этом ещё НЕ кончен: впереди весь остаток пути, просто решать его
       // будет приказ.
-      p.refreshContracts(
-          atFork.add(Duration(seconds: Tuning.forkWaitSeconds.round() + 1)));
+      p.refreshContracts(atFork
+          .add(Duration(seconds: Tuning.forkWaitAwaySeconds.round() + 1)));
       expect(contract.descending, isTrue);
       expect(contract.result!.awaitingFork, isFalse,
           reason: 'остаток спуска решён приказом, остановок больше не будет');
-      expect(contract.waitedSeconds, closeTo(Tuning.forkWaitSeconds, 0.01),
+      expect(contract.waitedSeconds, closeTo(Tuning.forkWaitAwaySeconds, 0.01),
           reason: 'простой засчитан ровно один раз');
 
       // И только когда время дошло до конца — контракт ждёт получения.
