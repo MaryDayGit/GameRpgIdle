@@ -11,8 +11,11 @@ import '../sim/crafting.dart';
 import '../sim/daily_rift.dart';
 import '../sim/descent.dart';
 import '../sim/fork.dart';
+import '../sim/lair.dart';
+import '../sim/loot.dart';
 import '../sim/rng.dart';
 import 'echo_tree.dart';
+import 'enemy.dart';
 import 'build_power.dart';
 import 'equipment.dart';
 import 'haul.dart';
@@ -398,6 +401,44 @@ class Contract {
   }
 }
 
+/// Один вызов стража: кто, на каком круге, чем кончилось.
+class LairChallenge {
+  const LairChallenge({
+    required this.mercenary,
+    required this.guardian,
+    required this.circle,
+    required this.depth,
+    required this.offering,
+    required this.seed,
+    required this.profile,
+    required this.fight,
+    required this.firstWin,
+    this.passivePoints = 0,
+    this.relic,
+  });
+
+  final Mercenary mercenary;
+  final EnemyArchetype guardian;
+  final int circle;
+  final int depth;
+  final double offering;
+
+  /// Сид боя и снимок героя: по ним экран повторяет тот же бой
+  /// (`LairFight.start`) тик в тик.
+  final int seed;
+  final HeroProfile profile;
+  final LairFightResult fight;
+
+  /// Круг взят впервые.
+  final bool firstWin;
+
+  /// Сколько очков пассивок принёс вызов: только первая победа над стражем.
+  final int passivePoints;
+
+  /// Уникальная вещь, упавшая со стража. Лежит в разборе добычи.
+  final Item? relic;
+}
+
 /// Аккаунт игрока — всё, что переживает гибель наёмника.
 class PlayerProfile {
   PlayerProfile({
@@ -412,8 +453,11 @@ class PlayerProfile {
     Map<int, int>? bestDepthByBrand,
     Iterable<int>? recentDepths,
     QuestLog? quests,
+    Map<String, int>? lairCircles,
+    this.lairAttempts = 0,
   })  : _maxDepthEver = maxDepthEver,
         recentDepths = [...?recentDepths],
+        lairCircles = {...?lairCircles},
         bestDepthByBrand = {...?bestDepthByBrand},
         quests = quests ?? QuestLog(),
         _brandRank = brandRank,
@@ -474,8 +518,14 @@ class PlayerProfile {
   }
 
   /// Очки дерева пассивок: даёт достигнутая глубина, тратит дерево.
+  ///
+  /// Сверх потолка за глубину — две лестницы позднего этапа: доказанные
+  /// ранги Клейма и взятые круги логов. Обе платят одним и тем же, потому что
+  /// на плато расти больше нечему, а дерево в 60 очков не кончается.
   int get passivePoints =>
-      PassiveTree.pointsFor(maxDepthEver) + provenBrandRanks;
+      PassiveTree.pointsFor(maxDepthEver) +
+      provenBrandRanks +
+      lairPassivePoints;
   int get passivePointsLeft => passivePoints - passives.spent;
 
   /// В какой день игрок последний раз спускался в разлом. `null` — ни разу.
@@ -814,6 +864,187 @@ class PlayerProfile {
 
   /// Глубина, на которой откроется следующий ранг. `null` — открыто всё.
   int? get brandNextUnlockDepth => Curves.brandNextUnlockDepth(maxDepthEver);
+
+  // --- Логова стражей ---------------------------------------------------------
+  //
+  // Лестница позднего этапа (раунд 36). К сороковому контракту Клеймо, дерево
+  // и Застава закрыты, и у игрока остаётся одна цель — пара этажей рекорда.
+  // Логово даёт цель, которую можно НАЗВАТЬ: «Владыка Пепельных залов, круг
+  // седьмой», — и спрашивает не «хватит ли силы», а «чем идти»: у каждого
+  // стража свои повадки и своя слабость (`docs/09-BESTIARY.md`).
+
+  /// Наибольший взятый круг каждого стража: id стража → круг. Нет записи —
+  /// не взят ни один.
+  final Map<String, int> lairCircles;
+
+  /// Сколько раз стражей вызывали. Входит в сид боя: без счётчика повторный
+  /// вызов того же круга выпадал бы на тот же бой, и проигрыш был бы
+  /// приговором навсегда, а после перезапуска — переигрываемым.
+  int lairAttempts;
+
+  /// Последний вызов. Живёт до следующего — по нему экран показывает исход.
+  LairChallenge? lastLairChallenge;
+
+  /// Открыты ли логова.
+  bool get lairsOpen => maxDepthEver >= Curves.lairUnlockDepth;
+
+  /// Взятые круги всех стражей вместе.
+  int get lairTrophies => lairCircles.values.fold(0, (a, b) => a + b);
+
+  /// Очки пассивок от логов: за ПЕРВУЮ победу над каждым стражем, и только.
+  ///
+  /// Первая версия платила очком за каждый круг, и замер показал, куда это
+  /// ведёт: 125 очков сверх дерева к сто пятидесятому контракту и сила, которая
+  /// сама себя разгоняет. Теперь потолок виден заранее — стражей четыре,
+  /// значит и очков не больше, чем четыре раза по [Curves.lairFirstKillPoints].
+  int get lairPassivePoints =>
+      lairCircles.values.where((c) => c > 0).length *
+      Curves.lairFirstKillPoints;
+
+  /// Сколько очков логова ещё могут дать.
+  int get lairPassivePointsLeft =>
+      Bestiary.guardians.length * Curves.lairFirstKillPoints -
+      lairPassivePoints;
+
+  /// Круг, который у стража [guardianId] следующий по очереди.
+  int nextLairCircle(String guardianId) => (lairCircles[guardianId] ?? 0) + 1;
+
+  /// Можно ли вызвать стража на круге [circle] наёмником [m]. `null` —
+  /// можно; иначе причина словами, как у запрета умения.
+  String? lairBlockedReason(Mercenary m, String guardianId, int circle) {
+    final ru = Lang.current == Lang.ru;
+    if (!lairsOpen) {
+      return ru
+          ? 'Логова открываются с глубины ${Curves.lairUnlockDepth}'
+          : 'Lairs open at depth ${Curves.lairUnlockDepth}';
+    }
+    if (_guardian(guardianId) == null) {
+      return ru ? 'Такого стража нет' : 'No such guardian';
+    }
+    if (circle < 1 || circle > nextLairCircle(guardianId)) {
+      return ru
+          ? 'Сначала возьмите круг ${nextLairCircle(guardianId)}'
+          : 'Take circle ${nextLairCircle(guardianId)} first';
+    }
+    if (!roster.reserve.contains(m)) {
+      return ru ? 'Наёмник занят' : 'The mercenary is busy';
+    }
+    if (gold < Curves.lairOffering(circle)) {
+      return ru ? 'Не хватает золота на подношение' : 'Not enough gold';
+    }
+    return null;
+  }
+
+  /// Вызывает стража. `null` — вызов невозможен ([lairBlockedReason]).
+  ///
+  /// Бой считается сразу и целиком, как спуск при отправке, но ждать его
+  /// нечего: у логова нет пути, только поединок. Цена у него двойная и обе
+  /// части настоящие — подношение уходит при любом исходе, а проигравший
+  /// наёмник гибнет, как в бездне. Победивший возвращается в резерв вместе
+  /// со снаряжением: платить жизнью за взятый круг значило бы, что к стражу
+  /// выгодно ходить только теми, кого не жалко.
+  LairChallenge? challengeGuardian(
+    Mercenary m,
+    String guardianId, {
+    int? circle,
+  }) {
+    final at = circle ?? nextLairCircle(guardianId);
+    if (lairBlockedReason(m, guardianId, at) != null) return null;
+    final guardian = _guardian(guardianId)!;
+
+    final depth = Curves.lairDepth(at);
+    final offering = Curves.lairOffering(at);
+    gold -= offering;
+
+    // Досбор в пустые слоты — тем же правилом, что при отправке вниз: сборка
+    // игрока идёт как есть, реликты решает он сам.
+    m.gear.equipFrom(stash,
+        base: Tuning.heroBase,
+        depth: 1,
+        loadout: BuildPower.loadoutOf(m.abilities),
+        onlyEmpty: true,
+        skipRelics: true);
+
+    // Сид — из счётчика, круга и места стража в бестиарии. Не `hashCode`
+    // строки: он не обязан совпадать между запусками, а бой обязан.
+    final seed = lairAttempts * 7919 +
+        at * 104729 +
+        Bestiary.guardians.indexOf(guardian) * 31;
+    lairAttempts++;
+
+    // Снимок героя ДО боя, а не ссылка на наёмника: проигравший отдаёт
+    // снаряжение в сундук, и повтор боя по живому наёмнику показал бы голого
+    // героя, которого в бою не было. Та же причина, что у снимка контракта.
+    final snapshot = HeroProfile(
+      gear: m.gear.copy(),
+      abilities: List.of(m.abilities),
+      echoTreeBonus: outpost.descentPowerBonus,
+      tree: EchoTree(bought: List.of(tree.bought)),
+      passives: PassiveTree(allocated: List.of(passives.allocated)),
+      startDepthBonus: startDepthBonus,
+      powerMultiplier: m.rank.statMultiplier,
+      traitStats: m.trait.apply,
+    );
+
+    final fight = LairFight.run(
+      profile: snapshot,
+      guardian: guardian,
+      depth: depth,
+      seed: seed,
+    );
+
+    final firstWin = fight.won && at == nextLairCircle(guardianId);
+    final pointsBefore = lairPassivePoints;
+    Item? relic;
+
+    if (fight.won) {
+      if (firstWin) lairCircles[guardianId] = at;
+
+      // Уникальная вещь того босса, которого страж воплощает: он и есть тот
+      // босс (`docs/04-RELICS.md`). Первая победа отдаёт её всегда — это и
+      // есть награда за круг, — повторная с шансом: к стражу возвращаются
+      // именно за ней.
+      final rng = Rng.stream(seed, at, 1, RngPurpose.lair);
+      final uniques = [
+        for (final def in ContentPack.current.relics)
+          if (def.source != null && def.source == guardian.embodies) def,
+      ];
+      if (uniques.isNotEmpty &&
+          (firstWin || rng.chance(Curves.lairRelicChance))) {
+        relic = ItemFactory.roll(
+          ilvl: depth,
+          rng: rng,
+          relic: uniques[rng.nextInt(uniques.length)],
+        );
+        pendingLoot.add(relic);
+        quests.relicsFound++;
+      }
+    } else {
+      // Гибель — как в бездне: снаряжение возвращается в сундук, наёмник в
+      // мемориал.
+      stash.addAll(m.gear.unequipAll());
+      roster.reserve.remove(m);
+      roster.fallen.add(m);
+      _trimStash();
+    }
+
+    return lastLairChallenge = LairChallenge(
+      mercenary: m,
+      guardian: guardian,
+      circle: at,
+      depth: depth,
+      offering: offering,
+      seed: seed,
+      profile: snapshot,
+      fight: fight,
+      firstWin: firstWin,
+      passivePoints: lairPassivePoints - pointsBefore,
+      relic: relic,
+    );
+  }
+
+  EnemyArchetype? _guardian(String id) =>
+      Bestiary.guardians.where((g) => g.id == id).firstOrNull;
 
   /// Ставит Клеймо. Ранг выше открытого не ставится — молча обрезать его
   /// значило бы соврать игроку о том, на чём он пошёл вниз.

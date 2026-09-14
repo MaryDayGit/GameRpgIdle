@@ -156,6 +156,10 @@ class _BattleScreenState extends State<BattleScreen>
         if (bossWave) {
           feedback.play(Sfx.boss, bump: Bump.medium);
         }
+      case BeatKind.bossWindup:
+        feedback.play(Sfx.boss, bump: Bump.medium);
+      case BeatKind.bossSkill:
+        feedback.play(Sfx.crit, bump: Bump.heavy);
       case BeatKind.heroSwing:
         break;
     }
@@ -186,6 +190,8 @@ class _BattleScreenState extends State<BattleScreen>
           ? null
           : S.battleTook(money(beat.amount)),
       BeatKind.heroDied => S.battleMercFell,
+      BeatKind.bossWindup => S.battleBossWindup(beat.name),
+      BeatKind.bossSkill => S.battleBossSkill(beat.name),
       BeatKind.waveStarted || BeatKind.heroSwing => null,
     };
   }

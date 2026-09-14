@@ -236,6 +236,44 @@ class Curves {
     }
     return null;
   }
+  // --- Логова стражей -------------------------------------------------------
+
+  static int get lairUnlockDepth => _config.lairUnlockDepth;
+  static double get lairRelicChance => _config.lairRelicChance;
+
+  /// Глубина, на которой стоит страж круга [circle] (с единицы).
+  static int lairDepth(int circle) =>
+      _config.lairFirstDepth +
+      _config.lairDepthPerCircle * (circle < 1 ? 0 : circle - 1);
+
+  static int get lairReferenceDepth => _config.lairReferenceDepth;
+  static int get lairFirstKillPoints => _config.lairFirstKillPoints;
+  static double get lairGuardianMight => _config.lairGuardianMight;
+
+  /// Во сколько раз здоровье стража в логове выше, чем дала бы ему кривая
+  /// мобов на глубине [depth].
+  ///
+  /// Замер раунда 36 показал, что без этой поправки логово не бой: на глубине
+  /// 40 страж держится 12–15 секунд, на 150 — три-шесть, на 300 — одну
+  /// десятую. Здоровье мобов растёт как `mobHpGrowth`, урон сборки — как
+  /// `itemGrowth`, и разрыв копится экспоненциально. В спуске он не мешает:
+  /// там убивает накопленный за волны урон, а не один враг. Страж же один, и
+  /// умирал, не успев ударить, — хотя удар его на 300-м этаже снимал половину
+  /// здоровья героя.
+  ///
+  /// Поэтому здоровье стража ведёт кривая ВЕЩЕЙ, отсчитанная от глубины
+  /// аудита: сборка той же глубины убивает его за то же время, за какое его
+  /// проверил аудит. Урон остаётся на кривой мобов — это та же стена, что и в
+  /// спуске, и именно она делает круг у рекорда опасным.
+  static double lairHpScale(int depth) {
+    final ref = lairReferenceDepth;
+    return (itemScale(depth) / itemScale(ref)) / (mobHp(depth) / mobHp(ref));
+  }
+
+  /// Подношение за вызов стража на круге [circle].
+  static double lairOffering(int circle) =>
+      goldPerFloor(lairDepth(circle)) * _config.lairOfferingFloors;
+
   static double get brandLootPerRank => _config.brandLootPerRank;
   static double get brandEchoPerRank => _config.brandEchoPerRank;
   static int get brandMaxRank => _config.brandMaxRank;

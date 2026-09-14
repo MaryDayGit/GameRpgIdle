@@ -1346,7 +1346,10 @@ void _auditBosses() {
   // спуска за нижнюю границу, потому что Владыка Пепла попадается каждые
   // пять этажей.
   final bosses = ContentPack.current.guardians;
-  const depth = 40;
+  // Та же глубина, от которой логово отсчитывает здоровье стража
+  // (`Curves.lairHpScale`): на ней страж в игре ровно такой, каким его здесь
+  // выверили. Число живёт в контенте, а не в двух местах.
+  final depth = Curves.lairReferenceDepth;
   final builds = _bossBuilds(depth);
   final holes = <String>[];
 

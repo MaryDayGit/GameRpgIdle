@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:rift/core/model/tags.dart';
 import 'package:rift/core/sim/combat_feed.dart';
 
 import 'combat_animation.dart';
@@ -240,6 +241,14 @@ class _Field extends Component with HasGameReference<FlameGame> {
   /// Сколько ещё держится надпись о входе босса, в секундах.
   double _bossBanner = 0.0;
 
+  /// Название умения, которое готовит страж, и сколько надпись ещё держится.
+  ///
+  /// Надпись появляется на ЗАМАХЕ, а не на ударе: имя умения полезно ровно
+  /// тогда, когда удара ещё не было, — после него оно только объяснение.
+  String _skillName = '';
+  double _skillBanner = 0.0;
+  DamageType _skillType = DamageType.physical;
+
   @override
   void update(double dt) {
     _time += dt;
@@ -257,6 +266,7 @@ class _Field extends Component with HasGameReference<FlameGame> {
     _anims.syncDeaths(view.enemyHpFractions);
     _anims.tick(dt);
     if (_bossBanner > 0.0) _bossBanner = math.max(0.0, _bossBanner - dt);
+    if (_skillBanner > 0.0) _skillBanner = math.max(0.0, _skillBanner - dt);
     _vfx.tick(dt);
     _vfx.ambient(Size(game.size.x, game.size.y), dt);
   }
@@ -402,6 +412,13 @@ class _Field extends Component with HasGameReference<FlameGame> {
         _aura(canvas, Offset(x, groundY + bob - lift - h * 0.5), h, each.accent);
       }
 
+      // Замах умения: кольцо стихии сжимается к фигуре по мере того, как
+      // удар приближается. Видно боковым зрением и читается как отсчёт.
+      if (alive && anim.charge > 0.0) {
+        _charge(canvas, Offset(x, groundY + bob - lift - h * 0.5), h,
+            anim.charge, lookForDamage(anim.chargeType).core);
+      }
+
       // Гаснет фигура ПОСЛЕ падения, а не в момент смерти: иначе моб темнеет
       // раньше, чем начинает заваливаться, и падает уже труп.
       _draw(
@@ -438,7 +455,93 @@ class _Field extends Component with HasGameReference<FlameGame> {
     // Поверх всего и без тряски: рамка раны и надпись босса — это сообщения
     // игроку, а не часть мира, и дрожать вместе с камнями им незачем.
     _woundVignette(canvas, size, view.heroHpFraction);
-    if (_bossBanner > 0.0) _drawBossBanner(canvas, size);
+    if (_anims.skill > 0.0) _skillFlash(canvas, size);
+    if (_bossBanner > 0.0) {
+      _drawBossBanner(canvas, size);
+    } else if (_skillBanner > 0.0) {
+      _drawSkillBanner(canvas, size);
+    }
+  }
+
+  /// Кольцо замаха: широкое в начале, прижатое к фигуре перед ударом.
+  void _charge(Canvas canvas, Offset center, double height, double charge,
+      Color color) {
+    final radius = height * (1.05 - 0.45 * charge);
+    final pulse = 0.75 + 0.25 * math.sin(_time * (8.0 + 10.0 * charge));
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0 + 4.0 * charge
+        ..color = color.withValues(alpha: (0.25 + 0.6 * charge) * pulse),
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..shader = Gradient.radial(center, radius, [
+          color.withValues(alpha: 0.22 * charge),
+          color.withValues(alpha: 0.0),
+        ]),
+    );
+  }
+
+  /// Вспышка по краям экрана в момент удара умения — цветом его стихии.
+  void _skillFlash(Canvas canvas, Vector2 size) {
+    final color = lookForDamage(_anims.skillType).core;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.x, size.y),
+      Paint()
+        ..shader = Gradient.radial(
+          Offset(size.x / 2, size.y / 2),
+          math.max(size.x, size.y) * 0.7,
+          [
+            const Color(0x00000000),
+            color.withValues(alpha: 0.35 * _anims.skill),
+          ],
+          const [0.45, 1.0],
+        ),
+    );
+  }
+
+  /// Имя умения на замахе: узкая полоса над ареной, цветом стихии.
+  void _drawSkillBanner(Canvas canvas, Vector2 size) {
+    const total = 1.6;
+    final t = 1.0 - _skillBanner / total;
+    final alpha = t < 0.12 ? t / 0.12 : (t > 0.8 ? (1.0 - t) / 0.2 : 1.0);
+    final color = lookForDamage(_skillType).core;
+    final y = size.y * 0.06;
+    const h = 28.0;
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, y, size.x, h),
+      Paint()
+        ..shader = Gradient.linear(
+          Offset(0, y),
+          Offset(size.x, y),
+          [
+            const Color(0x00000000),
+            const Color(0xFF120C0A).withValues(alpha: 0.85 * alpha),
+            const Color(0xFF120C0A).withValues(alpha: 0.85 * alpha),
+            const Color(0x00000000),
+          ],
+          const [0.0, 0.2, 0.8, 1.0],
+        ),
+    );
+    final label = ParagraphBuilder(ParagraphStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w800,
+      textAlign: TextAlign.center,
+    ))
+      ..pushStyle(TextStyle(
+        color: color.withValues(alpha: alpha),
+        letterSpacing: 2.0,
+      ))
+      ..addText(_skillName.toUpperCase());
+    final paragraph = label.build()
+      ..layout(ParagraphConstraints(width: size.x));
+    canvas.drawParagraph(paragraph, Offset(0, y + (h - paragraph.height) / 2));
   }
 
   /// Красная рамка по краям, когда здоровья мало.
@@ -639,6 +742,21 @@ class _Field extends Component with HasGameReference<FlameGame> {
           _vfx.kick(2.0);
         case BeatKind.heroDied:
           _vfx.kick(10.0);
+        case BeatKind.bossWindup:
+          _skillName = beat.name;
+          _skillType = beat.type;
+          _skillBanner = 1.6;
+        case BeatKind.bossSkill:
+          // Удар умения — самый тяжёлый момент боя, тяжелее крита.
+          _vfx.kick(8.0);
+          _vfx.hit(Offset(heroX, groundY - heroHeight * 0.55), beat.type,
+              crit: true, scale: heroHeight * 1.4);
+          if (_skillBanner <= 0.0) {
+            // Умение без замаха (ярость) объявляется в момент применения.
+            _skillName = beat.name;
+            _skillType = beat.type;
+            _skillBanner = 1.6;
+          }
         case BeatKind.heroSwing:
         case BeatKind.heroCast:
           break;

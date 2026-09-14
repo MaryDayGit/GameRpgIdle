@@ -885,6 +885,23 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  /// Вызывает стража в логове. `null` — вызов невозможен: причину словами
+  /// отдаёт `PlayerProfile.lairBlockedReason`.
+  ///
+  /// Бой считается сразу, и исход приходит в ответе: экран показывает его,
+  /// а не ждёт уведомления — у логова нет пути, только поединок.
+  LairChallenge? challengeGuardian(Mercenary m, String guardianId) {
+    final challenge = _profile.challengeGuardian(m, guardianId);
+    if (challenge == null) return null;
+
+    feedback.play(challenge.fight.won ? Sfx.reward : Sfx.death,
+        bump: Bump.medium);
+    analytics.log(GameEvents.lairChallenge(challenge, _profile));
+    _syncAnalyticsProfile();
+    _changed();
+    return challenge;
+  }
+
   /// Берёт узел дерева пассивок: общая прокачка за достигнутую глубину.
   bool allocatePassive(String nodeId) {
     final done = _profile.allocatePassive(nodeId);

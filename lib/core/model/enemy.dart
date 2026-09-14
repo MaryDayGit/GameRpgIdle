@@ -38,6 +38,73 @@ enum EnemyTrait {
   hardens,
 }
 
+/// Вид умения стража. Закрытый список по той же причине, что и повадки:
+/// умение, которое бой не читает, — это строка в JSON, а не механика.
+enum GuardianSkillKind {
+  /// Тяжёлый удар после замаха: `power` ударов стража разом.
+  slam,
+
+  /// Горение на герое: `power` ударов стража в секунду, `duration` секунд.
+  /// Броня его не держит — только сопротивление.
+  burn,
+
+  /// Оглушение: `duration` секунд герой не бьёт и не кастует. `power` — удар,
+  /// которым оно наносится (ноль — без урона).
+  stun,
+
+  /// Немота: `duration` секунд герой не кастует, и `power` доли маны сгорает.
+  /// Бьёт сборку на активках и не трогает ту, что живёт оружием.
+  silence,
+
+  /// Уязвимость: сопротивления героя ниже на `power` на `duration` секунд.
+  expose,
+
+  /// Щит: страж получает на долю `power` меньше урона `duration` секунд.
+  shield,
+
+  /// Ярость: один раз, когда здоровье падает до `threshold`, урон и скорость
+  /// атаки стража растут на `power`.
+  enrage,
+}
+
+/// Умение стража — то, чем бой с ним отличается от боя с мешком здоровья.
+///
+/// Замах ([windup]) — не украшение. Он виден на экране раньше удара, и страж на
+/// замахе не бьёт обычными атаками: бой читается как «он готовит удар», а не
+/// как случайный всплеск урона.
+class GuardianSkill {
+  const GuardianSkill({
+    required this.id,
+    required this.name,
+    required this.kind,
+    this.every = 0.0,
+    this.first = 0.0,
+    this.windup = 0.0,
+    this.power = 0.0,
+    this.duration = 0.0,
+    this.threshold = 0.0,
+  });
+
+  final String id;
+  final String name;
+  final GuardianSkillKind kind;
+
+  /// Секунд между применениями. У ярости не используется.
+  final double every;
+
+  /// Когда умение применяется впервые. Ноль — через [every].
+  final double first;
+
+  final double windup;
+  final double power;
+  final double duration;
+
+  /// Доля здоровья, на которой срабатывает ярость.
+  final double threshold;
+
+  bool get periodic => kind != GuardianSkillKind.enrage;
+}
+
 /// Архетип моба (GDD §7). Множители применяются к эталонным кривым [Curves].
 class EnemyArchetype {
   const EnemyArchetype({
@@ -59,6 +126,7 @@ class EnemyArchetype {
     this.everyFloors = 0,
     this.phases = const [],
     this.embodies,
+    this.skills = const [],
   });
 
   final String id;
@@ -113,6 +181,9 @@ class EnemyArchetype {
   /// (`RelicDef.source`), и страж роняет ту же вещь — он и есть тот босс.
   final String? embodies;
 
+  /// Умения стража. У мобов и боссов бездны пусто: там они ритм, а не цель.
+  final List<GuardianSkill> skills;
+
   double resistFor(DamageType type) => resists[type] ?? 0.0;
 
   bool has(EnemyTrait trait) => traits.contains(trait);
@@ -144,6 +215,32 @@ class EnemyInstance {
   /// Сколько моб прожил в этой волне. Нужен черте [EnemyTrait.rampUp]:
   /// её носитель опасен затяжным боем, а не первым ударом.
   double waveSeconds = 0.0;
+
+  // --- Умения стража ---------------------------------------------------------
+
+  /// До применения каждого умения, в порядке [EnemyArchetype.skills].
+  late final List<double> skillTimers = [
+    for (final s in archetype.skills) s.first > 0.0 ? s.first : s.every,
+  ];
+
+  /// Умение на замахе: индекс в [EnemyArchetype.skills], `-1` — замаха нет.
+  int windupSkill = -1;
+  double windupRemaining = 0.0;
+
+  /// Ярость: сработала ли и что дала.
+  bool enraged = false;
+  double enrageDamage = 0.0;
+  double enrageHaste = 0.0;
+
+  /// Щит: доля срезаемого урона и сколько он ещё держится.
+  double shieldFraction = 0.0;
+  double shieldRemaining = 0.0;
+
+  bool get shielded => shieldRemaining > 0.0;
+
+  /// Умение, которое страж сейчас готовит. `null` — не готовит.
+  GuardianSkill? get windingUp =>
+      windupSkill < 0 ? null : archetype.skills[windupSkill];
 
   // --- Наложенные эффекты ---------------------------------------------------
   //
@@ -224,6 +321,7 @@ class EnemyInstance {
     }
     if (curseRemaining > 0.0) curseRemaining -= dt;
     if (slowRemaining > 0.0) slowRemaining -= dt;
+    if (shieldRemaining > 0.0) shieldRemaining -= dt;
   }
 
   bool get alive => hp > 0.0;

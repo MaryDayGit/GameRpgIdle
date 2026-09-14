@@ -96,6 +96,30 @@ class FigureAnim {
 
   void strike() => _swing = swingSeconds;
 
+  /// Замах умения стража: от 0 до 1 за [seconds], потом удар гасит его.
+  ///
+  /// Растёт, а не мигает: игрок обязан видеть, СКОЛЬКО осталось до удара,
+  /// иначе замах читается как украшение, а не как предупреждение.
+  double get charge =>
+      _chargeTotal <= 0.0 ? 0.0 : (1.0 - _charge / _chargeTotal).clamp(0.0, 1.0);
+  DamageType chargeType = DamageType.physical;
+  double _charge = 0.0;
+  double _chargeTotal = 0.0;
+
+  void windup(double seconds, DamageType type) {
+    _chargeTotal = seconds <= 0.0 ? 0.01 : seconds;
+    _charge = _chargeTotal;
+    chargeType = type;
+  }
+
+  /// Удар умения: замах кончился, фигура бьёт всем телом.
+  void unleash() {
+    _charge = 0.0;
+    _chargeTotal = 0.0;
+    _swing = swingSeconds;
+    recoil = 0.0;
+  }
+
   void hurt(DamageType type, {required bool crit}) {
     flash = 1.0;
     flashType = type;
@@ -105,6 +129,9 @@ class FigureAnim {
 
   void tick(double dt) {
     if (_swing > 0) _swing = math.max(0.0, _swing - dt);
+    // Замах держится полным до удара: симуляция может выпустить умение на
+    // тик позже, и погасший раньше удара замах врал бы о времени.
+    if (_charge > 0) _charge = math.max(0.0, _charge - dt);
     if (flash > 0) flash = math.max(0.0, flash - dt * 4.0);
     if (recoil > 0) recoil = math.max(0.0, recoil - dt * 6.0);
     if (squash > 0) squash = math.max(0.0, squash - dt * 5.0);
@@ -138,6 +165,10 @@ class BattleAnimations {
   /// потому что это единственное событие боя, которое игрок обязан заметить
   /// ДО того, как по нему ударят.
   double entrance = 0.0;
+
+  /// Вспышка применённого умения стража, от 1 до 0, и его стихия.
+  double skill = 0.0;
+  DamageType skillType = DamageType.physical;
 
   int get length => _enemies.length;
 
@@ -173,6 +204,12 @@ class BattleAnimations {
           hero.hurt(beat.type, crit: false);
         case BeatKind.heroDied:
           hero.die();
+        case BeatKind.bossWindup:
+          enemy(beat.index).windup(beat.amount, beat.type);
+        case BeatKind.bossSkill:
+          enemy(beat.index).unleash();
+          skill = 1.0;
+          skillType = beat.type;
       }
     }
   }
@@ -192,5 +229,6 @@ class BattleAnimations {
     hero.tick(dt);
     if (cast > 0) cast = math.max(0.0, cast - dt * 1.6);
     if (entrance > 0) entrance = math.max(0.0, entrance - dt * 1.1);
+    if (skill > 0) skill = math.max(0.0, skill - dt * 2.2);
   }
 }

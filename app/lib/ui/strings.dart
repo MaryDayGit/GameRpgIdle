@@ -1146,6 +1146,149 @@ class S {
       ? 'откроется с этажа $gate'
       : 'opens from floor $gate';
 
+  // --- Логова стражей --------------------------------------------------------
+
+  static String get lairsTitle =>
+      const Phrase('Логова стражей', 'Guardian lairs').text;
+
+  static String get lairsAbout => const Phrase(
+        'В логове страж ждёт один на один, на глубине своего круга. Спуска '
+            'перед ним нет — только бой, и решается в нём одно: чем идти. У '
+            'каждого стража свои повадки и своя слабость.\n\nВызов стоит '
+            'подношения, и оно не возвращается. Проигравший наёмник гибнет, '
+            'победивший возвращается в резерв.\n\nУ каждого стража свои '
+            'умения: он готовит их с замахом, и замах видно на арене. Первая '
+            'победа над стражем даёт два очка дерева пассивок; каждая первая '
+            'победа на круге открывает следующий и отдаёт уникальную вещь того '
+            'босса, которого страж воплощает. К взятому кругу можно вернуться '
+            '— за вещью.',
+        'In a lair the guardian waits one on one, at the depth of its '
+            'circle. No descent before it — only the fight, and it decides '
+            'one thing: what to bring. Each guardian has its own habits and '
+            'its own weakness.\n\nA challenge costs an offering, and it is '
+            'not returned. A mercenary who loses dies; one who wins returns '
+            'to the reserve.\n\nEach guardian has its own skills: it winds '
+            'them up, and the wind-up shows in the arena. The first win over '
+            'a guardian grants two passive points; each first win of a '
+            'circle opens the next and drops the unique item of the boss the '
+            'guardian embodies. You can return to a taken circle — for the '
+            'item.',
+      ).text;
+
+  static String lairCircle(int circle, int depth) => Lang.current == Lang.ru
+      ? 'Круг $circle · этаж $depth'
+      : 'Circle $circle · floor $depth';
+
+  static String lairOffering(String gold) => Lang.current == Lang.ru
+      ? 'Подношение: $gold'
+      : 'Offering: $gold';
+
+  static String lairTaken(int circles) => Lang.current == Lang.ru
+      ? 'Взято кругов: $circles'
+      : 'Circles taken: $circles';
+
+  static String lairTrophies(int circles, int points, int maxPoints) =>
+      Lang.current == Lang.ru
+          ? 'Взято кругов: $circles · очков пассивок от логов: '
+              '$points из $maxPoints'
+          : 'Circles taken: $circles · passive points from lairs: '
+              '$points of $maxPoints';
+
+  static String lairSkills(String names) => Lang.current == Lang.ru
+      ? 'Умения: $names'
+      : 'Skills: $names';
+
+  static String lairFightTitle(int circle) => Lang.current == Lang.ru
+      ? 'Логово · круг $circle'
+      : 'Lair · circle $circle';
+
+  static String lairPreparing(String skill) => Lang.current == Lang.ru
+      ? 'Готовит: $skill'
+      : 'Preparing: $skill';
+
+  static String lairWeakness(String types, String conduits) =>
+      Lang.current == Lang.ru
+          ? (conduits.isEmpty
+              ? 'Слабость: $types'
+              : 'Слабость: $types · $conduits')
+          : (conduits.isEmpty
+              ? 'Weakness: $types'
+              : 'Weakness: $types · $conduits');
+
+  static String lairOfferingLost(String gold) => Lang.current == Lang.ru
+      ? 'Подношение сгорело: $gold'
+      : 'Offering lost: $gold';
+
+  static String get lairLossHint => const Phrase(
+        'Без ответа на его слабость круг у рекорда не берётся.',
+        'Without an answer to its weakness, a circle near your record '
+            'will not fall.',
+      ).text;
+
+  static String get lairStunned => const Phrase('Оглушён', 'Stunned').text;
+  static String get lairSilenced => const Phrase('Немота', 'Silenced').text;
+  static String get lairExposed => const Phrase('Уязвим', 'Exposed').text;
+  static String get lairBurning => const Phrase('Горит', 'Burning').text;
+  static String get lairShielded => const Phrase('Щит', 'Shielded').text;
+  static String get lairEnraged => const Phrase('Ярость', 'Enraged').text;
+  static String get lairGuardianHp =>
+      const Phrase('Страж', 'Guardian').text;
+  static String get lairSkip => const Phrase('К исходу', 'Skip to end').text;
+  static String get lairResult => const Phrase('Исход', 'Outcome').text;
+
+  static String battleBossWindup(String skill) => Lang.current == Lang.ru
+      ? 'Страж готовит: $skill'
+      : 'The guardian prepares: $skill';
+
+  static String battleBossSkill(String skill) => Lang.current == Lang.ru
+      ? '$skill!'
+      : '$skill!';
+
+  static String lairDrops(String items) => Lang.current == Lang.ru
+      ? 'Роняет: $items'
+      : 'Drops: $items';
+
+  static String get lairChallenge =>
+      const Phrase('Вызвать', 'Challenge').text;
+
+  static String get lairPickMerc =>
+      const Phrase('Кого отправить к стражу', 'Who faces the guardian').text;
+
+  static String get lairLossWarning => const Phrase(
+        'Проигравший погибнет. Подношение не возвращается.',
+        'The loser dies. The offering is not returned.',
+      ).text;
+
+  static String get lairNoMercs => const Phrase(
+        'В резерве никого — наймите в Таверне.',
+        'Nobody in reserve — hire at the Tavern.',
+      ).text;
+
+  static String lairWon(String guardian, int circle) => Lang.current == Lang.ru
+      ? '$guardian повержен. Круг $circle взят.'
+      : '$guardian falls. Circle $circle taken.';
+
+  static String lairWonAgain(String guardian, int circle) =>
+      Lang.current == Lang.ru
+          ? '$guardian повержен на круге $circle.'
+          : '$guardian falls at circle $circle.';
+
+  static String lairLost(String merc) => Lang.current == Lang.ru
+      ? '$merc не вернулся из логова.'
+      : '$merc did not return from the lair.';
+
+  static String lairHpLeft(int percent) => Lang.current == Lang.ru
+      ? 'Осталось здоровья: $percent %'
+      : 'Health left: $percent%';
+
+  static String lairPassivePoints(int points) => Lang.current == Lang.ru
+      ? '+$points очка дерева пассивок'
+      : '+$points passive points';
+
+  static String lairRelic(String name) => Lang.current == Lang.ru
+      ? 'Добыча: $name — ждёт в разборе'
+      : 'Loot: $name — waiting to be sorted';
+
   static String get brandTitle =>
       const Phrase('Клеймо Бездны', 'Brand of the Abyss').text;
 

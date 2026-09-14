@@ -219,13 +219,30 @@ class WaveRunner implements CombatContext {
       }
     }
 
+    _shredMult = shredMult;
+
+    // --- Умения стражей ------------------------------------------------------
+    // До героя: оглушение, наложенное в этот тик, обязано остановить удар
+    // этого же тика, иначе замах на экране и пропущенный удар расходятся.
+    _tickGuardianSkills(dt);
+    if (!hero.alive) {
+      _time += dt;
+      _done = true;
+      return;
+    }
+
     // --- Способности ---------------------------------------------------------
+    mods.silenced = _stunRemaining > 0.0 || _silenceRemaining > 0.0;
     abilities.tick(dt, this);
 
     // --- Герой бьёт ----------------------------------------------------------
     final attackSpeed = hero.stats.attackSpeed *
         (1.0 + hero.stats.increasedAttackSpeed + abilities.buffAttackSpeed);
-    hero.attackAccumulator += attackSpeed * slowMult * dt;
+    // Оглушённый не замахивается вовсе: накопленный замах не должен
+    // выстрелить пачкой ударов в ту секунду, когда оглушение спадёт.
+    if (_stunRemaining <= 0.0) {
+      hero.attackAccumulator += attackSpeed * slowMult * dt;
+    }
 
     while (hero.attackAccumulator >= 1.0 && _remaining > 0) {
       hero.attackAccumulator -= 1.0;
@@ -272,8 +289,25 @@ class WaveRunner implements CombatContext {
       return;
     }
 
+    // --- Горение на герое ----------------------------------------------------
+    final burner = _burnSource;
+    if (_burnRemaining > 0.0 && burner != null && hero.alive) {
+      final taken = _hitHero(burner, _burnDps * dt, _burnType, isHit: false);
+      _burnShown += taken;
+      _burnClock += dt;
+      // Цифрой раз в секунду, а не десять раз: горение тикает каждый тик,
+      // и столько чисел над героем — это не бой, а снегопад.
+      if (_burnClock >= 1.0 || !hero.alive) {
+        feed?.add(CombatBeat(BeatKind.heroHurt,
+            amount: _burnShown, type: _burnType));
+        _burnShown = 0.0;
+        _burnClock = 0.0;
+      }
+    }
+
     // --- Мобы бьют -----------------------------------------------------------
     for (final e in enemies) {
+      if (!hero.alive) break;
       if (!e.alive) continue;
       e.waveSeconds += dt;
 
@@ -295,32 +329,16 @@ class WaveRunner implements CombatContext {
               (Tuning.rampPerSecond * e.waveSeconds).clamp(0.0, Tuning.rampCap)
           : 1.0;
 
+      // Страж на замахе обычными атаками не бьёт: замах — это его ход, и
+      // удары поверх него превратили бы подготовку в обычный шум урона.
+      if (e.windupSkill >= 0) continue;
+
       final slowedBy = e.slowed ? e.slowFraction.clamp(0.0, 0.9) : 0.0;
-      e.attackAccumulator += e.attackSpeed * (1.0 - slowedBy) * dt;
+      e.attackAccumulator +=
+          e.attackSpeed * (1.0 - slowedBy) * (1.0 + e.enrageHaste) * dt;
 
       while (e.attackAccumulator >= 1.0) {
         e.attackAccumulator -= 1.0;
-
-        final result = DamageCalc.compute(
-          base: e.damagePerHit * ramp,
-          type: e.archetype.damageType,
-          rng: rng,
-          // Прибавка ко всем сопротивлениям от «Шкуры призм» и вычет по
-          // своей стихии от «Проводника»: реликт даёт силу и тут же делает
-          // героя уязвимым ровно к тому, чем бьёт.
-          targetResist: (hero.stats.resistFor(e.archetype.damageType) +
-                  rules.bonusResistAll -
-                  (rules.conduitType == e.archetype.damageType
-                      ? rules.conduitResistPenalty
-                      : 0.0)) *
-              shredMult,
-          // «Шкура призм» отменяет броню целиком: не срезает, а выключает.
-          targetArmor: rules.armorDisabled
-              ? 0.0
-              : hero.stats.armor * (1.0 - mods.lessArmor),
-          depth: depth,
-          canCrit: false,
-        );
 
         // «Разрядник» снимает ману ударом. Повадка, которая РАЗЛИЧАЕТ
         // сборки: живущему автоатакой она не мешает вовсе, а тому, кто
@@ -329,61 +347,12 @@ class WaveRunner implements CombatContext {
           hero.pay(Tuning.manaDrainPerHit);
         }
 
-        // Защита на низком здоровье («Последний рубеж») режет урон до того,
-        // как он снят: иначе она спасала бы уже мёртвого.
-        final taken = result.amount * abilities.damageTakenMultiplier(hero);
-
-        hero.hp -= taken;
-        _damageTaken += taken;
-
-        // «Клятый договор»: каждый принятый удар копит урон до конца волны.
-        if (rules.painPerHit > 0.0 && mods.painStacks < rules.painMaxStacks) {
-          mods.painStacks++;
-        }
-
-        // Шипы: часть полученного возвращается ударившему. Без крита и без
-        // событий — это отражение, а не удар героя, и цепочка «шипы убили ->
-        // взрыв трупа -> шипы…» была бы тем самым каскадом, от которого
-        // стоят предохранители шины.
-        final thorns = abilities.thornsFraction;
-        if (thorns > 0.0 && e.alive) {
-          dealDamage(
-            e,
-            base: taken * thorns,
-            type: DamageType.physical,
-            tags: const [],
-            canCrit: false,
-          );
-        }
-
-        // Узел древа «Порог»: один раз за спуск смертельный удар оставляет
-        // 1 HP. Проверка здесь, а не в конце тика: между ударом и концом тика
-        // герой успел бы «умереть» для всего остального кода.
-        if (!hero.alive && mods.deathThreshold && !mods.deathThresholdUsed) {
-          mods
-            ..deathThresholdUsed = true
-            ..deathThresholdTriggered = true;
-          hero.hp = 1.0;
-        }
-
-        if (!hero.alive) _killer = e.archetype;
-        // Ниже нуля здоровье не бывает: добивающий удар обычно бьёт с
-        // перехлёстом, и «−0.3 % HP» в журнале выглядело бы опечаткой.
-        final fraction = hero.hpFraction.clamp(0.0, 1.0);
-        if (fraction < _lowestHpFraction) _lowestHpFraction = fraction;
-        if (e.archetype.has(EnemyTrait.lifesteal)) {
-          e.heal(taken * Tuning.lifestealFraction);
-        }
-        bus.emit(EventContext(GameEventType.onDamageTaken,
-            source: e, target: hero, amount: taken));
-
-        if (feed != null) {
-          feed!.add(CombatBeat(BeatKind.heroHurt,
-              index: enemies.indexOf(e),
-              amount: taken,
-              type: e.archetype.damageType));
-          if (!hero.alive) feed!.add(const CombatBeat(BeatKind.heroDied));
-        }
+        _hitHero(
+          e,
+          e.damagePerHit * ramp * (1.0 + e.enrageDamage),
+          e.archetype.damageType,
+          lifesteal: e.archetype.has(EnemyTrait.lifesteal),
+        );
 
         if (!hero.alive) break;
       }
@@ -406,6 +375,13 @@ class WaveRunner implements CombatContext {
     for (final e in enemies) {
       if (e.alive) e.tickEffects(dt);
     }
+    if (_stunRemaining > 0.0) _stunRemaining -= dt;
+    if (_silenceRemaining > 0.0) _silenceRemaining -= dt;
+    if (_burnRemaining > 0.0) _burnRemaining -= dt;
+    if (_exposeRemaining > 0.0) {
+      _exposeRemaining -= dt;
+      if (_exposeRemaining <= 0.0) _exposeAmount = 0.0;
+    }
 
     bus.emit(EventContext(GameEventType.onTick, source: hero, amount: dt));
     _time += dt;
@@ -427,6 +403,218 @@ class WaveRunner implements CombatContext {
       _damageAtWindowStart = _damageDealt;
       _nextStallCheck += Tuning.stallCheckSeconds;
     }
+  }
+
+  // --- Умения стражей и удар по герою -----------------------------------------
+
+  double _shredMult = 1.0;
+
+  double _stunRemaining = 0.0;
+  double _silenceRemaining = 0.0;
+  double _exposeRemaining = 0.0;
+  double _exposeAmount = 0.0;
+
+  double _burnDps = 0.0;
+  double _burnRemaining = 0.0;
+  DamageType _burnType = DamageType.physical;
+  EnemyInstance? _burnSource;
+  double _burnShown = 0.0;
+  double _burnClock = 0.0;
+
+  /// Что сейчас висит на герое. Наружу — экрану боя: оглушённый герой, который
+  /// просто перестал бить, без подписи выглядит зависшей анимацией.
+  bool get heroStunned => _stunRemaining > 0.0;
+  bool get heroSilenced => _silenceRemaining > 0.0;
+  bool get heroExposed => _exposeRemaining > 0.0;
+  bool get heroBurning => _burnRemaining > 0.0;
+
+  /// Таймеры, замах и ярость стражей.
+  ///
+  /// Замах один за раз: страж, готовящий два удара сразу, читался бы как
+  /// случайность. Созревшее во время замаха умение ждёт своей очереди.
+  void _tickGuardianSkills(double dt) {
+    for (var i = 0; i < enemies.length; i++) {
+      final e = enemies[i];
+      final skills = e.archetype.skills;
+      if (!e.alive || skills.isEmpty) continue;
+
+      // Ярость — по порогу здоровья и один раз: второе пламя не зажигается
+      // дважды, иначе порог превращался бы в режим.
+      for (final s in skills) {
+        if (s.kind != GuardianSkillKind.enrage || e.enraged) continue;
+        if (e.hp > e.maxHp * s.threshold) continue;
+        e
+          ..enraged = true
+          ..enrageDamage += s.power
+          ..enrageHaste += s.power;
+        feed?.add(CombatBeat(BeatKind.bossSkill,
+            index: i, id: s.id, name: s.name, type: e.archetype.damageType));
+      }
+
+      for (var k = 0; k < skills.length; k++) {
+        if (skills[k].periodic) e.skillTimers[k] -= dt;
+      }
+
+      if (e.windupSkill >= 0) {
+        e.windupRemaining -= dt;
+        if (e.windupRemaining > 0.0) continue;
+        final skill = skills[e.windupSkill];
+        e.windupSkill = -1;
+        _releaseSkill(i, e, skill);
+        if (!hero.alive) return;
+        continue;
+      }
+
+      for (var k = 0; k < skills.length; k++) {
+        final s = skills[k];
+        if (!s.periodic || e.skillTimers[k] > 0.0) continue;
+        e.skillTimers[k] += s.every;
+        if (s.windup <= 0.0) {
+          _releaseSkill(i, e, s);
+        } else {
+          e
+            ..windupSkill = k
+            ..windupRemaining = s.windup;
+          feed?.add(CombatBeat(BeatKind.bossWindup,
+              index: i,
+              id: s.id,
+              name: s.name,
+              amount: s.windup,
+              type: e.archetype.damageType));
+        }
+        break;
+      }
+      if (!hero.alive) return;
+    }
+  }
+
+  void _releaseSkill(int index, EnemyInstance e, GuardianSkill s) {
+    final type = e.archetype.damageType;
+    feed?.add(CombatBeat(BeatKind.bossSkill,
+        index: index, id: s.id, name: s.name, type: type));
+
+    final strike = e.damagePerHit * (1.0 + e.enrageDamage);
+    switch (s.kind) {
+      case GuardianSkillKind.slam:
+        _hitHero(e, strike * s.power, type);
+      case GuardianSkillKind.burn:
+        _burnDps = strike * s.power;
+        _burnRemaining = s.duration;
+        _burnType = type;
+        _burnSource = e;
+      case GuardianSkillKind.stun:
+        _stunRemaining = s.duration;
+        // Накопленный замах сгорает: оглушение отнимает удар, а не
+        // откладывает его на потом.
+        hero.attackAccumulator = 0.0;
+        if (s.power > 0.0) _hitHero(e, strike * s.power, type);
+      case GuardianSkillKind.silence:
+        _silenceRemaining = s.duration;
+        hero.mana = (hero.mana - hero.stats.maxMana * s.power)
+            .clamp(0.0, hero.stats.maxMana);
+      case GuardianSkillKind.expose:
+        _exposeAmount = s.power;
+        _exposeRemaining = s.duration;
+      case GuardianSkillKind.shield:
+        e
+          ..shieldFraction = s.power
+          ..shieldRemaining = s.duration;
+      case GuardianSkillKind.enrage:
+        break;
+    }
+  }
+
+  /// Единственная точка урона ПО ГЕРОЮ: удар моба, умение стража, горение.
+  ///
+  /// Одна, по той же причине, что и [_applyDamage] для урона по мобам: «Порог»,
+  /// «Последний рубеж» и уязвимость, забытые в одной из веток, работали бы
+  /// через раз.
+  ///
+  /// [isHit] = `false` — горение: броня его не держит, шипы на него не
+  /// отвечают, и событий оно не порождает — тикает десять раз в секунду.
+  double _hitHero(
+    EnemyInstance e,
+    double base,
+    DamageType type, {
+    bool lifesteal = false,
+    bool isHit = true,
+  }) {
+    final result = DamageCalc.compute(
+      base: base,
+      type: type,
+      rng: rng,
+      // Прибавка ко всем сопротивлениям от «Шкуры призм» и вычет по своей
+      // стихии от «Проводника»: реликт даёт силу и тут же делает героя
+      // уязвимым ровно к тому, чем бьёт. Уязвимость от умения стража —
+      // туда же.
+      targetResist: (hero.stats.resistFor(type) +
+              rules.bonusResistAll -
+              (rules.conduitType == type ? rules.conduitResistPenalty : 0.0) -
+              (_exposeRemaining > 0.0 ? _exposeAmount : 0.0)) *
+          _shredMult,
+      // «Шкура призм» отменяет броню целиком: не срезает, а выключает.
+      targetArmor: !isHit || rules.armorDisabled
+          ? 0.0
+          : hero.stats.armor * (1.0 - mods.lessArmor),
+      depth: depth,
+      canCrit: false,
+    );
+
+    // Защита на низком здоровье («Последний рубеж») режет урон до того, как
+    // он снят: иначе она спасала бы уже мёртвого.
+    final taken = result.amount * abilities.damageTakenMultiplier(hero);
+
+    hero.hp -= taken;
+    _damageTaken += taken;
+
+    if (isHit) {
+      // «Клятый договор»: каждый принятый удар копит урон до конца волны.
+      if (rules.painPerHit > 0.0 && mods.painStacks < rules.painMaxStacks) {
+        mods.painStacks++;
+      }
+
+      // Шипы: часть полученного возвращается ударившему. Без крита и без
+      // событий — это отражение, а не удар героя, и цепочка «шипы убили ->
+      // взрыв трупа -> шипы…» была бы тем самым каскадом, от которого стоят
+      // предохранители шины.
+      final thorns = abilities.thornsFraction;
+      if (thorns > 0.0 && e.alive) {
+        dealDamage(
+          e,
+          base: taken * thorns,
+          type: DamageType.physical,
+          tags: const [],
+          canCrit: false,
+        );
+      }
+    }
+
+    // Узел древа «Порог»: один раз за спуск смертельный удар оставляет 1 HP.
+    // Проверка здесь, а не в конце тика: между ударом и концом тика герой
+    // успел бы «умереть» для всего остального кода.
+    if (!hero.alive && mods.deathThreshold && !mods.deathThresholdUsed) {
+      mods
+        ..deathThresholdUsed = true
+        ..deathThresholdTriggered = true;
+      hero.hp = 1.0;
+    }
+
+    if (!hero.alive) _killer = e.archetype;
+    // Ниже нуля здоровье не бывает: добивающий удар обычно бьёт с
+    // перехлёстом, и «−0.3 % HP» в журнале выглядело бы опечаткой.
+    final fraction = hero.hpFraction.clamp(0.0, 1.0);
+    if (fraction < _lowestHpFraction) _lowestHpFraction = fraction;
+    if (lifesteal) e.heal(taken * Tuning.lifestealFraction);
+
+    if (isHit) {
+      bus.emit(EventContext(GameEventType.onDamageTaken,
+          source: e, target: hero, amount: taken));
+      feed?.add(CombatBeat(BeatKind.heroHurt,
+          index: enemies.indexOf(e), amount: taken, type: type));
+    }
+    if (!hero.alive) feed?.add(const CombatBeat(BeatKind.heroDied));
+
+    return taken;
   }
 
   bool _autoAttack() {
@@ -481,6 +669,8 @@ class WaveRunner implements CombatContext {
   void dealRawDamage(EnemyInstance target, double amount,
       {DamageType type = DamageType.physical}) {
     if (!target.alive || amount <= 0.0) return;
+    // Щит стража держит и то, что прошло мимо формулы.
+    if (target.shielded) amount *= 1.0 - target.shieldFraction;
 
     _damageDealt += amount;
     // Тип называет тот, кто нанёс: иначе «перескок» Молнии считался бы
@@ -638,6 +828,10 @@ class WaveRunner implements CombatContext {
     if (!target.cursed && rules.uncursedPenalty > 0.0) {
       amount *= 1.0 - rules.uncursedPenalty;
     }
+
+    // Щит стража: доля урона не проходит, пока он держится. После митигации,
+    // как и проклятие, — это свойство цели, а не прибавка к удару.
+    if (target.shielded) amount *= 1.0 - target.shieldFraction;
 
     _damageDealt += amount;
     _damageByType[dealtType.index] += amount;

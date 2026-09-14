@@ -525,7 +525,31 @@ class ContentPack {
             'страж без повадок — мешок с HP: перед таким боссом нечего '
             'решать, кроме «хватит ли урона»');
       }
+      // Умения — то, чем страж отличается от босса бездны. Одно умение
+      // превращается в метроном, поэтому их не меньше двух.
+      if (g.skills.length < 2) {
+        issues.add('guardians.${g.id}.skills',
+            'у стража должно быть хотя бы два умения');
+      }
     }
+
+    // Умения обязаны быть СВОИМИ: два стража с одним набором видов — это
+    // один бой, надетый дважды. Тот же принцип, что у повадок.
+    final skillSets = <String, String>{};
+    final skillIds = <String>[];
+    for (final g in guardians) {
+      final kinds = [for (final s in g.skills) s.kind.name]..sort();
+      final key = kinds.join('+');
+      final twin = skillSets[key];
+      if (twin != null && kinds.isNotEmpty) {
+        issues.add('guardians.${g.id}.skills',
+            'набор умений повторяет стража «$twin»');
+      } else {
+        skillSets[key] = g.id;
+      }
+      skillIds.addAll(g.skills.map((s) => s.id));
+    }
+    _uniqueIds(issues, 'guardians.skills', skillIds);
 
     // Источник — это адрес, по которому игрок пойдёт за вещью. Адрес,
     // указывающий в никуда, означает реликт, который не выпадет НИКОГДА: та
@@ -656,6 +680,9 @@ class ContentPack {
     'startDepthShare',
     'passivePointPerFloors', 'passivePointCap',
     'echoNodeBaseCost', 'echoNodeCostGrowth',
+    'lairUnlockDepth', 'lairFirstDepth', 'lairDepthPerCircle',
+    'lairOfferingFloors', 'lairRelicChance', 'lairReferenceDepth',
+    'lairFirstKillPoints', 'lairGuardianMight',
   };
 
   static const _heroKeys = {

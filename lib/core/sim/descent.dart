@@ -13,6 +13,7 @@ import 'abilities.dart';
 import 'combat.dart';
 import 'combat_feed.dart';
 import 'fork.dart';
+import 'hero_rig.dart';
 import 'loot.dart';
 import 'relics.dart';
 import 'triggers.dart';
@@ -333,23 +334,16 @@ class DescentDriver {
   }) : bus = bus ?? EventBus() {
     this.bus.resetDiagnostics();
 
-    hero = HeroState(profile.aggregate());
-
     // Рантайм способностей живёт на уровне РАНА: кулдауны и баффы не должны
     // обнуляться между волнами, иначе способность с перезарядкой 14 с была бы
-    // готова к началу каждой волны.
-    _mods = CombatModifiers()
-      ..deathThreshold = profile.tree?.hasDeathThreshold ?? false;
-    _rules = profile.relicRules;
-    _abilities =
-        AbilityRuntime(profile.loadout, modifiers: _mods, rules: _rules);
-    _triggers = TriggerRuntime(
-      bus: this.bus,
-      abilities: _abilities,
-      mods: _mods,
-    )
-      ..rules = _rules
-      ..configure(profile.gear.triggerIds);
+    // готова к началу каждой волны. Собирается тем же `HeroRig`, что и бой в
+    // логове стража: герой в бою обязан быть один и тот же.
+    final rig = HeroRig.of(profile, this.bus);
+    hero = rig.hero;
+    _mods = rig.mods;
+    _rules = rig.rules;
+    _abilities = rig.abilities;
+    _triggers = rig.triggers;
     haul = Haul(
       capacity: backpackCapacityOverride ?? 12,
       salvageRate: salvageRate,

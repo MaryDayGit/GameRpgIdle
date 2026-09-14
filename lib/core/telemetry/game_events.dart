@@ -209,6 +209,25 @@ abstract final class GameEvents {
         'max_depth_ever': p.maxDepthEver,
       });
 
+  /// Игрок вызвал стража в логове.
+  ///
+  /// Главный вопрос логова — «чем идти», и балансировщик на него не отвечает:
+  /// он не надевает Проводников. Поэтому пишется и исход, и запас: страж,
+  /// которого берут с 90 % здоровья, и страж, которого берут с 5 %, — разные
+  /// стражи, хотя оба «побеждены».
+  static AnalyticsEvent lairChallenge(LairChallenge c, PlayerProfile p) =>
+      AnalyticsEvent('lair_challenge', {
+        'guardian': c.guardian.id,
+        'circle': c.circle,
+        'won': c.fight.won,
+        'first_win': c.firstWin,
+        'hp_left': (c.fight.hpLeft * 100).round(),
+        'seconds': c.fight.seconds.round(),
+        'merc_rank': c.mercenary.rank.name,
+        'max_depth_ever': p.maxDepthEver,
+        'lair_trophies': p.lairTrophies,
+      });
+
   static AnalyticsEvent mercHired(String rank, PlayerProfile p) =>
       AnalyticsEvent('merc_hired', {
         'merc_rank': rank,

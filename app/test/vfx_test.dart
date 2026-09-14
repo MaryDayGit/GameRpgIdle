@@ -41,6 +41,27 @@ void main() {
     expect(vfx.numberCount, lessThanOrEqualTo(Vfx.maxNumbers));
   });
 
+  test('частые удары по одной цели складываются в одну цифру', () {
+    // На экране стража отдельные цифры на каждый удар налезали друг на
+    // друга и не читались. Сумма — одна цифра, растущая с темпом ударов.
+    final vfx = Vfx();
+    for (var i = 0; i < 5; i++) {
+      vfx.number(const Offset(100, 100), 40.0);
+      vfx.tick(0.1);
+    }
+    expect(vfx.numberCount, 1);
+
+    // Крит отдельно: он обязан выпрыгнуть сам.
+    vfx.number(const Offset(100, 100), 90.0, crit: true);
+    expect(vfx.numberCount, 2);
+
+    // Другая стихия и другая цель — свои цифры.
+    vfx
+      ..number(const Offset(100, 100), 40.0, type: DamageType.fire)
+      ..number(const Offset(300, 100), 40.0);
+    expect(vfx.numberCount, 4);
+  });
+
   test('урон меньше единицы цифру не рождает', () {
     // Горение тикает десять раз в секунду долями единицы. Столб нулей над
     // мобом — это не информация, а помеха.

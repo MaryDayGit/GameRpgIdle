@@ -29,6 +29,14 @@ class CurveConfig {
     this.echoNodeCostGrowth = 2.6,
     this.passivePointPerFloors = 5,
     this.passivePointCap = 60,
+    this.lairUnlockDepth = 150,
+    this.lairFirstDepth = 150,
+    this.lairDepthPerCircle = 15,
+    this.lairOfferingFloors = 60.0,
+    this.lairRelicChance = 0.35,
+    this.lairReferenceDepth = 40,
+    this.lairFirstKillPoints = 2,
+    this.lairGuardianMight = 3.0,
   });
 
   final double tau;
@@ -90,6 +98,49 @@ class CurveConfig {
   final int passivePointPerFloors;
   final int passivePointCap;
 
+  /// Логова стражей: рекорд, с которого они открываются.
+  ///
+  /// Логово — цель позднего этапа. Замер раунда 36: к сороковому контракту
+  /// закрывается всё, что можно открыть, и дальше у игрока одна цель — пара
+  /// этажей рекорда. Открывать логова раньше значит отнять у Клейма его
+  /// собственную лестницу.
+  final int lairUnlockDepth;
+
+  /// Глубина первого круга и шаг глубины на каждый следующий.
+  final int lairFirstDepth;
+  final int lairDepthPerCircle;
+
+  /// Подношение за вызов — столько этажей дохода на глубине круга.
+  ///
+  /// Сток привязан к той же кривой, что и доход (`Curves.goldPerFloor`), и
+  /// растёт вместе с кругом: конечный сток против экспоненциального дохода
+  /// проигрывает всегда (раунд 27).
+  final double lairOfferingFloors;
+
+  /// Шанс уникальной вещи за ПОВТОРНУЮ победу. Первая даёт её всегда.
+  final double lairRelicChance;
+
+  /// Глубина, на которой стражей проверяет аудит (`audit_cli --bosses`).
+  ///
+  /// На ней страж ровно такой, каким его выверили: опасен, проходим и не
+  /// похож на других. Глубже его здоровье растёт вместе с уроном сборки, а
+  /// не с кривой мобов — см. `Curves.lairHpScale`.
+  final int lairReferenceDepth;
+
+  /// Очки дерева пассивок за ПЕРВУЮ победу над каждым стражем. Дальше круги
+  /// очков не дают: лестница, которая платит очком за каждую ступень,
+  /// раскручивала силу без предела (раунд 37).
+  final int lairFirstKillPoints;
+
+  /// Во сколько раз страж в логове крепче и злее, чем его выверил аудит.
+  ///
+  /// Аудит сравнивает стража с ГОЛЫМ снаряжением глубины — так видна форма
+  /// боя, «кого ломает и чем берётся». Но к логову игрок приходит с деревом
+  /// пассивок, древом Эха и Легендой, и против такого героя выверенный страж
+  /// падает с остатком здоровья в 60–100 % (замер раунда 38). Множитель
+  /// поднимает здоровье и урон вместе, и форма боя от него не меняется.
+  final double lairGuardianMight;
+
   factory CurveConfig.fromJson(Map<String, dynamic> j) => CurveConfig(
         tau: _d(j, 'tau', 30.0),
         mobHpGrowth: _d(j, 'mobHpGrowth', 1.06),
@@ -116,6 +167,14 @@ class CurveConfig {
         echoNodeCostGrowth: _d(j, 'echoNodeCostGrowth', 2.6),
         passivePointPerFloors: _i(j, 'passivePointPerFloors', 5),
         passivePointCap: _i(j, 'passivePointCap', 60),
+        lairUnlockDepth: _i(j, 'lairUnlockDepth', 150),
+        lairFirstDepth: _i(j, 'lairFirstDepth', 150),
+        lairDepthPerCircle: _i(j, 'lairDepthPerCircle', 15),
+        lairOfferingFloors: _d(j, 'lairOfferingFloors', 60.0),
+        lairRelicChance: _d(j, 'lairRelicChance', 0.35),
+        lairReferenceDepth: _i(j, 'lairReferenceDepth', 40),
+        lairFirstKillPoints: _i(j, 'lairFirstKillPoints', 2),
+        lairGuardianMight: _d(j, 'lairGuardianMight', 3.0),
       );
 
   static List<int> _ints(

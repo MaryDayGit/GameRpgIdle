@@ -22,6 +22,7 @@ import 'fork_card.dart';
 import 'format.dart';
 import 'battle_screen.dart';
 import 'journal_screen.dart';
+import 'lair_screen.dart';
 import 'mercenary_screen.dart';
 import 'mercenary_sheet.dart';
 import 'passive_tree_screen.dart';
@@ -435,6 +436,18 @@ class _OutpostScreenState extends State<OutpostScreen> {
                           MaterialPageRoute<void>(
                             builder: (_) => PassiveTreeScreen(controller: c),
                           ),
+                        ),
+                      ),
+                    ),
+                  // Логова — только когда открыты: до этого рекорда у игрока
+                  // своя лестница, Клеймо, и кнопка с замком перебивала бы её.
+                  if (profile.lairsOpen)
+                    _Destination(
+                      icon: Icons.shield_outlined,
+                      label: S.lairsTitle,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => LairScreen(controller: c),
                         ),
                       ),
                     ),

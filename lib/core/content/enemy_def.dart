@@ -69,6 +69,12 @@ class EnemyParser {
   static const _guardianKeys = {
     'id', 'ru', 'gender', 'role', 'boss', 'hpMult', 'dpsMult',
     'attackSpeed', 'armorMult', 'damageType', 'resists', 'traits', 'phases',
+    'skills',
+  };
+
+  static const _skillKeys = {
+    'id', 'ru', 'kind', 'every', 'first', 'windup', 'power', 'duration',
+    'threshold',
   };
 
   /// Страж области: тот же босс, но в своём логове и в полную силу.
@@ -83,6 +89,76 @@ class EnemyParser {
       weight: 0.0,
       phases: node.strList('phases'),
       embodies: node.str('boss'),
+      skills: [for (final s in node.children('skills')) _skill(s)],
+    );
+  }
+
+  /// Умение стража. Проверяется по виду: у каждого свои обязательные числа, и
+  /// умение с нулём там, где оно должно бить, молча не делало бы ничего.
+  static GuardianSkill _skill(JsonNode n) {
+    n.checkKeys(_skillKeys);
+
+    final kind = n.enumByName('kind', GuardianSkillKind.values) ??
+        GuardianSkillKind.slam;
+    final every = n.dbl('every', or: 0.0);
+    final windup = n.dbl('windup', or: 0.0);
+    final power = n.dbl('power', or: 0.0);
+    final duration = n.dbl('duration', or: 0.0);
+    final threshold = n.dbl('threshold', or: 0.0);
+
+    void bad(String field, String why) =>
+        n.issues.add('${n.path}.$field', why);
+
+    if (kind != GuardianSkillKind.enrage) {
+      if (every <= 0.0) bad('every', 'умение без перерыва — это не умение');
+      if (windup < 0.0 || windup >= every) {
+        bad('windup', 'замах обязан быть короче перерыва');
+      }
+    }
+
+    switch (kind) {
+      case GuardianSkillKind.slam:
+      case GuardianSkillKind.expose:
+        if (power <= 0.0) bad('power', 'должно быть больше нуля');
+        if (kind == GuardianSkillKind.expose && duration <= 0.0) {
+          bad('duration', 'должно быть больше нуля');
+        }
+      case GuardianSkillKind.burn:
+        if (power <= 0.0) bad('power', 'должно быть больше нуля');
+        if (duration <= 0.0) bad('duration', 'должно быть больше нуля');
+      case GuardianSkillKind.stun:
+        // Оглушение дольше половины перерыва — это не умение, а цепи: герой
+        // стоит больше, чем бьёт, и исход решает не сборка, а таймер.
+        if (duration <= 0.0 || duration > every * 0.5) {
+          bad('duration', 'оглушение обязано быть короче половины перерыва');
+        }
+      case GuardianSkillKind.silence:
+        if (duration <= 0.0 || duration >= every) {
+          bad('duration', 'немота обязана быть короче перерыва');
+        }
+      case GuardianSkillKind.shield:
+        // Щит на весь бой — это не повадка, а бессмертие.
+        if (power <= 0.0 || power > 0.8) bad('power', 'доля от 0 до 0.8');
+        if (duration <= 0.0 || duration >= every) {
+          bad('duration', 'щит обязан быть короче перерыва');
+        }
+      case GuardianSkillKind.enrage:
+        if (threshold <= 0.0 || threshold >= 1.0) {
+          bad('threshold', 'доля здоровья от 0 до 1');
+        }
+        if (power <= 0.0) bad('power', 'должно быть больше нуля');
+    }
+
+    return GuardianSkill(
+      id: n.str('id'),
+      name: n.str('ru'),
+      kind: kind,
+      every: every,
+      first: n.dbl('first', or: 0.0),
+      windup: windup,
+      power: power,
+      duration: duration,
+      threshold: threshold,
     );
   }
 
@@ -95,6 +171,7 @@ class EnemyParser {
     int everyFloors = 0,
     String? embodies,
     List<String> phases = const [],
+    List<GuardianSkill> skills = const [],
   }) {
     final attackSpeed = node.dbl('attackSpeed');
     final hpMult = node.dbl('hpMult');
@@ -132,6 +209,7 @@ class EnemyParser {
       everyFloors: everyFloors,
       phases: phases,
       embodies: embodies,
+      skills: skills,
     );
   }
 }

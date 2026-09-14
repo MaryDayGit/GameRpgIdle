@@ -10,8 +10,15 @@ import 'package:rift/core/model/lang.dart';
 
 /// Крупные числа: 1.2k, 3.4M. Экспоненциальная экономика иначе не читается —
 /// на сотом этаже золото измеряется миллионами.
+///
+/// Разряды идут до квадриллионов, дальше — экспонента. Поздний игрок держит
+/// в кошельке 10¹⁵, и без старших разрядов это превращалось в «1000000.0B»,
+/// которое не влезало в плашку ресурсов и переносилось на две строки.
 String money(double value) {
   final v = value.abs();
+  if (v >= 1e18) return value.toStringAsExponential(1).replaceAll('+', '');
+  if (v >= 1e15) return '${(value / 1e15).toStringAsFixed(1)}Qa';
+  if (v >= 1e12) return '${(value / 1e12).toStringAsFixed(1)}T';
   if (v >= 1e9) return '${(value / 1e9).toStringAsFixed(1)}B';
   if (v >= 1e6) return '${(value / 1e6).toStringAsFixed(1)}M';
   if (v >= 1e3) return '${(value / 1e3).toStringAsFixed(1)}k';

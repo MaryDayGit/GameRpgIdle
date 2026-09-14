@@ -304,6 +304,27 @@ class Vfx {
       DamageType type = DamageType.physical}) {
     if (amount < 1.0) return;
 
+    final color = crit ? const Color(0xFFFFD08A) : lookForDamage(type).glow;
+
+    // Частые удары по одной цели складываются в одну растущую цифру.
+    //
+    // Автоатака бьёт по нескольку раз в секунду, и отдельная цифра на каждый
+    // удар давала над стражем кашу из одинаковых «49915», налезающих друг на
+    // друга: старые всплывают ровно туда, где рождаются новые, и никакой
+    // сдвиг это не лечит. Сумма читается сразу и честно показывает темп.
+    // Крит не сливается: он и должен выпрыгнуть отдельно.
+    if (!crit) {
+      for (final n in _numbers) {
+        if (!n.alive || n.crit || n.color != color) continue;
+        if (n.fade < 0.45) continue;
+        if ((n.x - at.dx).abs() > 48.0 || (n.y - at.dy).abs() > 60.0) continue;
+        n
+          ..value += amount.round()
+          ..life = n.span;
+        return;
+      }
+    }
+
     var slot = _numbers.where((n) => !n.alive).firstOrNull;
     if (slot == null && _numbers.length < maxNumbers) {
       slot = DamageNumber();
@@ -311,16 +332,26 @@ class Vfx {
     }
     slot ??= _numbers.reduce((a, b) => a.fade < b.fade ? a : b);
 
+    // Свежие цифры рядом сдвигают новую выше. Без этого удары по одной цели
+    // ложились друг на друга, и над стражем висела нечитаемая стопка —
+    // «49915» поверх «46615» поверх «49915». Молодыми считаются те, что ещё
+    // не успели всплыть на высоту строки.
+    var stack = 0;
+    for (final n in _numbers) {
+      if (identical(n, slot) || !n.alive || n.fade < 0.55) continue;
+      if ((n.x - at.dx).abs() < 48.0 && (n.y - at.dy).abs() < 70.0) stack++;
+    }
+    final lift = (stack % 4) * 17.0;
+    final side = (stack ~/ 4).isOdd ? 26.0 : 0.0;
+
     slot
-      ..x = at.dx + _spread(6.0)
-      ..y = at.dy
+      ..x = at.dx + _spread(14.0) + side
+      ..y = at.dy - lift
       ..value = amount.round()
       ..crit = crit
       ..life = crit ? 0.95 : 0.7
       ..span = crit ? 0.95 : 0.7
-      ..color = crit
-          ? const Color(0xFFFFD08A)
-          : lookForDamage(type).glow;
+      ..color = color;
   }
 
   /// Толчок камеры. Копится, а не заменяется: два крита подряд обязаны

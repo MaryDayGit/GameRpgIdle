@@ -486,7 +486,35 @@
         "Пепел поднимается",
         "Жар нарастает"
       ],
-      "gender": "masculine"
+      "gender": "masculine",
+      "skills": [
+        {
+          "id": "ash_wall",
+          "ru": "Пепельный вал",
+          "kind": "slam",
+          "every": 9.0,
+          "first": 5.0,
+          "windup": 1.5,
+          "power": 2.5
+        },
+        {
+          "id": "ash_pyre",
+          "ru": "Погребальный жар",
+          "kind": "burn",
+          "every": 12.0,
+          "first": 3.0,
+          "windup": 0.8,
+          "power": 0.3,
+          "duration": 5.0
+        },
+        {
+          "id": "ash_rebirth",
+          "ru": "Второе пламя",
+          "kind": "enrage",
+          "threshold": 0.3,
+          "power": 0.3
+        }
+      ]
     },
     {
       "id": "warden_void",
@@ -509,7 +537,38 @@
       "phases": [
         "Пустота смыкается"
       ],
-      "gender": "masculine"
+      "gender": "masculine",
+      "skills": [
+        {
+          "id": "void_maw",
+          "ru": "Пасть пустоты",
+          "kind": "slam",
+          "every": 11.0,
+          "first": 6.0,
+          "windup": 1.8,
+          "power": 2.5
+        },
+        {
+          "id": "void_hush",
+          "ru": "Немота",
+          "kind": "silence",
+          "every": 13.0,
+          "first": 4.0,
+          "windup": 0.6,
+          "power": 0.4,
+          "duration": 4.0
+        },
+        {
+          "id": "void_rend",
+          "ru": "Разрыв",
+          "kind": "expose",
+          "every": 15.0,
+          "first": 8.0,
+          "windup": 1.0,
+          "power": 25.0,
+          "duration": 5.0
+        }
+      ]
     },
     {
       "id": "warden_storm",
@@ -532,7 +591,35 @@
         "Разряд по всей волне",
         "Небо падает"
       ],
-      "gender": "masculine"
+      "gender": "masculine",
+      "skills": [
+        {
+          "id": "storm_chain",
+          "ru": "Цепная молния",
+          "kind": "slam",
+          "every": 8.0,
+          "first": 4.0,
+          "windup": 1.0,
+          "power": 2.0
+        },
+        {
+          "id": "storm_aegis",
+          "ru": "Громовая эгида",
+          "kind": "shield",
+          "every": 12.0,
+          "first": 7.0,
+          "windup": 0.5,
+          "power": 0.35,
+          "duration": 3.0
+        },
+        {
+          "id": "storm_fall",
+          "ru": "Небо падает",
+          "kind": "enrage",
+          "threshold": 0.35,
+          "power": 0.25
+        }
+      ]
     },
     {
       "id": "warden_frost",
@@ -556,7 +643,38 @@
         "Лёд смыкается",
         "Панцирь нарастает"
       ],
-      "gender": "masculine"
+      "gender": "masculine",
+      "skills": [
+        {
+          "id": "frost_prison",
+          "ru": "Ледяная тюрьма",
+          "kind": "stun",
+          "every": 13.0,
+          "first": 6.0,
+          "windup": 1.2,
+          "power": 1.0,
+          "duration": 2.0
+        },
+        {
+          "id": "frost_shell",
+          "ru": "Ледяной панцирь",
+          "kind": "shield",
+          "every": 14.0,
+          "first": 9.0,
+          "windup": 0.6,
+          "power": 0.4,
+          "duration": 4.0
+        },
+        {
+          "id": "frost_avalanche",
+          "ru": "Лавина",
+          "kind": "slam",
+          "every": 18.0,
+          "first": 12.0,
+          "windup": 2.5,
+          "power": 4.0
+        }
+      ]
     }
   ]
 }

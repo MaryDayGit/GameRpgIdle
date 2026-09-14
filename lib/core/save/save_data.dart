@@ -41,7 +41,7 @@ class SaveData {
   }) : _seasonId = seasonId;
 
   /// Версия формата. Растёт вместе с цепочкой миграций.
-  static const int currentVersion = 5;
+  static const int currentVersion = 6;
 
   final int version;
 

@@ -5,6 +5,11 @@ import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/content/content_pack.dart';
 
 import 'package:rift/core/model/build_power.dart';
+import 'package:rift/core/model/enemy.dart';
+import 'package:rift/core/model/relic_effect.dart';
+import 'package:rift/core/sim/lair.dart';
+import 'package:rift/core/sim/loot.dart';
+import 'package:rift/core/sim/relics.dart';
 import 'package:rift/core/model/equipment.dart';
 import 'package:rift/core/model/item.dart';
 import 'package:rift/core/sim/crafting.dart';
@@ -57,6 +62,8 @@ void main(List<String> args) {
       _compareForks(opts);
     case 'forks-vs':
       _compareForkPlay(opts);
+    case 'lair-probe':
+      _lairProbe(opts);
     case 'runs':
       _runDistribution(opts);
     default:
@@ -1045,6 +1052,13 @@ PlayerProfile _playCampaign(
       }
     }
 
+    // 4½. Логова стражей.
+    //
+    // До Кузницы, а не после: Кузница съедает любой остаток, и после неё
+    // на подношение не остаётся никогда. Живой игрок, у которого открыт круг,
+    // выбирает цель раньше, чем шлифовку аффиксов.
+    _challengeLairs(player, Rng(o.seed + i * 15485863));
+
     // 5. Остаток золота — в Кузницу.
     //
     // Перекат аффикса и есть тот бесконечный сток, ради которого он задуман
@@ -1060,6 +1074,212 @@ PlayerProfile _playCampaign(
   }
 
   return player;
+}
+
+int _lairWins = 0;
+int _lairLosses = 0;
+
+/// Один вызов стража за контракт — как игрок, который заходит между спусками.
+///
+/// Стражи по кругу, а не «самый отстающий»: у каждого своя слабость, и
+/// автоигрок, упёршийся в одного, мерил бы стену этого стража, а не лестницу.
+/// Сборку под стража он не собирает — Проводники не надевает, реликты не
+/// меняет. Это нижняя граница: игрок, который думает, чем идти, берёт круги
+/// раньше.
+///
+/// Бойца нанимает отдельно, лучшего по карману сверх подношения и резерва на
+/// следующий задаток: гибель в логове не должна оставлять кампанию без
+/// наёмника на следующий спуск.
+void _challengeLairs(PlayerProfile player, Rng rng) {
+  if (!player.lairsOpen || Bestiary.guardians.isEmpty) return;
+
+  final guardian =
+      Bestiary.guardians[player.lairAttempts % Bestiary.guardians.length];
+  final offering = Curves.lairOffering(player.nextLairCircle(guardian.id));
+  final reserve = Roster.hireCost(MercRank.legend, depth: player.hireDepth);
+
+  List<Mercenary> affordable() => player.tavernCandidates
+      .where((m) => player.hireCostOf(m) + offering + reserve <= player.gold)
+      .toList()
+    ..sort((a, b) => b.rank.index.compareTo(a.rank.index));
+
+  player.refreshTavern(rng);
+  var rerolls = 0;
+  while (affordable().isEmpty && ++rerolls <= 20) {
+    player.refreshTavern(rng);
+  }
+  final pool = affordable();
+  if (pool.isEmpty) return;
+
+  final fighter = pool.first;
+  if (!player.hire(fighter)) return;
+
+  // Чем идти. Автоигрок делает то, ради чего стражи и заведены: если в
+  // сундуке лежит Проводник той стихии, к которой страж уязвим, он его
+  // надевает. Без этого замер мерил бы игрока, который логово не читает, и
+  // объявлял бы стражей стеной там, где у них есть ответ.
+  fighter.gear.equipFrom(player.stash,
+      base: Tuning.heroBase,
+      depth: 1,
+      loadout: BuildPower.loadoutOf(fighter.abilities),
+      onlyEmpty: true,
+      skipRelics: true);
+  final conduit = _answerConduit(player.stash, guardian);
+  if (conduit != null) {
+    player.stash.remove(conduit);
+    final slot = fighter.gear.slotsFor(conduit.kind).first;
+    player.stash.addAll(fighter.gear.equipTo(slot, conduit));
+  }
+
+  final challenge = player.challengeGuardian(fighter, guardian.id);
+  if (challenge == null) return;
+  if (_traceCampaign) {
+    print('  логово ${guardian.id} круг ${challenge.circle} '
+        '(этаж ${challenge.depth}, рекорд ${player.maxDepthEver}): '
+        '${challenge.fight.won ? "победа, HP ${(challenge.fight.hpLeft * 100).round()} %" : "гибель"}'
+        ', ${challenge.fight.seconds.round()} с, ${fighter.rank.name}');
+  }
+  if (challenge.fight.won) {
+    _lairWins++;
+    // Выживший возвращается в резерв ОДЕТЫМ, и первый замер показал, чем
+    // это кончается у автоматики: резерв копит бойцов в лучшем снаряжении,
+    // сундук пустеет, и следующий спуск уходит вниз голым — рекорд 167 вместо
+    // 290 и спуски по часу. Игрок с одним комплектом снимает его обратно.
+    player.stash.addAll(fighter.gear.unequipAll());
+  } else {
+    _lairLosses++;
+  }
+  player.autoSortLoot();
+}
+
+/// Стихия, которую даёт Проводник [item]. `null` — это не Проводник.
+DamageType? _conduitTypeOf(Item item) {
+  if (item.relicEffect != RelicEffect.elementalConduit) return null;
+  final gear = Equipment();
+  gear.equipTo(gear.slotsFor(item.kind).first, item);
+  return RelicRules.from(gear).conduitType;
+}
+
+/// Лучший Проводник против [guardian] из [items]: тот, к чьей стихии страж
+/// уязвим сильнее всего. Только к уязвимой: Проводник срезает сопротивление
+/// героя к своей стихии, и надетый наугад он хуже, чем ничего.
+Item? _answerConduit(Iterable<Item> items, EnemyArchetype guardian) {
+  Item? best;
+  var bestResist = 0.0;
+  for (final item in items) {
+    final type = _conduitTypeOf(item);
+    if (type == null || type == guardian.damageType) continue;
+    final resist = guardian.resistFor(type);
+    if (resist < bestResist ||
+        (resist == bestResist && best != null && item.ilvl > best.ilvl)) {
+      bestResist = resist;
+      best = item;
+    }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------------------
+// Режим: сила стража против героя позднего этапа
+// ---------------------------------------------------------------------------
+
+/// Подбор `lairGuardianMight`.
+///
+/// Аудит мерит стража против голого снаряжения — так видна форма боя. Но к
+/// логову игрок приходит с деревом пассивок, древом Эха и Легендой, и замер
+/// кампании показал: против такого героя стражи падают почти всегда. Этот
+/// режим отвечает на вопрос, какой множитель делает круг у рекорда настоящим
+/// боем: без ответа — гибель, с подходящим Проводником — победа, но не даром.
+void _lairProbe(_Options o) {
+  _header('ЛОГОВА · страж против героя после ${o.metaRuns} контрактов');
+
+  final player = _playCampaign(o, runs: o.metaRuns, onStop: print);
+  final record = player.maxDepthEver;
+
+  var circle = 1;
+  while (Curves.lairDepth(circle + 1) <= record) {
+    circle++;
+  }
+  final depth = Curves.lairDepth(circle);
+
+  final merc = MercFactory.roll(Rng(o.seed + 99),
+      idPrefix: 'probe', rank: MercRank.legend);
+  merc.gear.equipFrom(player.stash,
+      base: Tuning.heroBase,
+      depth: record,
+      loadout: BuildPower.loadoutOf(merc.abilities),
+      onlyEmpty: true,
+      skipRelics: true);
+
+  print('Рекорд $record, круг $circle на этаже $depth. '
+      'Наёмник: Легенда, пассивок ${player.passives.spent}, '
+      'узлов древа ${player.tree.nodesBought}.');
+  print('Клетка — побед из 9 и средний остаток здоровья у победы.');
+  print('');
+
+  HeroProfile profileWith(Equipment gear) => HeroProfile(
+        gear: gear,
+        abilities: merc.abilities,
+        echoTreeBonus: player.outpost.descentPowerBonus,
+        tree: player.tree,
+        passives: player.passives,
+        startDepthBonus: player.startDepthBonus,
+        powerMultiplier: merc.rank.statMultiplier,
+        traitStats: merc.trait.apply,
+      );
+
+  // Проводник берётся из контента, а не из сундука: вопрос режима — может ли
+  // игрок С ОТВЕТОМ взять круг, а не повезло ли автоигроку с добычей.
+  final conduits = [
+    for (final def in ContentPack.current.relics)
+      if (def.effect == RelicEffect.elementalConduit)
+        ItemFactory.roll(
+            ilvl: depth,
+            rng: Rng.stream(o.seed, depth, 0, RngPurpose.lootRoll),
+            relic: def),
+  ];
+
+  const mights = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0];
+  _row(['страж', 'мощь', 'без ответа', 'с Проводником']);
+  _rule(4);
+
+  for (final guardian in Bestiary.guardians) {
+    final answer = _answerConduit(conduits, guardian);
+    final withConduit = merc.gear.copy();
+    if (answer != null) {
+      withConduit.equipTo(withConduit.slotsFor(answer.kind).first, answer);
+    }
+
+    String cell(Equipment gear, double might) {
+      var wins = 0;
+      var hp = 0.0;
+      for (var s = 1; s <= 9; s++) {
+        final r = LairFight.run(
+          profile: profileWith(gear.copy()),
+          guardian: guardian,
+          depth: depth,
+          seed: s * 7919,
+          might: might,
+        );
+        if (r.won) {
+          wins++;
+          hp += r.hpLeft;
+        }
+      }
+      return wins == 0
+          ? '0/9'
+          : '$wins/9 ${(hp / wins * 100).round()} %';
+    }
+
+    for (final might in mights) {
+      _row([
+        might == mights.first ? guardian.id : '',
+        'x${might.toStringAsFixed(1)}',
+        cell(merc.gear, might),
+        answer == null ? '—' : cell(withConduit, might),
+      ]);
+    }
+  }
 }
 
 /// Тратит излишек золота на перекат худших аффиксов.
@@ -1188,9 +1408,11 @@ void _runCampaign(_Options o) {
   print('Наёмник = ран. Добыча выдаётся только при закрытии контракта.');
   print('');
 
+  // Время спуска печатается рядом с глубиной: на поздних контрактах вопрос не
+  // только «насколько глубоко», но и «через сколько наёмник вернётся».
   _row(['№', 'наёмник', 'ранг', 'глубина', 'Клеймо', 'пассивки', 'золото',
-      'Застава']);
-  _rule(8);
+      'Застава', 'логова', 'спуск', 'всего']);
+  _rule(11);
 
   var cumulativeSeconds = 0.0;
 
@@ -1218,6 +1440,9 @@ void _runCampaign(_Options o) {
         _sci(player.gold),
         '${_buildTotal(player.outpost)}/'
             '${Building.values.length * Building.maxLevel}',
+        '${player.lairTrophies}',
+        _dur(result.totalSeconds),
+        _dur(cumulativeSeconds),
       ]);
     },
   );
@@ -1228,13 +1453,18 @@ void _runCampaign(_Options o) {
   // называть. Балансировщик моделирует ОТСУТСТВУЮЩЕГО игрока: тот выстаивает
   // весь бюджет ожидания на каждом спуске. Игрок, который отвечает, платит
   // секунды вместо минут — это и есть награда за присутствие.
+  // Отсутствующий стоит на первой развилке `forkWaitAwaySeconds`, а не
+  // сорок пять секунд: те отмеряются только в открытой игре (раунд 34).
   print('  простой на развилках    : '
-      '${_dur(o.metaRuns * Tuning.forkWaitSeconds)} '
+      '${_dur(o.metaRuns * Tuning.forkWaitAwaySeconds)} '
       '(только если игрока нет)');
   print('Максимальная глубина    : ${player.maxDepthEver}');
   print('Узлов древа Эха         : ${player.tree.nodesBought}');
   print('Сундук Заставы          : ${player.stash.length}/${player.outpost.stashSlots}');
   print('Павших наёмников        : ${player.roster.fallen.length}');
+  print('Логова                  : побед $_lairWins, поражений $_lairLosses, '
+      'кругов ${player.lairTrophies} '
+      '(${[for (final g in Bestiary.guardians) '${g.id} ${player.lairCircles[g.id] ?? 0}'].join(', ')})');
 
   // Разбор сундука. Заведён после того, как замер показал обвал глубины
   // вдвое ровно на том контракте, где сундук перестаёт расти: общее число
@@ -1347,6 +1577,10 @@ class _Options {
           floorCap = int.tryParse(next()) ?? floorCap;
         case '--forks-vs':
           mode = 'forks-vs';
+        case '--lair-probe':
+          mode = 'lair-probe';
+          final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
+          if (v != null) metaRuns = int.parse(next());
         case '--trace':
           _traceCampaign = true;
         case '--forkplay':
@@ -1395,6 +1629,8 @@ void _printUsage() {
   --floor-cap N   потолок этажей на ран (2000)
   --forkplay S    кто отвечает на развилки: absent|plain|bold|smart (absent)
   --forks-vs      сравнение всех четырёх стратегий по многим сидам
+  --lair-probe N  кампания N контрактов, потом бои со стражами у рекорда при
+                  разной мощи — подбор lairGuardianMight
 ''');
 }
 

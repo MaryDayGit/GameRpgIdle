@@ -25,6 +25,7 @@ class SaveMigrations {
     SaveMigration(2, _namedEchoNodes),
     SaveMigration(3, _accountAndSeason),
     SaveMigration(4, _recentDepths),
+    SaveMigration(5, _lairs),
   ];
 
   final List<SaveMigration> steps;
@@ -160,6 +161,21 @@ const _legacyOrder = <String>[
 Map<String, dynamic> _recentDepths(Map<String, dynamic> raw) {
   final profile = raw['profile'];
   if (profile is Map) profile['recentDepths'] ??= <int>[];
+  return raw;
+}
+
+/// 5 → 6: логова стражей.
+///
+/// Пустые круги и ноль вызовов — и это правда: логов до этой версии не было,
+/// взятых кругов у сейва нет. Счётчик вызовов входит в сид боя, поэтому
+/// проставляется явно: без него повторный вызов после перезапуска выпадал бы
+/// на тот же сид, и проигранный бой можно было бы переиграть закрытием игры.
+Map<String, dynamic> _lairs(Map<String, dynamic> raw) {
+  final profile = raw['profile'];
+  if (profile is Map) {
+    profile['lairCircles'] ??= <String, dynamic>{};
+    profile['lairAttempts'] ??= 0;
+  }
   return raw;
 }
 

@@ -124,6 +124,10 @@ void main() {
           expect(beat.id, isNotEmpty);
         case BeatKind.heroDied:
           break;
+        // Умения бывают только у стражей, а в спуске их нет.
+        case BeatKind.bossWindup:
+        case BeatKind.bossSkill:
+          fail('в спуске нет стражей: $beat');
       }
     }
     expect(checked, greaterThan(0));
