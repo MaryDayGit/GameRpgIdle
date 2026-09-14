@@ -1,3 +1,4 @@
+import '../model/lang.dart';
 import 'json_node.dart';
 
 /// Что модификатор этажа умеет менять.
@@ -165,7 +166,13 @@ class FloorModifierDef {
 
     return FloorModifierDef(
       id: '${a.id}$composedMark${b.id}',
-      name: '${a.name} и ${b.name}',
+      // Союз берётся по языку игры, а не пишется буквой. Найдено на съёмке
+      // трейлера: в английской сборке третий путь развилки назывался
+      // «Abundance и Swelter» — русское слово посреди английского названия,
+      // и увидеть его можно было только там, где этот путь показывают.
+      name: Lang.current == Lang.ru
+          ? '${a.name} и ${b.name}'
+          : '${a.name} and ${b.name}',
       minus: '${a.minus}. ${b.minus}',
       plus: '${a.plus}. ${b.plus}',
       effects: effects,

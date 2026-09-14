@@ -12,9 +12,12 @@ import 'package:rift/core/sim/fork.dart';
 import '../state/game_controller.dart';
 import 'coach_mark.dart';
 import 'format.dart';
+import 'gear_grid.dart';
+import 'gear_icons.dart';
 import 'onboarding.dart';
 import 'strings.dart';
 import 'tutorial_host.dart';
+import 'theme.dart';
 
 /// Журнал отсутствия (GDD §9.3).
 ///
@@ -57,7 +60,7 @@ class JournalScreen extends StatelessWidget {
           _SectionTitle(S.journalFinds(haul.itemCount, haul.capacity)),
           if (haul.items.isEmpty)
             Text(S.journalNothingNew,
-                style: const TextStyle(fontSize: 13, color: Colors.white54))
+                style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted))
           else
             for (final item in haul.items) _ShowcaseItem(item: item),
 
@@ -67,7 +70,7 @@ class JournalScreen extends StatelessWidget {
             Text(
               S.journalOverflow(haul.salvagedCount, money(haul.salvagedGold),
                   haul.shards.length),
-              style: const TextStyle(fontSize: 12, color: Colors.white38),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
             ),
           ],
 
@@ -136,18 +139,35 @@ class _Outcome extends StatelessWidget {
       children: [
         Text(
           S.journalFloors(from, result.maxDepth, gained),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+          style: RiftText.display,
         ),
         const SizedBox(height: 6),
         Text(
           "${contract.mercenary.rank.forGender(contract.mercenary.gender)} · "
           "${contract.mercenary.trait.forGender(contract.mercenary.gender)} · "
           "${S.journalInAbyss(clock(result.totalSeconds))}",
-          style: const TextStyle(fontSize: 12, color: Colors.white54),
+          style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
         ),
-        const SizedBox(height: 10),
-        Text(tail,
-            style: const TextStyle(fontSize: 14, color: Colors.orangeAccent)),
+        const SizedBox(height: 12),
+        // Исход — плашкой своего цвета. Гибель красная, отзыв зелёный: это
+        // разные концы, и в первую секунду журнала должно быть видно, какой.
+        Builder(builder: (context) {
+          final tone = switch (result.ending) {
+            RunEnding.death => RiftColors.bad,
+            RunEnding.recalled => RiftColors.good,
+            _ => RiftColors.warn,
+          };
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(RiftSize.radiusSmall + 2),
+              border: Border.all(color: tone.withValues(alpha: 0.45)),
+            ),
+            child: Text(tail, style: RiftText.body.copyWith(color: tone)),
+          );
+        }),
       ],
     );
   }
@@ -161,12 +181,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Text(text,
-            style: const TextStyle(
-              fontSize: 11,
-              letterSpacing: 1.2,
-              color: Colors.white54,
-            )),
+        child: Text(text, style: RiftText.overline),
       );
 }
 
@@ -183,26 +198,34 @@ class _ShowcaseItem extends StatelessWidget {
         : ContentPack.current.triggerAffix(item.triggerAffixId!);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ItemPlaque(item: item),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
                 child: Text(ItemText.title(item),
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
+                    style: RiftText.heading.copyWith(
+                        fontSize: 15, color: colorFor(item.rarity))),
               ),
               if (item.isRelic)
-                _Badge(text: S.relicMark, color: const Color(0xFFC7643F)),
+                _Badge(text: S.relicMark, color: RiftColors.ember),
               if (trigger != null)
-                _Badge(text: S.triggerMark, color: const Color(0xFF4F8FC7)),
+                _Badge(text: S.triggerMark, color: RiftColors.info),
             ],
           ),
           for (final line in ItemText.lines(item))
-            Text(line,
-                style: const TextStyle(fontSize: 12, color: Colors.white60)),
+            Text(line, style: RiftText.small),
+        ],
+            ),
+          ),
         ],
       ),
     );
@@ -218,13 +241,15 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(left: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(4),
+          color: color.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.6)),
         ),
         child: Text(text,
-            style: TextStyle(fontSize: 10, color: color.withValues(alpha: 1))),
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w700, color: color)),
       );
 }
 
@@ -257,18 +282,26 @@ class _EventRow extends StatelessWidget {
             SizedBox(
               width: 44,
               child: Text('${event.depth}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white38,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                  style: RiftText.number.copyWith(
+                    color: event.warning
+                        ? RiftColors.bad
+                        : RiftColors.inkFaint,
                   )),
             ),
+            if (event.warning) ...[
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.warning_amber_rounded,
+                    size: 16, color: RiftColors.bad),
+              ),
+              const SizedBox(width: 6),
+            ],
             Expanded(
               child: Text(
                 event.text,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: event.warning ? Colors.orangeAccent : Colors.white70,
+                style: RiftText.body.copyWith(
+                  fontSize: 14.5,
+                  color: event.warning ? RiftColors.bad : RiftColors.ink,
                 ),
               ),
             ),
@@ -371,3 +404,26 @@ int get showcaseLimit => Tuning.gearSlots + 3;
 
 /// Пути развилки на этаже — для будущего экрана выбора.
 bool isForkFloor(int depth) => ForkChooser.isForkFloor(depth);
+
+/// Иконка вещи в плашке цвета редкости — тот же вид, что в сундуке.
+class _ItemPlaque extends StatelessWidget {
+  const _ItemPlaque({required this.item});
+
+  final Item item;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = colorFor(item.rarity);
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: GearIcon(kind: item.kind, size: 24, color: color),
+    );
+  }
+}

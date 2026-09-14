@@ -253,7 +253,11 @@ void main() {
     PlayerProfile packed(Rng rng, {int ilvl = 20, GearKind? kind}) {
       final profile = player(stashSlots: 0);
       while (profile.stash.length < profile.outpost.stashSlots) {
-        profile.stash.add(roll(rng, kind ?? GearKind.boots, ilvl: ilvl));
+        // Набивается ХЛАМОМ: случайный реликт среди него — это уже другой
+        // стенд. Проверки про реликты ставят их в сундук сами и знают, какие.
+        final item = roll(rng, kind ?? GearKind.boots, ilvl: ilvl);
+        if (item.isRelic) continue;
+        profile.stash.add(item);
       }
       expect(profile.stashRoom, 0, reason: 'сундук должен быть полон');
       return profile;
@@ -300,13 +304,82 @@ void main() {
         ..removeLast()
         ..add(relic);
 
-      for (var i = 0; i < 20; i++) {
-        profile.pendingLoot.add(roll(rng, GearKind.boots, ilvl: 90 + i));
+      // Вход — только обычные вещи. Случайный реликт того же вида сделал бы
+      // проверку про другое: копия того же правила лежащую копию как раз
+      // вытесняет, и это отдельное правило (ниже).
+      var added = 0;
+      while (added < 20) {
+        final item = roll(rng, GearKind.boots, ilvl: 90 + added);
+        if (item.isRelic) continue;
+        profile.pendingLoot.add(item);
+        added++;
       }
       profile.autoSortLoot();
 
       expect(profile.stash, contains(relic),
           reason: 'уникальный эффект не стареет — реликт остаётся');
+    });
+
+    test('лишняя копия реликта уступает место', () {
+      // Правило «реликты не вытесняются никогда» защищало чейз и обернулось
+      // ловушкой: реликт падает примерно раз за спуск, и за двадцать спусков
+      // сундук забивался ими ЦЕЛИКОМ — замер кампании показал 100 слотов из
+      // 100. Дальше вытеснять нечего, любая находка с глубины рекорда
+      // продаётся, сборка замирает на ilvl 115 при рекорде 131, и глубина
+      // обваливается вдвое.
+      //
+      // Неповторимо ПРАВИЛО, а не экземпляр: второй «Пепельный завет» с
+      // глубины 40 при уже лежащем с глубины 115 — занятая клетка.
+      final rng = Rng(107);
+      final profile = packed(rng, ilvl: 20);
+      final worn = roll(rng, GearKind.boots, ilvl: 10, relic: true);
+      final spare = worn.copyWith(ilvl: 9);
+      profile.stash
+        ..removeLast()
+        ..removeLast()
+        ..add(worn)
+        ..add(spare);
+
+      var added = 0;
+      while (added < 30) {
+        final item = roll(rng, GearKind.boots, ilvl: 120 + added);
+        if (item.isRelic) continue;
+        profile.pendingLoot.add(item);
+        added++;
+      }
+      profile.autoSortLoot();
+
+      final copies =
+          profile.stash.where((i) => i.relicId == worn.relicId).length;
+      expect(copies, 1,
+          reason: 'одно правило — одна клетка (у колец две, у сапог одна)');
+      expect(profile.stash.any((i) => i.ilvl >= 120), isTrue,
+          reason: 'освободившееся место занимает то, ради чего оно и нужно');
+    });
+
+    test('разбор добычи всегда заканчивается', () {
+      // Не про баланс, а про то, что игра запускается. Пока лишняя копия
+      // входила без сравнения уровней, она и вытесненная ею вещь менялись
+      // местами до бесконечности: разбор не падал и не врал, он просто не
+      // заканчивался — кампания вставала намертво на восьмом контракте, а на
+      // телефоне это выглядело бы как зависшая игра после спуска.
+      final rng = Rng(108);
+      final profile = packed(rng, ilvl: 50);
+      final relic = roll(rng, GearKind.boots, ilvl: 40, relic: true);
+      profile.stash
+        ..removeLast()
+        ..removeLast()
+        ..add(relic)
+        ..add(relic.copyWith(ilvl: 41));
+
+      for (var i = 0; i < 40; i++) {
+        profile.pendingLoot.add(i.isEven
+            ? relic.copyWith(ilvl: 30 + i)
+            : roll(rng, GearKind.boots, ilvl: 30 + i));
+      }
+
+      profile.autoSortLoot();
+      expect(profile.pendingLoot, isEmpty);
     });
 
     test('входящий реликт проходит, даже будучи ниже по уровню', () {

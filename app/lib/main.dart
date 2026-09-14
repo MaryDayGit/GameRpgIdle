@@ -5,6 +5,7 @@ import 'package:rift/core/model/lang.dart';
 import 'dev/core_probe_screen.dart';
 import 'state/game_controller.dart';
 import 'ui/outpost_screen.dart';
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,12 +35,14 @@ class RiftApp extends StatelessWidget {
 
   Widget _app() {
     return MaterialApp(
-      title: 'Расселина',
+      title: 'Riftmark',
       debugShowCheckedModeBanner: false,
 
       // Язык берётся из настроек игры, а не из системной локали телефона.
       // Игрок выбрал его сам в настройках, и системный русский не должен
-      // переключать обратно того, кто нарочно поставил английский.
+      // переключать обратно того, кто нарочно поставил английский. Локаль
+      // телефона спрашивают один раз — при первом запуске, когда настроек
+      // ещё нет и выбора тоже (`SettingsStore.load`).
       //
       // `Localizations` здесь отвечает только за виджеты Flutter — кнопки
       // диалогов, меню выделения текста. Тексты самой игры идут через
@@ -48,13 +51,7 @@ class RiftApp extends StatelessWidget {
       locale: Locale(controller.settings.lang.code),
       supportedLocales: [for (final lang in Lang.values) Locale(lang.code)],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFC7643F),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: riftTheme(),
       home: _Home(controller: controller),
     );
   }

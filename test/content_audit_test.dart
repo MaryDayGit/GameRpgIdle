@@ -65,6 +65,15 @@ void main() {
             '`dart run tool/audit_cli.dart --enemies`');
   }, timeout: _slow);
 
+  test('перед каждым стражем есть о чём подумать', () async {
+    expect(await audit('--bosses'), contains('AUDIT-BOSSES: OK'),
+        reason: 'страж области — не мешок с HP, а вопрос «чем и как идти». '
+            'Проверяется трижды: его ломает хотя бы одна эталонная сборка, '
+            'он сдаётся хотя бы одной стихии, и его профиль не совпадает ни '
+            'с одним другим стражем — иначе это один босс, надетый дважды. '
+            'Запустите `dart run tool/audit_cli.dart --bosses`');
+  }, timeout: _slow);
+
   test('у каждого тега есть и способности, и снаряжение', () async {
     final out = await audit('--tags');
     final line = out

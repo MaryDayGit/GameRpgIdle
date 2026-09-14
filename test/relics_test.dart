@@ -1,5 +1,6 @@
 import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/content/content_pack.dart';
+import 'package:rift/core/content/item_text.dart';
 import 'package:rift/core/model/enemy.dart';
 import 'package:rift/core/model/equipment.dart';
 import 'package:rift/core/model/gear.dart';
@@ -212,6 +213,130 @@ void main() {
             (Tuning.affixSlotsByRarity[item.rarity] ?? 0) + 1);
       }
       expect(checked, greaterThan(0), reason: 'двуручники обязаны выпадать');
+    });
+  });
+
+  test('реликт разыгрывается среди всех реликтов слота, а не первого', () {
+    // Вопрос этого теста — не «работает ли правило», а «доходит ли оно до
+    // игрока вообще». Пока выбор был `break` на первом совпадении, слот
+    // отдавал один и тот же реликт всегда, и семнадцать из двадцати пяти
+    // существовали только в документации.
+    //
+    // Речь про ОБЩИЙ пул: вещи с источником сюда не попадают по замыслу, их
+    // достижимость проверяется отдельно, через своего босса.
+    final pack = ContentPack.current;
+    for (final kind in GearKind.values) {
+      final expected = {
+        for (final relic in pack.relics)
+          if (relic.kind == kind && relic.source == null) relic.id,
+      };
+      if (expected.length < 2) continue;
+
+      final seen = <String>{};
+      for (var seed = 0; seed < 400; seed++) {
+        final item = ItemFactory.roll(
+            ilvl: 40, rng: Rng(seed), kind: kind, forceRelic: true);
+        if (item.relicId != null) seen.add(item.relicId!);
+      }
+
+      expect(seen, expected,
+          reason: 'слот ${kind.name}: выпадают не все реликты слота');
+    }
+  });
+
+  /// Спуск ровно до этажа [depth] и обратно — список того, что в рюкзаке.
+  ///
+  /// `null`, если наёмник до этажа не дожил: такой спуск ничего не говорит ни
+  /// про дроп босса, ни про его отсутствие.
+  List<Item>? _runToDepth(int depth, {required int seed}) {
+    final result = DescentSimulator(
+      profile: HeroProfile(powerMultiplier: 12.0),
+      seed: seed,
+    ).run(floorCap: depth);
+    if (result.maxDepth < depth) return null;
+    return result.haul.items;
+  }
+
+  group('уникальные вещи боссов', () {
+    test('реликт с источником не выпадает из общего пула', () {
+      // Источник — это адрес, по которому игрок идёт за вещью. Выпади такой
+      // реликт из обычного сундука, и адрес перестал бы что-либо значить:
+      // «Проводник пепла у Владыки Пепла» превратилось бы в «Проводник пепла
+      // где-нибудь».
+      final pack = ContentPack.current;
+      final sourced = {
+        for (final r in pack.relics)
+          if (r.source != null) r.id,
+      };
+      expect(sourced, isNotEmpty, reason: 'в контенте нет уникальных вещей');
+
+      final seen = <String>{};
+      for (var seed = 0; seed < 600; seed++) {
+        for (final kind in GearKind.values) {
+          final item = ItemFactory.roll(
+              ilvl: 60, rng: Rng(seed), kind: kind, forceRelic: true);
+          if (item.relicId != null) seen.add(item.relicId!);
+        }
+      }
+
+      expect(seen.intersection(sourced), isEmpty);
+      expect(seen, isNotEmpty, reason: 'общий пул не должен опустеть');
+    });
+
+    test('каждый слот остаётся доступен без боссов', () {
+      // Слот, у которого все реликты уехали к боссам, закрыт для всех, кто до
+      // этих боссов ещё не дошёл. Валидатор контента это же правило проверяет
+      // со своей стороны — здесь оно проверяется на живом контенте.
+      final common = <GearKind, int>{};
+      for (final r in ContentPack.current.relics) {
+        if (r.source == null) common[r.kind] = (common[r.kind] ?? 0) + 1;
+      }
+      for (final kind in GearKind.values) {
+        expect(common[kind] ?? 0, greaterThan(0), reason: 'слот ${kind.name}');
+      }
+    });
+
+    test('карточка вещи называет того, кто её роняет', () {
+      // Адрес, которого нет на карточке, — это адрес, который знает только
+      // тот, кто читал файлы контента.
+      final pack = ContentPack.current;
+      final def = pack.relics.firstWhere((r) => r.source != null);
+      final boss = pack.bosses.firstWhere((b) => b.id == def.source);
+
+      final item = ItemFactory.roll(ilvl: 50, rng: Rng(1), relic: def);
+      expect(ItemText.lines(item).any((l) => l.contains(boss.name)), isTrue,
+          reason: 'на карточке нет источника: ${ItemText.lines(item)}');
+    });
+
+    test('босс роняет свой реликт и только свой', () {
+      final pack = ContentPack.current;
+      final boss = pack.bosses.firstWhere(
+          (b) => pack.relics.any((r) => r.source == b.id));
+      final own = {
+        for (final r in pack.relics)
+          if (r.source == boss.id) r.id,
+      };
+
+      // Спуск ровно до этажа босса, много сидов: шанс не единица, поэтому
+      // вопрос теста — «падает ли вообще и падает ли своё», а не «падает ли
+      // всегда».
+      final dropped = <String>{};
+      var runs = 0;
+      for (var seed = 0; seed < 120; seed++) {
+        final result = _runToDepth(boss.everyFloors, seed: seed);
+        if (result == null) continue;
+        runs++;
+        for (final item in result) {
+          if (item.relicId != null && own.contains(item.relicId)) {
+            dropped.add(item.relicId!);
+          }
+        }
+      }
+
+      expect(runs, greaterThan(0), reason: 'ни один спуск не дошёл до босса');
+      expect(dropped, isNotEmpty,
+          reason: 'босс ${boss.id} не отдал ни одной своей вещи за $runs боёв');
+      expect(dropped.difference(own), isEmpty);
     });
   });
 

@@ -7,6 +7,7 @@ import 'package:rift/core/model/tags.dart';
 
 import 'format.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Подробная карточка способности.
 ///
@@ -58,17 +59,15 @@ class AbilityDetailSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(def.name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      )),
-              const SizedBox(height: 4),
-              Text(_kindLine(def),
-                  style: const TextStyle(fontSize: 12, color: Colors.white54)),
-              const SizedBox(height: 10),
+              Text(def.name, style: RiftText.title.copyWith(fontSize: 21)),
+              const SizedBox(height: 6),
+              // Вид умения — ярлыком своего цвета: активное, аура и пассивное
+              // устроены по-разному, и различать их надо до чтения описания.
+              _KindPill(def: def),
+              const SizedBox(height: 12),
               Text(
                 TextTemplate.render(def.text, _params(def)),
-                style: const TextStyle(fontSize: 13, height: 1.35),
+                style: RiftText.body,
               ),
               const SizedBox(height: 20),
 
@@ -399,8 +398,7 @@ class AbilityDetailSheet extends StatelessWidget {
         S.abTagsAbout,
 
 
-        style: const TextStyle(
-            fontSize: 12, color: Colors.white38, height: 1.35),
+        style: RiftText.small,
       ),
       const SizedBox(height: 10),
       for (final tag in def.tags) _tagRow(tag),
@@ -421,7 +419,7 @@ class AbilityDetailSheet extends StatelessWidget {
           Expanded(
             flex: 4,
             child: Text(tag.title,
-                style: const TextStyle(fontSize: 13, height: 1.3)),
+                style: const TextStyle(fontSize: 14.5, height: 1.3)),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -429,10 +427,10 @@ class AbilityDetailSheet extends StatelessWidget {
             child: Text(
               value > 0.0 ? '+${(value * 100).round()} %' : '—',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14.5,
                 height: 1.3,
                 fontWeight: value > 0.0 ? FontWeight.w600 : FontWeight.w400,
-                color: value > 0.0 ? Colors.white : Colors.white24,
+                color: value > 0.0 ? RiftColors.good : RiftColors.inkDisabled,
               ),
             ),
           ),
@@ -442,7 +440,7 @@ class AbilityDetailSheet extends StatelessWidget {
             child: Text(
               _tagMeaning(tag),
               style: const TextStyle(
-                  fontSize: 11, color: Colors.white38, height: 1.3),
+                  fontSize: 12.5, color: RiftColors.inkFaint, height: 1.3),
             ),
           ),
         ],
@@ -540,11 +538,7 @@ class AbilityDetailSheet extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.2,
-            color: Colors.white54,
-          ),
+          style: RiftText.overline,
         ),
       );
 
@@ -560,24 +554,29 @@ class AbilityDetailSheet extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Expanded(
+                  flex: 3,
                   child: Text(label,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: strong ? Colors.white : Colors.white70,
+                        fontSize: 14.5,
+                        color: strong ? RiftColors.ink : RiftColors.inkMuted,
                         fontWeight:
-                            strong ? FontWeight.w600 : FontWeight.w400,
+                            strong ? FontWeight.w700 : FontWeight.w400,
                       )),
                 ),
                 const SizedBox(width: 8),
                 // Значение тоже гибкое: «3.3 маны в секунду» рядом с длинной
                 // подписью не влезает, и без этого строка уезжала за край.
-                Flexible(
+                Expanded(
+                  flex: 2,
                   child: Text(
                     value,
                     textAlign: TextAlign.end,
+                    // Итог расчёта — углями: это число, ради которого разбор и
+                    // открывают, и среди промежуточных оно должно быть видно.
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: strong ? 16 : 14.5,
+                      fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
+                      color: strong ? RiftColors.ember : RiftColors.ink,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -588,7 +587,7 @@ class AbilityDetailSheet extends StatelessWidget {
               const SizedBox(height: 2),
               Text(note,
                   style: const TextStyle(
-                      fontSize: 11, color: Colors.white38, height: 1.3)),
+                      fontSize: 12.5, color: RiftColors.inkFaint, height: 1.3)),
             ],
           ],
         ),
@@ -645,4 +644,43 @@ class StatKeyText {
               Phrase('ко всем сопротивлениям', 'to all resistances')),
         _ => null,
       };
+}
+
+
+/// Ярлык вида умения: активное, аура или пассивное.
+class _KindPill extends StatelessWidget {
+  const _KindPill({required this.def});
+
+  final AbilityDef def;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, icon) = def.isActive
+        ? (RiftColors.ember, Icons.bolt)
+        : def.isAura
+            ? (RiftColors.info, Icons.blur_on)
+            : (RiftColors.good, Icons.shield_moon_outlined);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              AbilityDetailSheet._kindLine(def),
+              style: RiftText.small
+                  .copyWith(color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

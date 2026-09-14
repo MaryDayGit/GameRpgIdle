@@ -13,6 +13,7 @@ import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/data/settings_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/stash_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Сундук глазами игрока: что у меня есть → что это за вещь → что я могу
 /// с ней сделать.
@@ -84,7 +85,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: StashScreen(controller: controller),
     ));
     await tester.pump();
@@ -151,7 +152,7 @@ void main() {
     await openItem(tester, controller.profile.stash.first);
 
     expect(find.text('Надеть'), findsNothing);
-    expect(find.textContaining('заперто до его гибели'), findsOneWidget);
+    expect(find.textContaining('снаряжение заперто'), findsOneWidget);
   });
 
   testWidgets('пустой сундук говорит, откуда берутся вещи', (tester) async {

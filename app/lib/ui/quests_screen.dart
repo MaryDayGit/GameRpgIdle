@@ -6,6 +6,7 @@ import 'package:rift/core/model/quest_log.dart';
 import '../state/game_controller.dart';
 import 'mercenary_screen.dart' show TagChips;
 import 'strings.dart';
+import 'theme.dart';
 
 /// Журнал заданий.
 ///
@@ -45,7 +46,7 @@ class QuestsScreen extends StatelessWidget {
           appBar: AppBar(
             title: Text(S.questsTitle),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(28),
+              preferredSize: const Size.fromHeight(34),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                 child: Align(
@@ -53,7 +54,7 @@ class QuestsScreen extends StatelessWidget {
                   child: Text(
                     S.questsDone(done.length, all.length),
                     style: const TextStyle(
-                        fontSize: 12, color: Colors.white54),
+                        fontSize: 13.5, color: RiftColors.inkMuted),
                   ),
                 ),
               ),
@@ -84,7 +85,7 @@ class QuestsScreen extends StatelessWidget {
                     child: Text(
                       S.questsHiddenAhead(hidden),
                       style: const TextStyle(
-                          fontSize: 12, color: Colors.white30),
+                          fontSize: 13.5, color: RiftColors.inkDisabled),
                     ),
                   ),
                 if (done.isNotEmpty) ...[
@@ -155,8 +156,8 @@ class _Chain extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8, bottom: 4),
           child: Text(title,
               style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white38,
+                  fontSize: 13.5,
+                  color: RiftColors.inkFaint,
                   letterSpacing: 0.4)),
         ),
         for (final quest in quests)
@@ -194,17 +195,16 @@ class _QuestRow extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  done ? Icons.check_circle_outline : Icons.flag_outlined,
-                  size: 16,
-                  color: done ? Colors.greenAccent : Colors.white54,
+                  done ? Icons.check_circle : Icons.flag_outlined,
+                  size: 20,
+                  color: done ? RiftColors.good : RiftColors.ember,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     quest.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: done ? Colors.white54 : null,
+                    style: RiftText.heading.copyWith(
+                      color: done ? RiftColors.inkMuted : RiftColors.ink,
                     ),
                   ),
                 ),
@@ -214,7 +214,7 @@ class _QuestRow extends StatelessWidget {
               const SizedBox(height: 4),
               Text(quest.text,
                   style: const TextStyle(
-                      fontSize: 12, color: Colors.white60, height: 1.3)),
+                      fontSize: 13.5, color: RiftColors.inkMuted, height: 1.3)),
             ],
 
             // Полоска только там, где есть что копить. У целей про один спуск
@@ -222,18 +222,17 @@ class _QuestRow extends StatelessWidget {
             if (progress != null) ...[
               const SizedBox(height: 8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress.$2 <= 0 ? 0 : progress.$1 / progress.$2,
-                  minHeight: 4,
-                  backgroundColor: Colors.white12,
+                  minHeight: 8,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 S.outOf(_num(progress.$1), _num(progress.$2)),
                 style:
-                    const TextStyle(fontSize: 11, color: Colors.white38),
+                    const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
               ),
             ],
 
@@ -243,15 +242,15 @@ class _QuestRow extends StatelessWidget {
                 children: [
                   Icon(Icons.auto_awesome_outlined,
                       size: 14,
-                      color: done ? Colors.white24 : Colors.amberAccent),
+                      color: done ? RiftColors.inkDisabled : RiftColors.gold),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       S.questReward(reward.name,
                           opened: done, echo: quest.rewardEcho),
                       style: TextStyle(
-                        fontSize: 12,
-                        color: done ? Colors.white24 : Colors.white70,
+                        fontSize: 13.5,
+                        color: done ? RiftColors.inkDisabled : RiftColors.ink,
                       ),
                     ),
                   ),
@@ -286,11 +285,7 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.2,
-            color: Colors.white54,
-          ),
+          style: RiftText.overline,
         ),
       );
 }
@@ -304,7 +299,7 @@ class _Empty extends StatelessWidget {
         child: Text(
           S.questsEmpty,
           style: const TextStyle(
-              fontSize: 13, color: Colors.white38, height: 1.4),
+              fontSize: 14.5, color: RiftColors.inkFaint, height: 1.4),
         ),
       );
 }

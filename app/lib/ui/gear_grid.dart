@@ -4,6 +4,7 @@ import 'package:rift/core/model/gear.dart';
 import 'package:rift/core/model/item.dart';
 
 import 'gear_icons.dart';
+import 'theme.dart';
 
 /// Снаряжение героя одной картинкой.
 ///
@@ -69,12 +70,25 @@ class GearGrid extends StatelessWidget {
 
 /// Цвет редкости. Единственный способ отличить находки друг от друга взглядом,
 /// пока иконки одинаковые для всего слота.
+///
+/// Обычная вещь была тёмно-серой (`0xFF8A7F77`) — тем же цветом, что и рамка
+/// пустого слота. На пробе это и сломалось: беглым взглядом по сетке нельзя
+/// было сказать, надет меч или слот пуст. Цвет обычного поднят до светлого
+/// пепельного, а «пусто» уведено в цвет фона (см. [_Cell]): разница обязана
+/// читаться не вглядыванием, а периферийным зрением.
 Color colorFor(Rarity rarity) => switch (rarity) {
-      Rarity.common => const Color(0xFF8A7F77),
+      Rarity.common => const Color(0xFFC4B6A8),
       Rarity.uncommon => const Color(0xFF7FB069),
       Rarity.rare => const Color(0xFF4F8FC7),
       Rarity.relic => const Color(0xFFC7643F),
     };
+
+/// Рамка пустого слота: почти фон. Ровно настолько видима, чтобы сетка
+/// читалась сеткой, и не настолько, чтобы спорить с надетой вещью.
+const _emptyOutline = Color(0x1FFFFFFF);
+
+/// Иконка типа в пустом слоте — призрак.
+const _emptyGlyph = Color(0x14FFFFFF);
 
 class _Cell extends StatelessWidget {
   const _Cell({
@@ -95,7 +109,7 @@ class _Cell extends StatelessWidget {
   Widget build(BuildContext context) {
     final kind = Equipment.slotKinds[slot];
     final worn = item;
-    final accent = worn == null ? const Color(0xFF3A312D) : colorFor(worn.rarity);
+    final accent = worn == null ? _emptyOutline : colorFor(worn.rarity);
     final size = compact ? 44.0 : 62.0;
 
     return InkWell(
@@ -103,11 +117,22 @@ class _Cell extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Container(
         height: size,
+        // Занятый слот светится цветом редкости — заливка, рамка в полную
+        // силу и иконка тем же цветом; пустой уходит в фон и держится на
+        // одной еле заметной линии.
+        //
+        // Раньше разница была в полтона: рамка одного и того же тёмно-серого
+        // при 0.5 и 0.9 прозрачности. Игрок на пробе сказал прямо — «не
+        // понятно, есть там что-то в слоте или нет», — и это правда: ради
+        // такого различения приходилось останавливаться и всматриваться в
+        // каждую из девяти клеток.
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: worn == null ? 0.02 : 0.05),
+          color: worn == null
+              ? Colors.white.withValues(alpha: 0.015)
+              : accent.withValues(alpha: 0.16),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: accent.withValues(alpha: worn == null ? 0.5 : 0.9),
+            color: worn == null ? accent : accent.withValues(alpha: 0.95),
             width: worn == null ? 1 : 1.5,
           ),
         ),
@@ -119,7 +144,11 @@ class _Cell extends StatelessWidget {
                   : GearIcon(
                       kind: kind,
                       size: compact ? 20 : 28,
-                      color: worn == null ? Colors.white24 : accent,
+                      // Пустой слот показывает тип призраком: это подсказка
+                      // «сюда — сапоги», а не вещь. На четверти белого призрак
+                      // был ярче, чем надетая обычная вещь, и слоты читались
+                      // наоборот.
+                      color: worn == null ? _emptyGlyph : accent,
                     ),
             ),
             // Пустой слот, на который можно нажать, помечен плюсом. Одна
@@ -130,7 +159,7 @@ class _Cell extends StatelessWidget {
                 right: 4,
                 bottom: 2,
                 child: Icon(Icons.add,
-                    size: compact ? 12 : 16, color: Colors.white38),
+                    size: compact ? 12 : 16, color: RiftColors.inkFaint),
               ),
             if (worn != null)
               Positioned(
@@ -139,8 +168,8 @@ class _Cell extends StatelessWidget {
                 child: Text(
                   '${worn.ilvl}',
                   style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white54,
+                    fontSize: 11.5,
+                    color: RiftColors.inkMuted,
                     fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -150,7 +179,7 @@ class _Cell extends StatelessWidget {
                 left: 4,
                 bottom: 2,
                 child: Text('2H',
-                    style: TextStyle(fontSize: 9, color: Colors.white38)),
+                    style: TextStyle(fontSize: 11, color: RiftColors.inkFaint)),
               ),
             if (worn?.triggerAffixId != null)
               Positioned(
@@ -160,7 +189,7 @@ class _Cell extends StatelessWidget {
                   width: 5,
                   height: 5,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF4F8FC7),
+                    color: RiftColors.info,
                     shape: BoxShape.circle,
                   ),
                 ),

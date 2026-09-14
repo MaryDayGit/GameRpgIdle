@@ -8,6 +8,7 @@ import 'format.dart';
 import 'gear_grid.dart';
 import 'mercenary_stats.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Карточка наёмника перед решением.
 ///
@@ -94,32 +95,41 @@ class _MercBody extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(merc.name, style: Theme.of(context).textTheme.titleLarge),
+            Text(merc.name, style: RiftText.display.copyWith(fontSize: 24)),
             const SizedBox(height: 4),
             Text(
               '${merc.rank.forGender(merc.gender)} · '
               '${S.backpackOf(merc.backpackSlots)}',
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
             ),
             const SizedBox(height: 16),
 
-            Row(
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: RiftColors.raised,
+                borderRadius: BorderRadius.circular(RiftSize.radius),
+                border: Border.all(color: RiftColors.line),
+              ),
+              child: Row(
               children: [
                 _Stat(
                     S.buildPower,
                     money(BuildPower.of(stats, depth,
-                        loadout: BuildPower.loadoutOf(merc.abilities)))),
+                        loadout: BuildPower.loadoutOf(merc.abilities))),
+                    flex: 3),
                 _Stat('HP', money(stats.maxHp)),
                 _Stat(S.statDamage, money(stats.attackDamage)),
                 _Stat(S.statArmor, money(stats.armor)),
               ],
+              ),
             ),
             const SizedBox(height: 16),
 
             _Line(S.mercTrait, merc.trait.forGender(merc.gender)),
             Text(
               merc.trait.description,
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
             ),
             const SizedBox(height: 10),
             _Line(S.mercAbilities,
@@ -130,7 +140,7 @@ class _MercBody extends StatelessWidget {
                   : merc.abilities
                       .map((id) => ContentPack.current.ability(id)?.name ?? id)
                       .join(', '),
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
             ),
             _Line(S.mercGear,
                 S.gearSlotsFilled(merc.gear.filledSlots, merc.gear.usableSlots)),
@@ -141,7 +151,7 @@ class _MercBody extends StatelessWidget {
               const SizedBox(height: 12),
               Text(note!,
                   style: const TextStyle(
-                      fontSize: 12, color: Colors.orangeAccent)),
+                      fontSize: 13.5, color: RiftColors.bad)),
             ],
 
             const SizedBox(height: 20),
@@ -197,24 +207,24 @@ class _MercBody extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat(this.label, this.value);
+  const _Stat(this.label, this.value, {this.flex = 2});
 
   final String label;
   final String value;
 
+  /// «Сила сборки» — подпись в два слова, и в равной доле она наезжала на
+  /// соседнее «HP».
+  final int flex;
+
   @override
   Widget build(BuildContext context) => Expanded(
+        flex: flex,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: const TextStyle(fontSize: 11, color: Colors.white54)),
-            Text(value,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                )),
+            Text(label, style: RiftText.caption),
+            const SizedBox(height: 2),
+            Text(value, style: RiftText.stat.copyWith(fontSize: 18)),
           ],
         ),
       );
@@ -232,11 +242,8 @@ class _Line extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label,
-                style: const TextStyle(fontSize: 12, color: Colors.white54)),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(label, style: RiftText.small),
+            Text(value, style: RiftText.heading.copyWith(fontSize: 15)),
           ],
         ),
       );

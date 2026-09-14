@@ -58,6 +58,7 @@ class EnemyArchetype {
     this.traits = const {},
     this.everyFloors = 0,
     this.phases = const [],
+    this.embodies,
   });
 
   final String id;
@@ -95,6 +96,22 @@ class EnemyArchetype {
 
   /// Фазы босса — пока текст для UI, механика в Фазе 2.
   final List<String> phases;
+
+  /// Для СТРАЖА: идентификатор босса, чьё это воплощение в собственном
+  /// логове.
+  ///
+  /// Одно существо в двух ролях, и роли разные настолько, что числа у них
+  /// свои. В бездне босс — РИТМ: он попадается каждые несколько этажей, мимо
+  /// него идут вниз, и сделать его там тяжёлым значит превратить каждый пятый
+  /// этаж в стену (замерено: окно первого спуска уезжает за нижнюю границу от
+  /// правки, которая стражу проходит даром).
+  ///
+  /// В области он — ЦЕЛЬ, к которой игрок пришёл нарочно, зная, кто там
+  /// стоит. Вот перед ней и положено думать, чем идти.
+  ///
+  /// Связь нужна не для красоты: уникальная вещь привязана к БОССУ
+  /// (`RelicDef.source`), и страж роняет ту же вещь — он и есть тот босс.
+  final String? embodies;
 
   double resistFor(DamageType type) => resists[type] ?? 0.0;
 
@@ -297,6 +314,7 @@ class Bestiary {
   );
 
   static List<EnemyArchetype> _enemies = const [_defaultScavenger];
+  static List<EnemyArchetype> _guardians = const [];
   static List<EnemyArchetype> _bosses = const [
     _defaultAshLord,
     _defaultVoidDevourer,
@@ -308,6 +326,7 @@ class Bestiary {
   static void configure({
     required List<EnemyArchetype> enemies,
     required List<EnemyArchetype> bosses,
+    List<EnemyArchetype> guardians = const [],
   }) {
     _enemies = List.unmodifiable(
       [...enemies]..sort((a, b) => a.id.compareTo(b.id)),
@@ -315,7 +334,17 @@ class Bestiary {
     _bosses = List.unmodifiable(
       [...bosses]..sort((a, b) => a.id.compareTo(b.id)),
     );
+    _guardians = List.unmodifiable(
+      [...guardians]..sort((a, b) => a.id.compareTo(b.id)),
+    );
   }
+
+  /// Страж, воплощающий босса [bossId]. `null` — у этого босса своей области
+  /// нет.
+  static EnemyArchetype? guardianOf(String bossId) =>
+      _guardians.where((g) => g.embodies == bossId).firstOrNull;
+
+  static List<EnemyArchetype> get guardians => _guardians;
 
   /// Возврат к бестиарию Фазы 1. Нужен тестам, которые проверяют сами
   /// значения по умолчанию: порядок тестов внутри файла не должен решать,

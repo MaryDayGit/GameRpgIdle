@@ -23,6 +23,8 @@ class SaveMigrations {
   static const List<SaveMigration> _defaults = [
     SaveMigration(1, _addForkPolicy),
     SaveMigration(2, _namedEchoNodes),
+    SaveMigration(3, _accountAndSeason),
+    SaveMigration(4, _recentDepths),
   ];
 
   final List<SaveMigration> steps;
@@ -126,3 +128,48 @@ const _legacyOrder = <String>[
   'blood_threshold', 'blade_cooldown', 'abyss_abilities_2',
   'abyss_affix_slot', 'abyss_keep_shard',
 ];
+
+/// 3 → 4: у сейва появились аккаунт, сезон и номер записи.
+///
+/// Все четыре поля проставляются ЯВНО, а не оставляются на умолчания
+/// читателя, — по тому же правилу, что и приказ на развилку в миграции 1 → 2:
+/// сейв обязан говорить, что было, а не полагаться на то, что чужое
+/// умолчание никогда не поменяется.
+///
+/// Значения выбраны так, чтобы разрешение конфликтов (`save_sync.dart`)
+/// прочло их правильно:
+///
+/// * `revision = 1` — этот сейв записывали хотя бы раз, он существует.
+/// * `mirroredRevision = 0` — в облако он не доезжал НИКОГДА, и это правда:
+///   облака до этой версии не было. Ноль здесь означает «я не потомок ничего
+///   облачного», и любой найденный облачный сейв будет честно считаться
+///   расхождением, а не отставанием.
+/// * `seasonId = season_0` — играли в нулевой сезон, просто тогда он ещё не
+///   был подписан.
+/// * `accountId` НЕ проставляется. Сейв заведён без аккаунта, и приписать
+///   ему нынешний uid значило бы соврать: тот же файл на том же телефоне
+///   может принадлежать другому человеку, и пометка «это его» помешала бы
+///   заметить смену аккаунта.
+/// Память о последних спусках, по которой считается задаток.
+///
+/// Пустой список, а не выведенный из рекорда, и это решение, а не лень.
+/// Вывести из рекорда значило бы вернуть тот самый храповик: сейв, чей
+/// владелец однажды дошёл до 133 этажа и с тех пор ходит на 60, открылся бы
+/// с ценой найма 25× — то есть ровно в том тупике, из которого эта версия
+/// его и вытаскивает. Пустая память отдаёт ему цену новичка на один спуск.
+Map<String, dynamic> _recentDepths(Map<String, dynamic> raw) {
+  final profile = raw['profile'];
+  if (profile is Map) profile['recentDepths'] ??= <int>[];
+  return raw;
+}
+
+Map<String, dynamic> _accountAndSeason(Map<String, dynamic> raw) {
+  raw['revision'] ??= 1;
+  raw['mirroredRevision'] ??= 0;
+  raw['deviceId'] ??= '';
+  raw['seasonId'] ??= 'season_0';
+
+  final profile = raw['profile'];
+  if (profile is Map) profile['achievements'] ??= <String, dynamic>{};
+  return raw;
+}

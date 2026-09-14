@@ -11,6 +11,7 @@ import 'strings.dart';
 import 'forge_screen.dart';
 import 'gear_grid.dart';
 import 'gear_icons.dart';
+import 'theme.dart';
 
 /// Сундук Заставы — всё, что наёмники донесли.
 ///
@@ -79,7 +80,7 @@ class _StashScreenState extends State<StashScreen> {
                     S.stashFull,
 
                     style: const TextStyle(
-                        fontSize: 11, color: Color(0xFFD98F4E)),
+                        fontSize: 12.5, color: RiftColors.warn),
                   ),
                 ),
               Expanded(
@@ -87,14 +88,14 @@ class _StashScreenState extends State<StashScreen> {
                     ? Center(
                         child: Text(
                           S.stashEmpty,
-                          style: const TextStyle(color: Colors.white38),
+                          style: const TextStyle(color: RiftColors.inkFaint),
                         ),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         itemCount: items.length,
                         separatorBuilder: (_, _) =>
-                            const Divider(height: 1, color: Colors.white10),
+                            const Divider(height: 1, color: RiftColors.line),
                         itemBuilder: (context, i) => _StashRow(
                           item: items[i],
                           onTap: () => _open(items[i]),
@@ -221,7 +222,7 @@ class _Chip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: ChoiceChip(
-        label: Text(label, style: const TextStyle(fontSize: 12)),
+        label: Text(label, style: const TextStyle(fontSize: 13.5)),
         selected: selected,
         onSelected: (_) => onTap(),
       ),
@@ -246,7 +247,20 @@ class _StashRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            GearIcon(kind: item.kind, size: 22, color: color),
+            // Иконка в плашке цвета редкости. Голая иконка на двадцать две
+            // точки была самым мелким, что есть в строке, — а редкость
+            // главное, что ищут, пролистывая семьдесят вещей.
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+                border: Border.all(color: color.withValues(alpha: 0.55)),
+              ),
+              child: GearIcon(kind: item.kind, size: 26, color: color),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -254,8 +268,7 @@ class _StashRow extends StatelessWidget {
                 children: [
                   Text(
                     item.kind.title,
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: color),
+                    style: RiftText.heading.copyWith(color: color),
                   ),
                   Text(
                     S.itemLine(
@@ -265,12 +278,12 @@ class _StashRow extends StatelessWidget {
                       max: Crafting.affixCapacity(item),
                       relic: item.isRelic,
                     ),
-                    style: const TextStyle(fontSize: 11, color: Colors.white54),
+                    style: RiftText.small,
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.white38),
+            const Icon(Icons.chevron_right, size: 22, color: RiftColors.inkFaint),
           ],
         ),
       ),
@@ -318,9 +331,8 @@ class ItemSheet extends StatelessWidget {
           children: [
             Text(
               ItemText.title(item),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+              style: RiftText.title.copyWith(
+                fontSize: 20,
                 color: colorFor(item.rarity),
               ),
             ),
@@ -329,27 +341,27 @@ class ItemSheet extends StatelessWidget {
             // Аффиксы — то, ради чего вещь и открывают.
             if (item.implicit != null) ...[
               Text(lines.first,
-                  style: const TextStyle(fontSize: 13, color: Colors.white54)),
+                  style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted)),
               const SizedBox(height: 8),
             ],
             for (var i = 0; i < item.affixes.length; i++) ...[
-              Text(lines[i + offset], style: const TextStyle(fontSize: 14)),
+              Text(lines[i + offset], style: RiftText.body),
               Text(
                 S.affixQuality((item.affixes[i].percentile * 100).round(),
                     item.affixes[i].rerolls),
-                style: const TextStyle(fontSize: 11, color: Colors.white38),
+                style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 8),
             ],
             for (final line in lines.skip(offset + item.affixes.length)) ...[
               Text(line,
                   style:
-                      const TextStyle(fontSize: 13, color: Color(0xFF9AA7D0))),
+                      const TextStyle(fontSize: 14.5, color: RiftColors.info)),
               const SizedBox(height: 8),
             ],
 
             const SizedBox(height: 8),
-            const Divider(color: Colors.white10),
+            const Divider(color: RiftColors.line),
             const SizedBox(height: 8),
 
             if (onEquip != null)
@@ -357,7 +369,7 @@ class ItemSheet extends StatelessWidget {
                 Text(
                   S.stashNobodyToEquip,
 
-                  style: const TextStyle(fontSize: 12, color: Colors.white38),
+                  style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
                 )
               else
                 Wrap(
@@ -393,7 +405,7 @@ class ItemSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               S.salvageAbout,
-              style: const TextStyle(fontSize: 11, color: Colors.white38),
+              style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
             ),
           ],
         ),

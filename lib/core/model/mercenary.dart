@@ -405,11 +405,18 @@ class Roster {
   /// Стоимость найма растёт с рангом: Таверна повышает шансы, но не делает
   /// «Легенду» бесплатной.
   ///
-  /// И растёт с [maxDepthEver] — тем же темпом, что доход (см.
+  /// И растёт с глубиной — тем же темпом, что доход (см.
   /// [Curves.hireCostScale]). Кто идёт глубже, тот и требует больше вперёд.
   /// Оборванец вне этого счёта: он всегда стоит своих 250, и это единственный
   /// ход, который нельзя потерять.
-  static double hireCost(MercRank rank, {int maxDepthEver = 0}) {
+  ///
+  /// [depth] — НЕ рекорд, а медиана последних спусков
+  /// (`PlayerProfile.hireDepth`). Рекорд не умеет снижаться, и цена,
+  /// прикованная к нему, переживает того, кто её заработал: доход падает
+  /// вместе с достигнутой глубиной, а задаток остаётся на пике. Замер
+  /// кампании показал, чем это кончается, — обвалом вдвое и ровной линией
+  /// до конца.
+  static double hireCost(MercRank rank, {int depth = 0}) {
     final byRank = switch (rank) {
       MercRank.ragged => 1.0,
       MercRank.veteran => 3.0,
@@ -417,7 +424,7 @@ class Roster {
       MercRank.legend => 27.0,
     };
     final scale =
-        rank == MercRank.ragged ? 1.0 : Curves.hireCostScale(maxDepthEver);
+        rank == MercRank.ragged ? 1.0 : Curves.hireCostScale(depth);
     return Tuning.baseHireCost * byRank * scale;
   }
 }

@@ -79,25 +79,46 @@ class TrailerShot {
 
   /// Сколько ширины цели обязано остаться в кадре.
   ///
-  /// Наезд по высоте неизбежно режет края широкой панели, и цена этого
-  /// выяснилась на живом прогоне: при допуске в треть карточка спуска
-  /// лишилась «Floor 62» слева и таймера справа — то есть ровно тех двух
-  /// чисел, ради которых кадр и снимался. Содержимое панелей прижато к краям,
-  /// а не к центру, поэтому резать почти нечего: девяносто три процента.
-  static const keepWidth = 0.93;
+  /// Практически вся: девяносто девять процентов. Допуск проверялся дважды и
+  /// оба раза оказывался щедрее, чем можно.
+  ///
+  /// Сперва треть — карточка спуска лишилась «Floor 62» слева и таймера
+  /// справа, то есть ровно тех чисел, ради которых кадр и снимался. Потом
+  /// семь процентов: на панели приказа это двадцать точек, а радиокнопки в
+  /// ней прижаты к самому краю — в кадре от них остались половинки, и у
+  /// каждой строки списка построек пропала первая буква.
+  ///
+  /// Содержимое панелей прижато к краям, а не к центру. Резать у них нечего
+  /// вовсе, и потолок по ширине должен звучать именно так.
+  ///
+  /// Раньше это было бы платой за неподвижный кадр: наезд, упёршийся в
+  /// ширину, оставлял бы план стоять. Теперь не оставляет — упёршийся подъезд
+  /// переходит в панораму, а поверх всего идёт дыхание камеры.
+  static const keepWidth = 0.99;
 }
 
-/// Положение камеры: куда смотрит и насколько близко.
+/// Положение камеры: куда смотрит, насколько близко и насколько близко ей
+/// вообще можно.
 @immutable
 class _Frame {
-  const _Frame(this.focus, this.scale);
+  const _Frame(this.focus, this.scale, this.limit);
 
   final Offset focus;
   final double scale;
 
+  /// Потолок по ширине цели ([TrailerShot.keepWidth]).
+  ///
+  /// Хранится вместе с планом, потому что его обязан соблюдать не только
+  /// наезд, но и подъезд. Пока его тут не было, подъезд считался поверх уже
+  /// выбранного масштаба и спокойно проезжал сквозь потолок: на живом прогоне
+  /// панель построек к концу плана лишилась первой буквы у каждой строки —
+  /// «Buildings» превратилось в «uildings», «Vault» в «ault».
+  final double limit;
+
   static _Frame lerp(_Frame a, _Frame b, double t) => _Frame(
         Offset.lerp(a.focus, b.focus, t)!,
         a.scale + (b.scale - a.scale) * t,
+        a.limit + (b.limit - a.limit) * t,
       );
 }
 
@@ -147,6 +168,17 @@ class _TrailerCameraState extends State<TrailerCamera>
   /// экрана. Перезапускается на каждом плане.
   late final AnimationController _push;
 
+  /// Дыхание камеры: незаметное покачивание и наклон на доли градуса.
+  ///
+  /// Идёт непрерывно и не перезапускается планами — в этом и смысл. Подъезд
+  /// заканчивается вместе с планом, и кадр, доехавший до места, дальше стоял
+  /// мёртво: интерфейс не шевелится сам, и картинка становилась неотличима
+  /// от скриншота ровно в тот момент, когда её начинали читать.
+  ///
+  /// Амплитуда нарочно на грани заметности — два пиксела и одна десятая
+  /// градуса. Больше уже читается как трясущиеся руки, а не как съёмка.
+  late final AnimationController _breath;
+
   _Frame? _from;
   _Frame? _current;
 
@@ -164,6 +196,14 @@ class _TrailerCameraState extends State<TrailerCamera>
     )
       ..addListener(_onFrame)
       ..forward();
+    // Период взят некратным длине плана: кратный давал бы одинаковое
+    // покачивание в каждом кадре, и оно читалось бы как цикл.
+    _breath = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 9400),
+    )
+      ..addListener(_onFrame)
+      ..repeat();
   }
 
   @override
@@ -182,6 +222,7 @@ class _TrailerCameraState extends State<TrailerCamera>
   void dispose() {
     _move.dispose();
     _push.dispose();
+    _breath.dispose();
     super.dispose();
   }
 
@@ -203,7 +244,14 @@ class _TrailerCameraState extends State<TrailerCamera>
     final centre = Offset(world.width / 2, world.height / 2);
 
     final anchor = widget.shot.anchor;
-    if (anchor == null) return _Frame(centre, widget.shot.zoom);
+    // У плана без метки цель — весь экран, и ширина ограничивает его так же.
+    // Пока не ограничивала, `zoom: 1.2` вместе с подъездом давал 1.34, и
+    // список в кадре терял по строчке слева: «ilvl 80» превращалось в
+    // «lvl 80», «Buildings» в «uildings». Панели игры прижаты к краям —
+    // резать у них нечего.
+    if (anchor == null) {
+      return _Frame(centre, widget.shot.zoom, 1 / TrailerShot.keepWidth);
+    }
 
     final rect = TutorialAnchor.rectOf(
       anchor,
@@ -212,7 +260,9 @@ class _TrailerCameraState extends State<TrailerCamera>
     // Метки на экране нет — например, раздел ещё не открылся или список до
     // неё не доехал. Общий план вместо наезда в пустоту: сценарий не должен
     // ломаться от того, что кнопку переставили.
-    if (rect == null || rect.isEmpty) return _Frame(centre, widget.shot.zoom);
+    if (rect == null || rect.isEmpty) {
+      return _Frame(centre, widget.shot.zoom, 1 / TrailerShot.keepWidth);
+    }
 
     // Рамка по высоте — и ограничение, чтобы не срезать цель по бокам.
     final byHeight = view.height * widget.shot.fill / rect.height;
@@ -225,7 +275,7 @@ class _TrailerCameraState extends State<TrailerCamera>
         byHeight.clamp(widget.shot.minZoom, widget.shot.maxZoom).toDouble();
     final scale = math.max(1.0, math.min(wanted, widthLimit));
 
-    return _Frame(rect.center, scale.toDouble());
+    return _Frame(rect.center, scale.toDouble(), math.max(1.0, widthLimit));
   }
 
   /// Не выпускает край мира в кадр.
@@ -254,17 +304,37 @@ class _TrailerCameraState extends State<TrailerCamera>
     // концу. Величина у каждого плана своя — общий план едет заметнее, ему
     // нечем больше жить.
     final t = Curves.easeOutSine.transform(_push.value);
-    final scale = frame.scale * (1 + widget.shot.push * t);
+
+    // Подъезд не имеет права проехать сквозь потолок по ширине: наезд, режущий
+    // то, ради чего снят кадр, хуже отсутствия наезда — и подъезд тут ничем не
+    // отличается от наезда.
+    final wanted = frame.scale * (1 + widget.shot.push * t);
+    final scale = math.min(wanted, frame.limit);
+
+    // Упёрлись в потолок — двигаем не масштабом, а панорамой. Иначе широкая
+    // панель, у которой наезжать некуда, стояла бы весь план неподвижно, а
+    // ровно ради движения подъезд и существует.
+    final capped = wanted > frame.limit + 0.001;
+    final pan = (capped ? -74.0 : -14.0) * t;
+
     final focus = _clamp(
-      frame.focus + Offset(0, -14 * t),
+      frame.focus + Offset(0, pan),
       scale,
       view,
       world,
     );
     final target = Offset(view.width / 2, view.height * widget.shot.gravity);
 
+    // Дыхание. Две волны разной длины — по горизонтали и по вертикали, — и
+    // третья на наклон: совпадающие периоды дали бы движение по прямой, а оно
+    // читается как проезд камеры, а не как рука.
+    final b = _breath.value * 2 * math.pi;
+    final sway = Offset(math.sin(b) * 2.2, math.cos(b * 0.61) * 1.7);
+    final tilt = math.sin(b * 0.37) * 0.0017;
+
     return Matrix4.identity()
-      ..translateByDouble(target.dx, target.dy, 0, 1)
+      ..translateByDouble(target.dx + sway.dx, target.dy + sway.dy, 0, 1)
+      ..rotateZ(tilt)
       ..scaleByDouble(scale, scale, 1, 1)
       ..translateByDouble(-focus.dx, -focus.dy, 0, 1);
   }

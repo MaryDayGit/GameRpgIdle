@@ -12,7 +12,10 @@ import 'package:rift/core/model/shard.dart';
 import 'package:rift/core/model/stat_key.dart';
 import 'package:rift/core/save/migrations.dart';
 import 'package:rift/core/save/save_data.dart';
+import 'package:rift/core/save/save_head.dart';
 import 'package:rift/core/save/save_issue.dart';
+import 'package:rift/core/save/save_sync.dart';
+import 'package:rift/core/save/season.dart';
 import 'package:rift/core/sim/rng.dart';
 import 'package:rift/core/sim/fork.dart';
 import 'package:test/test.dart';
@@ -222,7 +225,7 @@ void main() {
 
       before.refreshContracts(arrivedAt);
       before.refreshContracts(arrivedAt
-          .add(Duration(seconds: Tuning.forkWaitSeconds.round() + 1)));
+          .add(Duration(seconds: Tuning.forkWaitAwaySeconds.round() + 1)));
       expect(contract.forkWaitingSpent, isTrue);
       expect(contract.descending, isTrue);
 
@@ -451,6 +454,43 @@ void main() {
       expect(loaded.version, 3);
     });
 
+    test('сейв до памяти о спусках открывается ценой новичка', () {
+      // Ступень 4 → 5. У сейва, чей владелец однажды дошёл до 133-го этажа и
+      // с тех пор ходит на 60, рекорд остаётся 133 — но задаток по нему
+      // считать нельзя: это и есть храповик, из-за которого игра уходила в
+      // минус. Пустая память отдаёт ему цену новичка на один спуск, а
+      // первый же закрытый контракт поставит настоящую.
+      final player = PlayerProfile(maxDepthEver: 133, gold: 1000);
+
+      final raw = jsonDecode(
+        SaveData(lastSeenUtc: DateTime.now().toUtc(), profile: player)
+            .encode(),
+      ) as Map<String, dynamic>;
+
+      raw['version'] = 4;
+      (raw['profile'] as Map).remove('recentDepths');
+
+      final loaded = SaveData.decode(jsonEncode(raw));
+      expect(loaded.version, SaveData.currentVersion);
+      expect(loaded.profile.maxDepthEver, 133, reason: 'рекорд не теряется');
+      expect(loaded.profile.recentDepths, isEmpty);
+      expect(loaded.profile.hireDepth, 0,
+          reason: 'выводить память из рекорда значило бы вернуть храповик');
+    });
+
+    test('память о спусках переживает запись и чтение', () {
+      // Без этого каждый перезапуск обнулял бы цену найма, и «закрыть игру
+      // перед покупкой Легенды» стало бы самым выгодным ходом в ней.
+      final player = PlayerProfile(recentDepths: const [90, 95, 88, 102, 91]);
+
+      final back = SaveData.decode(
+        SaveData(lastSeenUtc: DateTime.now().toUtc(), profile: player).encode(),
+      );
+
+      expect(back.profile.recentDepths, [90, 95, 88, 102, 91]);
+      expect(back.profile.hireDepth, 91);
+    });
+
     test('сейв первой версии получает приказ, который у него был', () {
       // Первая настоящая ступень цепочки. До второй версии политика была
       // одна, и старый контракт обязан открыться именно с ней: спуск в нём
@@ -480,6 +520,89 @@ void main() {
         SaveData(lastSeenUtc: DateTime.now().toUtc(), profile: player).encode(),
       );
       expect(again.profile.contracts.single.forkPolicy, contract.forkPolicy);
+    });
+
+    test('сейв третьей версии получает аккаунт, сезон и номер записи', () {
+      // Ступень 3 → 4. Сейв, написанный до аккаунтов, обязан открыться и
+      // получить значения, по которым разрешение конфликтов
+      // (`save_sync.dart`) прочтёт его правильно.
+      final player = PlayerProfile.newGame(seed: 7);
+      final raw = jsonDecode(SaveData(
+        lastSeenUtc: DateTime.utc(2026, 5, 1),
+        profile: player,
+      ).encode()) as Map<String, dynamic>;
+
+      raw['version'] = 3;
+      for (final key in ['revision', 'mirroredRevision', 'deviceId',
+        'seasonId', 'accountId']) {
+        raw.remove(key);
+      }
+
+      final loaded = SaveData.decode(jsonEncode(raw));
+      expect(loaded.version, SaveData.currentVersion);
+      expect(loaded.revision, 1, reason: 'сейв существует — значит записан');
+      expect(loaded.mirroredRevision, 0,
+          reason: 'в облако он не доезжал никогда, и врать об этом нельзя');
+      expect(loaded.seasonId, Season.zero.id);
+      expect(loaded.accountId, isNull,
+          reason: 'приписать сейву нынешний uid значит соврать о владельце');
+    });
+
+    test('старый сейв не считается потомком облачного', () {
+      // Следствие `mirroredRevision = 0`, которое стоит проверить отдельно:
+      // именно оно не даёт молча затереть облачный сейв локальным после
+      // обновления игры.
+      final player = PlayerProfile(maxDepthEver: 30);
+      final raw = jsonDecode(SaveData(
+        lastSeenUtc: DateTime.utc(2026, 5, 1),
+        profile: player,
+      ).encode()) as Map<String, dynamic>;
+      raw['version'] = 3;
+      raw.remove('mirroredRevision');
+
+      final local = SaveData.decode(jsonEncode(raw)).head;
+      final remote = SaveHead(
+        version: 4,
+        revision: 12,
+        seasonId: Season.zero.id,
+        lastSeenUtc: DateTime.utc(2026, 5, 2),
+        progress: const SaveProgress(maxDepth: 40, runs: 9, outpostLevel: 5),
+      );
+
+      expect(SaveSync.resolve(local: local, remote: remote).action,
+          SyncAction.ask);
+    });
+  });
+
+  group('достижения', () {
+    test('открытое переживает круг сохранения вместе со временем', () {
+      final player = PlayerProfile.newGame(seed: 11);
+      expect(player.unlockAchievement('first_blood', DateTime.utc(2026, 9, 1)),
+          isTrue);
+      expect(
+          player.unlockAchievement('first_blood', DateTime.utc(2026, 9, 5)),
+          isFalse,
+          reason: 'хранится время ПЕРВОГО раза, второй ничего не меняет');
+
+      final back = SaveData.decode(
+        SaveData(lastSeenUtc: DateTime.utc(2026, 9, 5), profile: player)
+            .encode(),
+      );
+      expect(back.profile.achievements['first_blood'],
+          DateTime.utc(2026, 9, 1));
+    });
+
+    test('испорченная дата не отбирает у игрока достижение', () {
+      final player = PlayerProfile.newGame(seed: 11)
+        ..unlockAchievement('deep_diver', DateTime.utc(2026, 9, 1));
+      final raw = jsonDecode(SaveData(
+        lastSeenUtc: DateTime.utc(2026, 9, 5),
+        profile: player,
+      ).encode()) as Map<String, dynamic>;
+      (raw['profile'] as Map)['achievements'] = {'deep_diver': 'позавчера'};
+
+      final back = SaveData.decode(jsonEncode(raw));
+      expect(back.profile.achievements.containsKey('deep_diver'), isTrue);
     });
   });
 

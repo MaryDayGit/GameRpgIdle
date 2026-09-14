@@ -3,6 +3,7 @@ import 'package:rift/core/content/echo_tree_def.dart';
 
 import '../state/game_controller.dart';
 import 'strings.dart';
+import 'theme.dart';
 
 /// Древо Эха (GDD §8.3).
 ///
@@ -42,20 +43,22 @@ class _EchoTreeScreenState extends State<EchoTreeScreen> {
                 runSpacing: 2,
                 crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
+                  // Эхо — своим цветом, тем же, что в полосе ресурсов на
+                  // Заставе: это валюта, и узнаваться она обязана везде.
                   Text(S.echoAmount(c.profile.echo),
-                      style: Theme.of(context).textTheme.titleMedium),
+                      style: RiftText.title.copyWith(color: RiftColors.echo)),
                   Text(
                     tree.complete
                         ? S.echoTreeComplete
                         : S.echoNextNode(tree.nextNodeCost.round()),
-                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                    style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 S.echoTreeAbout(tree.nodesBought, tree.totalNodes),
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 20),
 
@@ -95,18 +98,16 @@ class _BranchHeader extends StatelessWidget {
       child: Row(
         children: [
           Flexible(
-            child: Text(branch.name,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600)),
+            child: Text(branch.name, style: RiftText.title),
           ),
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
             child: Text(branch.about,
-                style: const TextStyle(fontSize: 12, color: Colors.white38)),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint)),
           ),
           Text('$bought/${branch.nodes.length}',
-              style: const TextStyle(fontSize: 12, color: Colors.white54)),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted)),
         ],
       ),
     );
@@ -149,10 +150,10 @@ class _NodeRow extends StatelessWidget {
                     : Icons.lock_outline,
             size: 18,
             color: bought
-                ? const Color(0xFF7FB069)
+                ? RiftColors.good
                 : available
-                    ? Colors.white54
-                    : Colors.white24,
+                    ? RiftColors.inkMuted
+                    : RiftColors.inkDisabled,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -162,17 +163,18 @@ class _NodeRow extends StatelessWidget {
                 Text(
                   node.name,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: bought || available ? Colors.white : Colors.white38,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: bought || available ? RiftColors.ink : RiftColors.inkFaint,
                   ),
                 ),
                 Text(
                   node.text,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13.5,
                     color: bought || available
-                        ? Colors.white54
-                        : Colors.white24,
+                        ? RiftColors.inkMuted
+                        : RiftColors.inkDisabled,
                   ),
                 ),
               ],
@@ -186,6 +188,14 @@ class _NodeRow extends StatelessWidget {
               constraints: const BoxConstraints(minWidth: 72),
               child: OutlinedButton(
                 onPressed: canBuy ? onBuy : null,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: RiftColors.echo,
+                  side: BorderSide(
+                    color: canBuy
+                        ? RiftColors.echo.withValues(alpha: 0.6)
+                        : RiftColors.line,
+                  ),
+                ),
                 child: Text('$cost'),
               ),
             ),

@@ -29,7 +29,7 @@ List<TrailerBeat> buildTrailerScript() {
   return [
     // --- Крючок. Три секунды на то, чтобы отличиться от всех idle-игр ---
     TrailerBeat(
-      shot: const TrailerShot(zoom: 1.06, push: 0.14),
+      shot: const TrailerShot(zoom: 1.05, push: 0.14),
       line: TrailerLine(
         const Phrase(
           'Вы не спускаетесь в бездну сами',
@@ -91,7 +91,7 @@ List<TrailerBeat> buildTrailerScript() {
       line: TrailerLine(
         const Phrase(
           'А приказ решает, когда вас нет',
-          'Your standing order decides when you are gone',
+          'Your standing order takes over',
         ).text,
         text: const Phrase(
           'На развилке он ждёт 45 секунд и выбирает сам',
@@ -134,9 +134,12 @@ List<TrailerBeat> buildTrailerScript() {
       line: TrailerLine(
         const Phrase('Путь раздваивается', 'The path splits').text,
         text: const Phrase(
-          'Дорога короче или добыча богаче. Останетесь — откроется третья',
-          'A shorter road, or a richer haul. Stay, and a third one opens.',
+          'Короче путь или богаче добыча. Останетесь — откроется третий',
+          'A shorter road or a richer haul. Stay, and a third opens.',
         ).text,
+        // Наверх: третий путь — нижняя карточка развилки, и подпись снизу
+        // ложилась ровно на неё. Показывать надо то, о чём говоришь.
+        top: true,
       ),
       hold: const Duration(seconds: 3),
     ),
@@ -145,6 +148,9 @@ List<TrailerBeat> buildTrailerScript() {
         s.chooseBold();
         await s.until(
             () => s.controller.collectableContract != null, speed: 40);
+        // Вспышка ровно на гибели. Единственное место в ролике, где событие
+        // игры необратимо, — и единственное, где кадр имеет право моргнуть.
+        await s.flash();
       },
       shot: const TrailerShot(anchor: Onboarding.anchorCollect, fill: 0.5),
       line: TrailerLine(
@@ -182,9 +188,11 @@ List<TrailerBeat> buildTrailerScript() {
     TrailerBeat(
       act: (s) async {
         s.collect();
-        await s.back();
-        if (!s.profile.hasPendingLoot) return;
-        await s.open(LootSortScreen(controller: s.controller));
+        if (!s.profile.hasPendingLoot) {
+          await s.back();
+          return;
+        }
+        await s.show(LootSortScreen(controller: s.controller));
       },
       shot: const TrailerShot(anchor: Onboarding.anchorLootRow, fill: 0.36),
       line: TrailerLine(
@@ -195,15 +203,14 @@ List<TrailerBeat> buildTrailerScript() {
 
     // --- Чем растёт следующий ---
     //
-    // Внутри этих экранов меток нет: наводиться не на что, и общим планом они
-    // четыре кадра подряд стояли бы неподвижно. Поэтому у них свой масштаб —
-    // камера входит в экран и медленно подъезжает.
+    // Внутри этих экранов меток нет: наводиться не на что. Масштаб у них свой,
+    // но небольшой: цель здесь — весь экран, а панели игры прижаты к краям, и
+    // наезд крупнее восьми процентов срезает у списка первую букву каждой
+    // строки. Движение таким планам даёт не наезд, а панорама и дыхание
+    // камеры — упёршись в потолок по ширине, подъезд переходит в неё сам.
     TrailerBeat(
-      act: (s) async {
-        await s.back();
-        await s.open(EchoTreeScreen(controller: s.controller));
-      },
-      shot: const TrailerShot(zoom: 1.22, push: 0.12),
+      act: (s) => s.show(EchoTreeScreen(controller: s.controller)),
+      shot: const TrailerShot(zoom: 1.08, push: 0.14),
       line: TrailerLine(
         const Phrase(
           'Эхо растит не наёмника, а Заставу',
@@ -217,11 +224,8 @@ List<TrailerBeat> buildTrailerScript() {
       hold: const Duration(milliseconds: 2600),
     ),
     TrailerBeat(
-      act: (s) async {
-        await s.back();
-        await s.open(PassiveTreeScreen(controller: s.controller));
-      },
-      shot: const TrailerShot(zoom: 1.3, push: 0.14),
+      act: (s) => s.show(PassiveTreeScreen(controller: s.controller)),
+      shot: const TrailerShot(zoom: 1.08, push: 0.14),
       line: TrailerLine(
         const Phrase(
           'Триста узлов пассивного древа',
@@ -231,25 +235,19 @@ List<TrailerBeat> buildTrailerScript() {
       hold: const Duration(milliseconds: 2400),
     ),
     TrailerBeat(
-      act: (s) async {
-        await s.back();
-        await s.open(ForgeScreen(controller: s.controller));
-      },
-      shot: const TrailerShot(zoom: 1.24, push: 0.12),
+      act: (s) => s.show(ForgeScreen(controller: s.controller)),
+      shot: const TrailerShot(zoom: 1.08, push: 0.14),
       line: TrailerLine(
         const Phrase(
-          'Осколок вынимается из вещи и вбивается в другую',
-          'Shards pull out of one item and into another',
+          'Осколок переезжает из вещи в вещь',
+          'Shards move from one item to another',
         ).text,
       ),
       hold: const Duration(milliseconds: 2600),
     ),
     TrailerBeat(
-      act: (s) async {
-        await s.back();
-        await s.open(StashScreen(controller: s.controller));
-      },
-      shot: const TrailerShot(zoom: 1.2, push: 0.12),
+      act: (s) => s.show(StashScreen(controller: s.controller)),
+      shot: const TrailerShot(zoom: 1.08, push: 0.14),
       line: TrailerLine(
         const Phrase(
           'Сундук тесен, и это решение',
@@ -263,11 +261,8 @@ List<TrailerBeat> buildTrailerScript() {
       hold: const Duration(milliseconds: 2600),
     ),
     TrailerBeat(
-      act: (s) async {
-        await s.back();
-        await s.open(QuestsScreen(controller: s.controller));
-      },
-      shot: const TrailerShot(zoom: 1.22, push: 0.12),
+      act: (s) => s.show(QuestsScreen(controller: s.controller)),
+      shot: const TrailerShot(zoom: 1.08, push: 0.14),
       line: TrailerLine(
         const Phrase('Сорок четыре задания', 'Forty-four quests').text,
       ),
@@ -304,8 +299,23 @@ List<TrailerBeat> buildTrailerScript() {
     ),
 
     // --- Финал ---
+    //
+    // Два кадра, а не один. Сначала общий план Заставы под подписью — зритель
+    // должен последний раз увидеть игру, а не только буквы. И только потом
+    // карточка: ролик надо закончить, а не дать ему затухнуть.
     TrailerBeat(
       shot: const TrailerShot(zoom: 1.04, push: 0.12),
+      line: TrailerLine(
+        const Phrase(
+          'Каждый следующий уходит глубже',
+          'Each one goes deeper than the last',
+        ).text,
+      ),
+      hold: const Duration(milliseconds: 2600),
+      move: const Duration(milliseconds: 1400),
+    ),
+    TrailerBeat(
+      shot: const TrailerShot(zoom: 1.06, push: 0.06),
       line: TrailerLine(
         // Название берётся у игры, а не пишется здесь заново: разойтись с
         // переводом ровно в финальном кадре было бы обиднее всего.
@@ -314,9 +324,10 @@ List<TrailerBeat> buildTrailerScript() {
           'Idle-RPG про наёмников, которые спускаются вместо вас',
           'An idle RPG about mercenaries who go down in your place',
         ).text,
+        card: true,
       ),
-      hold: const Duration(seconds: 4),
-      move: const Duration(milliseconds: 1400),
+      hold: const Duration(milliseconds: 3400),
+      move: const Duration(milliseconds: 900),
     ),
   ];
 }

@@ -11,6 +11,7 @@ import 'strings.dart';
 import 'gear_grid.dart';
 import 'help_screen.dart';
 import 'gear_icons.dart';
+import 'theme.dart';
 
 /// Кузница: сундук, осколки и всё, что с ними делают.
 ///
@@ -76,60 +77,80 @@ class _ForgeScreenState extends State<ForgeScreen> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Flexible(
+                child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            children: [
+              Text(title, style: RiftText.title.copyWith(fontSize: 20)),
               const SizedBox(height: 8),
-              Text(
-                what,
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
-              ),
+              Text(what, style: RiftText.small),
               const SizedBox(height: 16),
-              if (before.isNotEmpty) ...[
-                Text(
-                  S.forgeNow,
-                  style: const TextStyle(fontSize: 11, color: Colors.white38),
+              // «Сейчас» и «станет» — двумя плашками одна под другой, со
+              // стрелкой между: операция в Кузнице и есть этот переход, и
+              // читать его надо сверху вниз, а не искать разницу в тексте.
+              if (before.isNotEmpty)
+                _Box(
+                  label: S.forgeNow,
+                  lines: before,
+                  color: RiftColors.inkMuted,
                 ),
-                for (final line in before)
-                  Text(line, style: const TextStyle(fontSize: 13)),
-                const SizedBox(height: 12),
-              ],
-              if (after.isNotEmpty) ...[
-                Text(
-                  S.forgeBecomes,
-                  style: const TextStyle(fontSize: 11, color: Colors.white38),
-                ),
-                for (final line in after)
-                  Text(
-                    line,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF7FB069),
-                    ),
+              if (before.isNotEmpty && after.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Center(
+                    child: Icon(Icons.arrow_downward_rounded,
+                        size: 20, color: RiftColors.inkFaint),
                   ),
-                const SizedBox(height: 12),
-              ],
+                ),
+              if (after.isNotEmpty)
+                _Box(
+                  label: S.forgeBecomes,
+                  lines: after,
+                  color: RiftColors.good,
+                ),
+              const SizedBox(height: 12),
               if (warning != null) ...[
-                Text(
-                  warning,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFD98F4E),
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        size: 18, color: RiftColors.warn),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(warning,
+                          style: RiftText.small
+                              .copyWith(color: RiftColors.warn)),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
               ],
-              FilledButton(
-                onPressed: cost != null && !c.canAfford(cost)
-                    ? null
-                    : () => Navigator.of(context).pop(true),
-                child: Text(cost == null ? action : '$action · ${money(cost)}'),
+            ],
+                ),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(S.cancel),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton(
+                      onPressed: cost != null && !c.canAfford(cost)
+                          ? null
+                          : () => Navigator.of(context).pop(true),
+                      child: Text(
+                          cost == null ? action : '$action · ${money(cost)}'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(S.cancel),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -393,10 +414,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
             children: [
               Text(
                 S.goldAmount(money(profile.gold)),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: RiftText.title.copyWith(color: RiftColors.gold),
               ),
               const SizedBox(height: 20),
 
@@ -411,7 +429,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
 
 
 
-                  style: const TextStyle(fontSize: 13, color: Colors.white54),
+                  style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted),
                 )
               else
                 for (final shard in profile.shards)
@@ -425,7 +443,7 @@ class _ForgeScreenState extends State<ForgeScreen> {
               if (stash.isEmpty)
                 Text(
                   S.stashEmptyForge,
-                  style: const TextStyle(fontSize: 13, color: Colors.white54),
+                  style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted),
                 )
               else
                 for (final item in stash)
@@ -446,14 +464,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 11,
-        letterSpacing: 1.2,
-        color: Colors.white54,
-      ),
-    ),
+    child: Text(text, style: RiftText.overline),
   );
 }
 
@@ -485,15 +496,9 @@ class _ShardRow extends StatelessWidget {
             _Quality(shard.quality),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text(title, style: RiftText.heading.copyWith(fontSize: 15)),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.white38),
+            const Icon(Icons.chevron_right, size: 22, color: RiftColors.inkFaint),
           ],
         ),
       ),
@@ -511,20 +516,24 @@ class _Quality extends StatelessWidget {
   Widget build(BuildContext context) {
     final good = value >= 90;
     return Container(
-      width: 40,
-      height: 32,
+      width: 44,
+      height: 36,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: (good ? const Color(0xFFC7643F) : const Color(0xFF4F8FC7))
-            .withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(6),
+        color: (good ? RiftColors.gold : RiftColors.shard)
+            .withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: (good ? RiftColors.gold : RiftColors.shard)
+              .withValues(alpha: 0.5),
+        ),
       ),
       child: Text(
         '$value',
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 15.5,
           fontWeight: FontWeight.w700,
-          color: good ? const Color(0xFFE0A183) : const Color(0xFF8FB8DC),
+          color: good ? RiftColors.gold : RiftColors.shard,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
@@ -546,7 +555,19 @@ class _ItemRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            GearIcon(kind: item.kind, size: 20, color: colorFor(item.rarity)),
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colorFor(item.rarity).withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+                border: Border.all(
+                    color: colorFor(item.rarity).withValues(alpha: 0.55)),
+              ),
+              child: GearIcon(
+                  kind: item.kind, size: 24, color: colorFor(item.rarity)),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -554,21 +575,19 @@ class _ItemRow extends StatelessWidget {
                 children: [
                   Text(
                     ItemText.title(item),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: RiftText.heading
+                        .copyWith(fontSize: 15, color: colorFor(item.rarity)),
                   ),
                   Text(
                     S.propertyCount(Crafting.usedSlots(item),
                         Crafting.affixCapacity(item),
                         relic: item.isRelic),
-                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                    style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.white38),
+            const Icon(Icons.chevron_right, size: 18, color: RiftColors.inkFaint),
           ],
         ),
       ),
@@ -608,23 +627,24 @@ class _ItemSheet extends StatelessWidget {
           children: [
             Text(
               ItemText.title(item),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: RiftText.title
+                  .copyWith(fontSize: 19, color: colorFor(item.rarity)),
             ),
             if (item.implicit != null) ...[
               const SizedBox(height: 6),
               Text(
                 lines.first,
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
               ),
             ],
             const SizedBox(height: 16),
 
             for (var i = 0; i < item.affixes.length; i++) ...[
-              Text(lines[i + offset], style: const TextStyle(fontSize: 13)),
+              Text(lines[i + offset], style: RiftText.body),
               Text(
                 S.affixQuality((item.affixes[i].percentile * 100).round(),
                     item.affixes[i].rerolls),
-                style: const TextStyle(fontSize: 11, color: Colors.white38),
+                style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
               ),
               const SizedBox(height: 6),
               Row(
@@ -654,7 +674,7 @@ class _ItemSheet extends StatelessWidget {
             if (item.isRelic && !canDeepen)
               Text(
                 S.deepenGate,
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
           ],
         ),
@@ -692,13 +712,13 @@ class _ShardSheet extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               S.shardRecomputeNote,
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
             ),
             const SizedBox(height: 16),
             if (targets.isEmpty)
               Text(
                 S.noSuitableItems,
-                style: const TextStyle(fontSize: 13, color: Colors.white54),
+                style: const TextStyle(fontSize: 14.5, color: RiftColors.inkMuted),
               )
             else
               for (final item in targets)
@@ -717,7 +737,7 @@ class _ShardSheet extends StatelessWidget {
                         Expanded(
                           child: Text(
                             ItemText.title(item),
-                            style: const TextStyle(fontSize: 13),
+                            style: const TextStyle(fontSize: 14.5),
                           ),
                         ),
                         Text(
@@ -725,10 +745,10 @@ class _ShardSheet extends StatelessWidget {
                               ? S.freeSlot
                               : S.overwrite,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12.5,
                             color: Crafting.hasFreeSlot(item)
-                                ? const Color(0xFF7FB069)
-                                : Colors.orangeAccent,
+                                ? RiftColors.good
+                                : RiftColors.bad,
                           ),
                         ),
                       ],
@@ -770,7 +790,7 @@ class _OverwriteSheet extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               S.replaceNoRoomAny,
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
             ),
             for (var i = 0; i < item.affixes.length; i++)
               ListTile(
@@ -778,7 +798,7 @@ class _OverwriteSheet extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(
                   lines[i + offset],
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: 14.5),
                 ),
                 // Каждая строка показывает не только что пропадёт, но и что
                 // встанет на это место: выбирать «что стереть», не видя, на
@@ -788,8 +808,8 @@ class _OverwriteSheet extends StatelessWidget {
                       Crafting.imprint(item, shard, slotIndex: i)
                           .item)[i + offset]),
                   style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF7FB069),
+                    fontSize: 12.5,
+                    color: RiftColors.good,
                   ),
                 ),
                 onTap: () => onPick(i),
@@ -799,4 +819,39 @@ class _OverwriteSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// Плашка «сейчас» или «станет» в подтверждении Кузницы.
+class _Box extends StatelessWidget {
+  const _Box({required this.label, required this.lines, required this.color});
+
+  final String label;
+  final List<String> lines;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(RiftSize.radiusSmall + 2),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: RiftText.overline.copyWith(color: color)),
+            const SizedBox(height: 4),
+            for (final line in lines)
+              Text(line,
+                  style: RiftText.body.copyWith(
+                    color: color == RiftColors.inkMuted
+                        ? RiftColors.ink
+                        : color,
+                  )),
+          ],
+        ),
+      );
 }

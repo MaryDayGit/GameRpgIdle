@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:rift/core/sim/combat_feed.dart';
 
 import 'combat_animation.dart';
+import 'vfx.dart';
 import 'silhouettes.dart';
 
 /// То, что боевая сцена знает о бое.
@@ -207,19 +208,57 @@ class _Field extends Component with HasGameReference<FlameGame> {
   /// Считается по событиям боя — см. [BattleAnimations].
   final _anims = BattleAnimations();
 
-  static final _barBack = Paint()..color = const Color(0xFF2A2422);
-  static final _barHero = Paint()..color = const Color(0xFF7FB069);
-  static final _barMana = Paint()..color = const Color(0xFF5B8DD9);
-  static final _barEnemy = Paint()..color = const Color(0xFFC7643F);
+  /// Искры, прах, цифры урона и тряска — см. [Vfx].
+  final _vfx = Vfx();
 
-  static const _hitColor = Color(0xFFFFE3B3);
+  /// События, которым ещё не нашли места на экране.
+  ///
+  /// Забираются в `update`, а тратятся в `render`: искре нужна ТОЧКА, а точка
+  /// известна только после раскладки волны, то есть при отрисовке. Считать
+  /// раскладку дважды было бы дешевле по коду и дороже по кадру, а брать
+  /// прошлую — значит бить искрами мимо в тот единственный кадр, когда волна
+  /// сменилась.
+  final List<CombatBeat> _pending = [];
+
+  /// Была ли прошлая волна боссовой. По смене решается, показывать ли вход.
+  bool _wasBoss = false;
+
+  /// Стены бездны позади бойцов.
+  final _backdrop = _Backdrop();
+
+  // Цвета полосок — те же, что у полосок под сценой (`ui/theme.dart`):
+  // здоровье героя на арене и в сводке обязано быть одним цветом.
+  static final _barBack = Paint()..color = const Color(0xE0120C0A);
+  static final _barEdge = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.0
+    ..color = const Color(0x55F3E9DF);
+  static final _barHero = Paint()..color = const Color(0xFF8CCB6E);
+  static final _barMana = Paint()..color = const Color(0xFF6F9EF0);
+  static final _barEnemy = Paint()..color = const Color(0xFFF08A6C);
+
+  /// Сколько ещё держится надпись о входе босса, в секундах.
+  double _bossBanner = 0.0;
 
   @override
   void update(double dt) {
     _time += dt;
-    _anims.apply(view.takeBeats());
+
+    final beats = view.takeBeats();
+    _anims.apply(beats, bossWave: view.bossWave);
+    if (beats.isNotEmpty) {
+      // Потолок на случай перемотки: спуск догоняет тысячами тиков за кадр,
+      // и события целой волны могут прийти разом. Искры от каждого удара
+      // такой пачки — это не бой, а вспышка на весь экран.
+      if (_pending.length > 40) _pending.removeRange(0, _pending.length - 40);
+      _pending.addAll(beats);
+    }
+
     _anims.syncDeaths(view.enemyHpFractions);
     _anims.tick(dt);
+    if (_bossBanner > 0.0) _bossBanner = math.max(0.0, _bossBanner - dt);
+    _vfx.tick(dt);
+    _vfx.ambient(Size(game.size.x, game.size.y), dt);
   }
 
   @override
@@ -248,8 +287,8 @@ class _Field extends Component with HasGameReference<FlameGame> {
       scale: bossScale,
     );
 
-    // --- Герой ---------------------------------------------------------------
-    //
+    final heroLook = heroSilhouette(view.heroWeapon);
+    final heroX = size.x * 0.16;
     // Рост героя не зависит от волны. Если считать его от размера мобов, он
     // будет ужиматься на пачке из пяти и вырастать на боссе — фигура игрока
     // прыгала бы в размере каждую волну, а она здесь единственная постоянная.
@@ -257,8 +296,6 @@ class _Field extends Component with HasGameReference<FlameGame> {
     // Но и возвышаться над волной вдвое он не должен: пачка из пяти мелких
     // делает фигуры узкими, и герой рядом с ними выглядел великаном. Отсюда
     // потолок в долях от роста мобов.
-    final heroLook = heroSilhouette(view.heroWeapon);
-    final heroX = size.x * 0.16;
     final heroHeight = math.min(
       math.min(size.y * 0.30, WaveLayout.maxHeight) * 1.05,
       layout.height * 1.4,
@@ -274,31 +311,41 @@ class _Field extends Component with HasGameReference<FlameGame> {
       // на двухрядной пачке верхние фигуры уезжают под шапку экрана.
       tallest: math.max(
         heroHeight,
-        layout.height + (layout.lifts.isEmpty ? 0.0 : layout.lifts.reduce(math.max)),
+        layout.height +
+            (layout.lifts.isEmpty ? 0.0 : layout.lifts.reduce(math.max)),
       ),
     );
-    canvas.drawRect(
-      Rect.fromLTWH(0, groundY + 2, size.x, 1.2),
-      Paint()..color = const Color(0x22D9C8A9),
-    );
 
+    _spawnEffects(layout, enemies, ids, heroX, heroHeight, groundY);
+
+    // Тряска двигает ВСЮ сцену, включая землю и фон: трясти одни фигуры
+    // значит показать, что они нарисованы поверх, а не стоят в мире.
+    final shake = _vfx.offset;
+    canvas.save();
+    // Сцена обязана оставаться в своей полосе. Flame её не обрезает, и без
+    // этого стены бездны и искры вылезали поверх шапки экрана — на снимке
+    // было видно, как камни стоят на заголовке.
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.x, size.y));
+    canvas.translate(shake.dx, shake.dy);
+
+    _backdrop.render(canvas, size, groundY, _time, shake);
+    _drawGround(canvas, size, groundY);
+
+    // --- Герой ---------------------------------------------------------------
     final breath = math.sin(_time * 2.2) * 0.008 * heroHeight;
-
-    // Замах — рывок навстречу волне. Без него герой бьёт неотличимо от того,
-    // как он стоит, и бой читается только по полоскам.
-    final lunge = _anims.hero.swing * heroHeight * 0.10 -
+    final lunge = _anims.hero.lunge * heroHeight * 0.13 -
         _anims.hero.recoil * heroHeight * 0.04;
 
     if (_anims.cast > 0) {
-      canvas.drawCircle(
-        Offset(heroX, groundY - heroHeight * 0.45),
-        heroHeight * (0.35 + 0.55 * (1.0 - _anims.cast)),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0 + 2.0 * _anims.cast
-          ..color =
-              const Color(0xFF7FB069).withValues(alpha: 0.45 * _anims.cast),
-      );
+      _castRing(canvas, Offset(heroX, groundY - heroHeight * 0.45), heroHeight);
+    }
+
+    // След удара: дуга перед героем на самом быстром куске выпада. Силуэт
+    // оружия для этого не нужен и даже вреден — у каждого оружия своя фигура,
+    // а читается движение, а не железо.
+    if (_anims.hero.lunge > 0.45) {
+      _slash(canvas, Offset(heroX + lunge, groundY + breath), heroHeight,
+          _anims.hero.lunge);
     }
 
     _draw(
@@ -323,15 +370,13 @@ class _Field extends Component with HasGameReference<FlameGame> {
     _bar(
       canvas,
       heroX,
-      groundY - heroHeight * 1.10 + 6.0,
+      groundY - heroHeight * 1.10 + 10.0,
       barWidth,
       view.heroManaFraction,
       _barMana,
       size.x,
-      height: 3.0,
+      height: 4.0,
     );
-
-    if (enemies.isEmpty) return;
 
     // --- Волна ---------------------------------------------------------------
     final h = layout.height;
@@ -343,9 +388,19 @@ class _Field extends Component with HasGameReference<FlameGame> {
       final each = silhouetteFor(i < ids.length ? ids[i] : '');
 
       final anim = _anims.enemy(i);
-      final x = layout.positions[i] + anim.recoil * h * 0.06;
+      // Моб подаётся к герою — то есть ВЛЕВО: тот же замах, зеркально.
+      final x = layout.positions[i] +
+          anim.recoil * h * 0.06 -
+          anim.lunge * h * 0.11;
       final lift = i < layout.lifts.length ? layout.lifts[i] : 0.0;
       final bob = math.sin(_time * 1.8 + i * 0.7) * 0.012 * h;
+
+      // Босс светится. Не украшение: волна с боссом ничем, кроме размера, не
+      // отличалась от обычной, а размер на телефоне — слабый признак. Свечение
+      // видно раньше, чем игрок успеет сравнить фигуры.
+      if (view.bossWave && alive) {
+        _aura(canvas, Offset(x, groundY + bob - lift - h * 0.5), h, each.accent);
+      }
 
       // Гаснет фигура ПОСЛЕ падения, а не в момент смерти: иначе моб темнеет
       // раньше, чем начинает заваливаться, и падает уже труп.
@@ -372,6 +427,256 @@ class _Field extends Component with HasGameReference<FlameGame> {
         );
       }
     }
+
+    // Искры поверх фигур, цифры поверх искр: число, спрятанное за силуэтом
+    // босса, не сообщает ничего.
+    _vfx.render(canvas);
+    _vfx.renderNumbers(canvas);
+
+    canvas.restore();
+
+    // Поверх всего и без тряски: рамка раны и надпись босса — это сообщения
+    // игроку, а не часть мира, и дрожать вместе с камнями им незачем.
+    _woundVignette(canvas, size, view.heroHpFraction);
+    if (_bossBanner > 0.0) _drawBossBanner(canvas, size);
+  }
+
+  /// Красная рамка по краям, когда здоровья мало.
+  ///
+  /// Полоска над героем — в десять точек высотой, и на пачке из пяти мобов
+  /// её не видно за искрами. Край экрана, наливающийся красным и дышащий,
+  /// видно всегда и сразу: это ровно тот сигнал, после которого отзывают.
+  void _woundVignette(Canvas canvas, Vector2 size, double hp) {
+    if (hp <= 0.0 || hp >= 0.35) return;
+    final danger = 1.0 - hp / 0.35;
+    final pulse = 0.75 + 0.25 * math.sin(_time * 6.0);
+    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = Gradient.radial(
+          Offset(size.x / 2, size.y / 2),
+          math.max(size.x, size.y) * 0.75,
+          [
+            const Color(0x00000000),
+            const Color(0xFFB3261E).withValues(alpha: 0.38 * danger * pulse),
+          ],
+          const [0.55, 1.0],
+        ),
+    );
+  }
+
+  /// Надпись о входе босса: полоса поперёк арены с именем волны.
+  ///
+  /// Свечение и размер фигуры говорят «этот крупнее», но не говорят «это
+  /// босс» — а босс единственный враг, ради которого стоит смотреть бой.
+  void _drawBossBanner(Canvas canvas, Vector2 size) {
+    const total = 1.8;
+    final t = 1.0 - _bossBanner / total;
+    // Въезжает, держится, гаснет.
+    final alpha = t < 0.15
+        ? t / 0.15
+        : t > 0.75
+            ? (1.0 - t) / 0.25
+            : 1.0;
+    final y = size.y * 0.16;
+    final h = 34.0;
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, y, size.x, h),
+      Paint()
+        ..shader = Gradient.linear(
+          Offset(0, y),
+          Offset(size.x, y),
+          [
+            const Color(0x00000000),
+            const Color(0xFF3A1709).withValues(alpha: 0.85 * alpha),
+            const Color(0xFF3A1709).withValues(alpha: 0.85 * alpha),
+            const Color(0x00000000),
+          ],
+          const [0.0, 0.25, 0.75, 1.0],
+        ),
+    );
+    for (final edge in [y, y + h]) {
+      canvas.drawRect(
+        Rect.fromLTWH(size.x * 0.15, edge, size.x * 0.7, 1.2),
+        Paint()..color = const Color(0xFFE8804F).withValues(alpha: 0.8 * alpha),
+      );
+    }
+
+    final label = ParagraphBuilder(ParagraphStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w800,
+      textAlign: TextAlign.center,
+    ))
+      ..pushStyle(TextStyle(
+        color: const Color(0xFFF2B65E).withValues(alpha: alpha),
+        letterSpacing: 4.0,
+      ))
+      ..addText(view.enemyName.toUpperCase());
+    final paragraph = label.build()
+      ..layout(ParagraphConstraints(width: size.x));
+    canvas.drawParagraph(
+        paragraph, Offset(0, y + (h - paragraph.height) / 2));
+  }
+
+  /// Земля, свет над ней и затемнение по краям.
+  ///
+  /// Фон здесь не украшение: до него сцена была фигурами в пустоте, и глубина
+  /// боя ничем не отличалась от глубины меню. Свет у линии земли даёт бойцам
+  /// место, где они стоят, а затемнение по краям — стены вокруг.
+  void _drawGround(Canvas canvas, Vector2 size, double groundY) {
+    final glow = Rect.fromLTWH(0, groundY - size.y * 0.32, size.x,
+        size.y * 0.32 + 10.0);
+    canvas.drawRect(
+      glow,
+      Paint()
+        ..shader = Gradient.linear(
+          Offset(0, glow.top),
+          Offset(0, glow.bottom),
+          const [Color(0x00000000), Color(0x22C7643F)],
+        ),
+    );
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, groundY + 2, size.x, 1.2),
+      Paint()..color = const Color(0x33D9C8A9),
+    );
+
+    // Отражение на камне: полоса под линией земли, тусклее самой линии.
+    canvas.drawRect(
+      Rect.fromLTWH(0, groundY + 3.2, size.x, math.max(0.0, size.y - groundY)),
+      Paint()
+        ..shader = Gradient.linear(
+          Offset(0, groundY + 3.2),
+          Offset(0, size.y),
+          const [Color(0x18D9C8A9), Color(0x00000000)],
+        ),
+    );
+
+    for (final side in const [true, false]) {
+      final w = size.x * 0.16;
+      canvas.drawRect(
+        Rect.fromLTWH(side ? 0 : size.x - w, 0, w, size.y),
+        Paint()
+          ..shader = Gradient.linear(
+            Offset(side ? 0 : size.x, 0),
+            Offset(side ? w : size.x - w, 0),
+            const [Color(0x66000000), Color(0x00000000)],
+          ),
+      );
+    }
+  }
+
+  /// Кольцо применённой способности: расходится и гаснет.
+  void _castRing(Canvas canvas, Offset center, double height) {
+    final t = _anims.cast;
+    for (var ring = 0; ring < 2; ring++) {
+      final phase = (t - ring * 0.18).clamp(0.0, 1.0);
+      if (phase <= 0.0) continue;
+      canvas.drawCircle(
+        center,
+        height * (0.30 + 0.60 * (1.0 - phase)),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 + 2.5 * phase
+          ..color = const Color(0xFF7FB069).withValues(alpha: 0.40 * phase),
+      );
+    }
+  }
+
+  /// Превращает случившееся в бою в искры, цифры и толчки камеры.
+  ///
+  /// Здесь же и только здесь бой становится зрелищем. Правило одно: эффект
+  /// рождается из УЖЕ случившегося события и ни на что не влияет — иначе бой
+  /// шёл бы иначе, когда на него смотрят.
+  void _spawnEffects(
+    WaveLayout layout,
+    List<double> enemies,
+    List<String> ids,
+    double heroX,
+    double heroHeight,
+    double groundY,
+  ) {
+    // Вход босса: волна началась, и в ней тот, кто крупнее всех.
+    if (view.bossWave && !_wasBoss) {
+      _vfx.kick(7.0);
+      _bossBanner = 1.8;
+    }
+    _wasBoss = view.bossWave;
+
+    if (_pending.isEmpty) return;
+
+    Offset spot(int index) {
+      if (index < 0 || index >= layout.positions.length) {
+        return Offset(heroX, groundY - heroHeight * 0.55);
+      }
+      final lift = index < layout.lifts.length ? layout.lifts[index] : 0.0;
+      // Середина груди, а не ноги: удар приходится в фигуру, и искры от ног
+      // читаются как пыль из-под сапог.
+      return Offset(layout.positions[index], groundY - lift - layout.height * 0.55);
+    }
+
+    for (final beat in _pending) {
+      switch (beat.kind) {
+        case BeatKind.waveStarted:
+          _vfx.clear();
+        case BeatKind.enemyHit:
+          final at = spot(beat.index);
+          _vfx.hit(at, beat.type, crit: beat.crit, scale: layout.height);
+          _vfx.number(at, beat.amount, crit: beat.crit, type: beat.type);
+          // Трясёт только крит. Тряска на каждом ударе — это не вес, а
+          // дрожащий экран: удары идут по нескольку раз в секунду.
+          if (beat.crit) _vfx.kick(3.5);
+        case BeatKind.enemyDied:
+          final each = silhouetteFor(
+              beat.index < ids.length && beat.index >= 0 ? ids[beat.index] : '');
+          _vfx.death(spot(beat.index), each.accent, scale: layout.height);
+        case BeatKind.heroHurt:
+          final at = Offset(heroX, groundY - heroHeight * 0.55);
+          _vfx.hit(at, beat.type, scale: heroHeight);
+          _vfx.number(at, beat.amount, type: beat.type);
+          _vfx.kick(2.0);
+        case BeatKind.heroDied:
+          _vfx.kick(10.0);
+        case BeatKind.heroSwing:
+        case BeatKind.heroCast:
+          break;
+      }
+    }
+    _pending.clear();
+  }
+
+  /// Дуга удара: широкий мазок перед фигурой, гаснущий вместе с выпадом.
+  void _slash(Canvas canvas, Offset feet, double height, double lunge) {
+    final power = ((lunge - 0.45) / 0.55).clamp(0.0, 1.0);
+    final center = Offset(feet.dx + height * 0.22, feet.dy - height * 0.52);
+    canvas.drawArc(
+      Rect.fromCenter(
+          center: center, width: height * 0.85, height: height * 1.05),
+      -1.05,
+      2.1,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = height * 0.05 * power
+        ..color = const Color(0xFFFFF3DC).withValues(alpha: 0.5 * power),
+    );
+  }
+
+  /// Свечение боссовой фигуры: дышит, а не мигает.
+  void _aura(Canvas canvas, Offset center, double height, Color color) {
+    final pulse = 0.5 + 0.5 * math.sin(_time * 2.4);
+    canvas.drawCircle(
+      center,
+      height * (0.62 + 0.05 * pulse),
+      Paint()
+        ..shader = Gradient.radial(center, height * (0.62 + 0.05 * pulse), [
+          color.withValues(alpha: 0.16 + 0.06 * pulse),
+          color.withValues(alpha: 0.0),
+        ]),
+    );
   }
 
   /// Фигура с тенью на земле и вспышкой на попадании.
@@ -396,15 +701,53 @@ class _Field extends Component with HasGameReference<FlameGame> {
         width: height * look.aspect * 0.9 * (1.0 - falling * 0.3),
         height: height * 0.10,
       ),
-      Paint()..color = Color(0x33000000).withValues(alpha: 0.20 * alpha),
+      Paint()..color = const Color(0x33000000).withValues(alpha: 0.20 * alpha),
     );
 
+    canvas.save();
+
     if (falling > 0.0) {
-      canvas.save();
       canvas.translate(feet.dx, feet.dy);
       canvas.rotate(falling * 1.25);
       canvas.translate(-feet.dx, -feet.dy);
     }
+
+
+    // Сжатие от удара: фигуру приминает к земле и раздаёт вширь. Объём
+    // сохраняется — иначе она не приминается, а просто становится меньше.
+    if (anim.squash > 0.0) {
+      final k = anim.squash * 0.12;
+      canvas.translate(feet.dx, feet.dy);
+      canvas.scale(1.0 + k, 1.0 - k);
+      canvas.translate(-feet.dx, -feet.dy);
+    }
+
+    // Объём тремя проходами одной и той же фигуры.
+    //
+    // Силуэт — это плоская заливка, и никакой формой его не сделать объёмным.
+    // Но глазу хватает края: тёмная копия, сдвинутая вниз-вправо, читается
+    // как собственная тень, светлая копия вверх-влево — как свет, падающий
+    // оттуда же, откуда светит вся сцена. Дороже ровно на два прохода и
+    // работает сразу на всех двадцати фигурах, не трогая ни одной из них.
+    final depth = height * 0.014;
+    look.draw(Sketch(
+      canvas: canvas,
+      feet: feet.translate(depth, depth * 0.35),
+      height: height,
+      t: _time,
+      body: const Color(0xFF0C0908),
+      accent: const Color(0xFF0C0908),
+      alpha: 0.55 * alpha,
+    ));
+    look.draw(Sketch(
+      canvas: canvas,
+      feet: feet.translate(-depth * 0.7, -depth * 0.7),
+      height: height,
+      t: _time,
+      body: _lighten(look.body, 0.45),
+      accent: _lighten(look.accent, 0.35),
+      alpha: alpha,
+    ));
 
     look.draw(Sketch(
       canvas: canvas,
@@ -417,19 +760,32 @@ class _Field extends Component with HasGameReference<FlameGame> {
     ));
 
     if (anim.flash > 0) {
+      // Цвет вспышки — цвет стихии. Одна белая вспышка на все пять стихий
+      // означала бы, что игрок, собравший сборку вокруг Холода, не видит в
+      // бою никакой разницы с физическим ударом.
+      final tint = lookForDamage(anim.flashType).core;
       look.draw(Sketch(
         canvas: canvas,
         feet: feet,
         height: height,
         t: _time,
-        body: _hitColor,
-        accent: _hitColor,
+        body: tint,
+        accent: tint,
         alpha: 0.55 * anim.flash,
       ));
     }
 
-    if (falling > 0.0) canvas.restore();
+    canvas.restore();
   }
+
+  /// Цвет, подтянутый к белому. Нужен обводке света: у каждой фигуры свой
+  /// цвет, и общий белый край превратил бы их всех в фольгу.
+  static Color _lighten(Color c, double k) => Color.fromARGB(
+        (c.a * 255).round(),
+        (c.r * 255 + (255 - c.r * 255) * k).round(),
+        (c.g * 255 + (255 - c.g * 255) * k).round(),
+        (c.b * 255 + (255 - c.b * 255) * k).round(),
+      );
 
   void _bar(
     Canvas canvas,
@@ -439,7 +795,7 @@ class _Field extends Component with HasGameReference<FlameGame> {
     double fraction,
     Paint fill,
     double fieldWidth, {
-    double height = 4.0,
+    double height = 6.0,
   }) {
     // Полоска не выходит за край поля: у героя она шире его фигуры, а сам он
     // стоит близко к левому краю — и полоска обрезалась экраном.
@@ -449,11 +805,129 @@ class _Field extends Component with HasGameReference<FlameGame> {
       math.max(fieldWidth - half - 4.0, fieldWidth / 2),
     );
     final rect = Rect.fromLTWH(x - half, y, width, height);
-    canvas.drawRect(rect, _barBack);
-    canvas.drawRect(
-      Rect.fromLTWH(rect.left, rect.top, rect.width * fraction.clamp(0.0, 1.0),
-          rect.height),
-      fill,
-    );
+    final radius = Radius.circular(height / 2);
+    // Подложка шире на точку со всех сторон: полоска стоит на тёмной плашке
+    // и не теряется на светлом разломе позади.
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(rect.inflate(1.5), radius), _barBack);
+    final filled = rect.width * fraction.clamp(0.0, 1.0);
+    if (filled > 0.5) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(rect.left, rect.top, filled, rect.height), radius),
+        fill,
+      );
+    }
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(rect.inflate(1.5), radius), _barEdge);
   }
+}
+
+
+/// Стены бездны позади бойцов.
+///
+/// До них сцена была двумя фигурами в черноте, и десятый этаж выглядел ровно
+/// как шестидесятый. Требование к фону ровно одно и оно не про красоту: он
+/// обязан оставаться ФОНОМ. Поэтому здесь нет ни одной яркой точки — только
+/// силуэты темнее и светлее общей темноты, — и ни одного движения, кроме
+/// сдвига при тряске.
+///
+/// Столбы считаются один раз на размер экрана, а не каждый кадр: это десяток
+/// прямоугольников, но кадр в бою и без них занят.
+class _Backdrop {
+  final List<_Column> _far = [];
+  final List<_Column> _near = [];
+  double _builtFor = -1.0;
+
+  void _build(double width) {
+    _far.clear();
+    _near.clear();
+    // Свой генератор с постоянным зерном: стены не должны перестраиваться
+    // при каждом повороте телефона — иначе бездна «моргает» другой пещерой.
+    final rng = math.Random(4242);
+
+    for (var i = 0; i < 7; i++) {
+      _far.add(_Column(
+        x: width * (0.02 + 0.16 * i) + rng.nextDouble() * width * 0.05,
+        width: width * (0.05 + rng.nextDouble() * 0.06),
+        height: 0.55 + rng.nextDouble() * 0.35,
+      ));
+    }
+    for (var i = 0; i < 4; i++) {
+      _near.add(_Column(
+        x: width * (0.08 + 0.28 * i) + rng.nextDouble() * width * 0.07,
+        width: width * (0.08 + rng.nextDouble() * 0.07),
+        height: 0.30 + rng.nextDouble() * 0.28,
+      ));
+    }
+  }
+
+  void render(Canvas canvas, Vector2 size, double groundY, double time,
+      Offset shake) {
+    if (_builtFor != size.x) {
+      _build(size.x);
+      _builtFor = size.x;
+    }
+
+    // Разлом в глубине: единственный источник света в кадре, и он же
+    // объясняет, откуда на фигурах свет.
+    final riftX = size.x * 0.62;
+    final top = math.max(0.0, groundY - size.y * 0.78);
+    canvas.drawRect(
+      Rect.fromLTRB(riftX - size.x * 0.14, top, riftX + size.x * 0.14, groundY),
+      Paint()
+        ..shader = Gradient.radial(
+          Offset(riftX, groundY - size.y * 0.30),
+          size.x * 0.30,
+          [
+            // Дышит еле заметно: неподвижный свет читается как картинка,
+            // а слишком живой — как мигающая лампа.
+            Color(0x1AC7643F)
+                .withValues(alpha: 0.055 + 0.012 * math.sin(time * 0.8)),
+            const Color(0x00000000),
+          ],
+        ),
+    );
+
+    // Дальний слой почти не смещается тряской, ближний — заметно: разница и
+    // читается как расстояние.
+    _columns(canvas, _far, size, groundY, const Color(0xFF1C1513),
+        shake * -0.15);
+    _columns(canvas, _near, size, groundY, const Color(0xFF231A17),
+        shake * -0.45);
+  }
+
+  void _columns(Canvas canvas, List<_Column> columns, Vector2 size,
+      double groundY, Color color, Offset offset) {
+    final paint = Paint()..color = color;
+    for (final c in columns) {
+      final h = size.y * c.height;
+      final rect = Rect.fromLTWH(
+        c.x + offset.dx,
+        groundY - h + offset.dy,
+        c.width,
+        h,
+      );
+      // Верх столба скруглён: прямоугольник в прямоугольном кадре читается
+      // как элемент интерфейса, а не как камень.
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          rect,
+          topLeft: Radius.circular(c.width * 0.5),
+          topRight: Radius.circular(c.width * 0.5),
+        ),
+        paint,
+      );
+    }
+  }
+}
+
+class _Column {
+  const _Column({required this.x, required this.width, required this.height});
+
+  final double x;
+  final double width;
+
+  /// Рост в долях высоты поля.
+  final double height;
 }

@@ -88,7 +88,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: OutpostScreen(controller: c)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.volume_up_outlined));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
     // Языки подписаны на себе самих: русский ищет «Русский», а не «Russian».
@@ -141,5 +141,22 @@ void main() {
     final settings = SettingsStore(dir).load();
     expect(settings.lang, Lang.ru);
     expect(settings.sound, isFalse, reason: 'остальные настройки на месте');
+  });
+
+  test('первый запуск говорит на языке телефона', () {
+    // Файла настроек нет — игру открыли впервые, и спросить не у кого, кроме
+    // телефона. Обучение, начавшееся по-русски у того, кто русского не знает,
+    // теряет его на первом же экране: он этот язык не выбирал.
+    expect(SettingsStore(dir, device: Lang.en).load().lang, Lang.en);
+    expect(SettingsStore(dir, device: Lang.ru).load().lang, Lang.ru);
+  });
+
+  test('выбранный язык не сдаётся языку телефона', () {
+    // Русский телефон, английский выбор в настройках. Игрок поставил
+    // английский нарочно — и следующий запуск обязан его удержать, иначе
+    // переключатель в настройках живёт до первой перезагрузки.
+    SettingsStore(dir).save(AppSettings(lang: Lang.en));
+
+    expect(SettingsStore(dir, device: Lang.ru).load().lang, Lang.en);
   });
 }

@@ -11,6 +11,7 @@ import '../ui/outpost_screen.dart';
 import 'demo_profile.dart';
 import 'trailer_director.dart';
 import 'trailer_script.dart';
+import '../ui/theme.dart';
 
 /// Приложение трейлера: живая игра под камерой.
 ///
@@ -111,18 +112,12 @@ class _TrailerAppState extends State<TrailerApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Расселина — трейлер',
+      title: 'Riftmark — трейлер',
       debugShowCheckedModeBanner: false,
       locale: Locale(widget.lang.code),
       supportedLocales: [for (final lang in Lang.values) Locale(lang.code)],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFC7643F),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: riftTheme(),
       navigatorKey: _nav,
       // `builder` оборачивает НАВИГАТОР, а не экран. Сборка, открытая поверх
       // Заставы, — отдельный маршрут; обернув только Заставу, камера

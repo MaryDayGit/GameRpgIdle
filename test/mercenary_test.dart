@@ -49,12 +49,12 @@ void main() {
       // применения. Ниже якоря цена не меняется — ранние раны измерены.
       final anchor = Curves.hireScaleFromDepth;
 
-      expect(Roster.hireCost(MercRank.legend, maxDepthEver: anchor ~/ 2),
+      expect(Roster.hireCost(MercRank.legend, depth: anchor ~/ 2),
           Roster.hireCost(MercRank.legend));
-      expect(Roster.hireCost(MercRank.legend, maxDepthEver: anchor),
+      expect(Roster.hireCost(MercRank.legend, depth: anchor),
           Roster.hireCost(MercRank.legend));
 
-      final deep = Roster.hireCost(MercRank.legend, maxDepthEver: anchor + 60);
+      final deep = Roster.hireCost(MercRank.legend, depth: anchor + 60);
       expect(deep, greaterThan(Roster.hireCost(MercRank.legend) * 10),
           reason: 'иначе задаток отстаёт от дохода на порядки');
 
@@ -67,17 +67,47 @@ void main() {
     test('Оборванец не дорожает никогда', () {
       // Единственный ход, который нельзя потерять: игрок без наёмника и без
       // золота не смог бы заработать снова.
-      expect(Roster.hireCost(MercRank.ragged, maxDepthEver: 100000),
+      expect(Roster.hireCost(MercRank.ragged, depth: 100000),
           Roster.hireCost(MercRank.ragged));
     });
 
     test('цену найма считает профиль, а не экран', () {
       // Экран найма и проверка кошелька обязаны читать одно число.
       final merc = MercFactory.roll(Rng(1), idPrefix: 'hire');
-      final profile = PlayerProfile(maxDepthEver: 150);
+      final profile = PlayerProfile(recentDepths: const [150, 150, 150]);
 
       expect(profile.hireCostOf(merc),
-          Roster.hireCost(merc.rank, maxDepthEver: 150));
+          Roster.hireCost(merc.rank, depth: 150));
+    });
+
+    test('задаток считается по последним спускам, а не по рекорду', () {
+      // Храповик: рекорд не умеет снижаться, и цена, прикованная к нему,
+      // переживает того, кто её заработал. Замер кампании показал, чем это
+      // кончается: доход падает вместе с достигнутой глубиной в 83 раза, а
+      // задаток остаётся на пике, и выбраться из этого нельзя.
+      // Ранг задан явно: Оборванец не дорожает никогда, и на нём проверка
+      // сравнивала бы 250 с 250.
+      final merc = Mercenary(
+          id: 'r', name: 'Корвин', rank: MercRank.legend,
+          trait: MercTrait.swift);
+      final peaked = PlayerProfile(
+        maxDepthEver: 150,
+        recentDepths: const [60, 62, 61, 64, 63],
+      );
+
+      expect(peaked.hireDepth, 62, reason: 'медиана последних спусков');
+      expect(peaked.hireCostOf(merc), Roster.hireCost(merc.rank, depth: 62));
+      expect(peaked.hireCostOf(merc),
+          lessThan(Roster.hireCost(merc.rank, depth: 150)));
+    });
+
+    test('один сорванный спуск цену не обваливает', () {
+      // Иначе «слить ран нарочно, чтобы купить Легенду дёшево» становится
+      // выгодным ходом. Медиана двигается только тремя провалами из пяти, а
+      // три сорванных рана стоят дороже, чем экономия на задатке.
+      final dipped = PlayerProfile(recentDepths: const [120, 118, 5, 122, 119]);
+
+      expect(dipped.hireDepth, 119);
     });
   });
 

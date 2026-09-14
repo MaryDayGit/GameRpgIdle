@@ -5,6 +5,26 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase подключается, только если ключи проекта лежат на месте.
+//
+// `google-services.json` — секрет: он не в репозитории и не у того, кто
+// склонировал его первый раз. Плагин Google этого не прощает и роняет сборку
+// с сообщением про отсутствующий файл — то есть без ключей игра перестала бы
+// СОБИРАТЬСЯ, а не просто молчать в аналитику. Правило игры обратное:
+// аналитики может не быть, игра должна быть (`docs/11-ANALYTICS.md` §2).
+//
+// Проверка по файлу, а не по флагу сборки, потому что флаг придётся не
+// забыть, а файл либо лежит, либо нет.
+val googleServices = file("google-services.json")
+if (googleServices.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle(
+        "google-services.json не найден — сборка без аналитики " +
+            "(docs/11-ANALYTICS.md §2)",
+    )
+}
+
 android {
     namespace = "com.riftgame.rift_app"
     compileSdk = flutter.compileSdkVersion

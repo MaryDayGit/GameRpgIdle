@@ -8,10 +8,13 @@ import 'package:rift/core/model/item.dart';
 import '../state/game_controller.dart';
 import 'coach_mark.dart';
 import 'format.dart';
+import 'gear_grid.dart';
+import 'gear_icons.dart';
 import 'onboarding.dart';
 import 'strings.dart';
 import 'tutorial_host.dart';
 import 'help_screen.dart';
+import 'theme.dart';
 
 /// Разбор добычи: что из принесённого достойно места в сундуке.
 ///
@@ -173,8 +176,7 @@ class _Summary extends StatelessWidget {
         children: [
           Text(
             S.lootBrought(pending, room, tight: tight),
-
-            style: const TextStyle(fontSize: 13),
+            style: RiftText.heading,
           ),
           const SizedBox(height: 2),
           Text(
@@ -183,8 +185,8 @@ class _Summary extends StatelessWidget {
                 : S.lootSortAbout,
 
             style: TextStyle(
-              fontSize: 12,
-              color: tight ? Colors.orangeAccent : Colors.white38,
+              fontSize: 13.5,
+              color: tight ? RiftColors.bad : RiftColors.inkFaint,
             ),
           ),
         ],
@@ -206,14 +208,21 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
-        label: Text(label, style: const TextStyle(fontSize: 12)),
+        label: Text(label,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: selected ? RiftColors.ember : RiftColors.inkMuted,
+            )),
         onPressed: onTap,
+        backgroundColor: selected
+            ? RiftColors.ember.withValues(alpha: 0.12)
+            : RiftColors.raised,
         side: BorderSide(
-          color: selected ? accent : Colors.white24,
+          color: selected ? RiftColors.ember : RiftColors.line,
         ),
       ),
     );
@@ -247,33 +256,42 @@ class _LootRow extends StatelessWidget {
         ? null
         : ContentPack.current.triggerAffix(item.triggerAffixId!);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    // Каждая находка — карточкой: три кнопки под списком свойств без рамки
+    // читались продолжением соседней вещи, и «Оставить» нажимали не той.
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: RiftColors.surface,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(color: RiftColors.line),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              _ItemPlaque(item: item),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   ItemText.title(item),
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600),
+                  style: RiftText.heading.copyWith(
+                      fontSize: 15, color: colorFor(item.rarity)),
                 ),
               ),
               if (item.isRelic)
-                _Tag(text: S.relicMark, color: const Color(0xFFC7643F)),
+                _Tag(text: S.relicMark, color: RiftColors.ember),
               if (trigger != null)
-                _Tag(text: S.triggerMark, color: const Color(0xFF4F7FA8)),
+                _Tag(text: S.triggerMark, color: RiftColors.info),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           // Строки предмета целиком: решение принимается по ним, и прятать их
           // за нажатием значит просить игрока выбирать вслепую.
           for (final line in ItemText.lines(item))
-            Text(line,
-                style: const TextStyle(fontSize: 12, color: Colors.white60)),
-          const SizedBox(height: 8),
+            Text(line, style: RiftText.small),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -286,19 +304,27 @@ class _LootRow extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: onMelt,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: RiftColors.gold,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                  ),
                   child: Text(S.salvageFull(money(salvage)),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12)),
+                      style: const TextStyle(fontSize: 13.5)),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton(
                   onPressed: onSell,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: RiftColors.gold,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                  ),
                   child: Text(
                     S.sellFor(money(salvage * Tuning.sellBonus)),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 13.5),
                   ),
                 ),
               ),
@@ -319,12 +345,37 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(left: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(4),
+          color: color.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.6)),
         ),
         child: Text(text,
-            style: const TextStyle(fontSize: 10, color: Colors.white70)),
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w700, color: color)),
       );
+}
+
+/// Иконка вещи в плашке цвета редкости — тот же вид, что в сундуке.
+class _ItemPlaque extends StatelessWidget {
+  const _ItemPlaque({required this.item});
+
+  final Item item;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = colorFor(item.rarity);
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(RiftSize.radiusSmall),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: GearIcon(kind: item.kind, size: 24, color: color),
+    );
+  }
 }

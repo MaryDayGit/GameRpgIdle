@@ -379,7 +379,9 @@ class WaveRunner implements CombatContext {
 
         if (feed != null) {
           feed!.add(CombatBeat(BeatKind.heroHurt,
-              index: enemies.indexOf(e), amount: taken));
+              index: enemies.indexOf(e),
+              amount: taken,
+              type: e.archetype.damageType));
           if (!hero.alive) feed!.add(const CombatBeat(BeatKind.heroDied));
         }
 
@@ -486,7 +488,8 @@ class WaveRunner implements CombatContext {
     // на ту долю, которую даёт узел дерева.
     _damageByType[type.index] += amount;
     final watched = feed != null ? enemies.indexOf(target) : -1;
-    feed?.add(CombatBeat(BeatKind.enemyHit, index: watched, amount: amount));
+    feed?.add(CombatBeat(BeatKind.enemyHit,
+        index: watched, amount: amount, type: type));
 
     if (target.takeDamage(amount)) {
       feed?.add(CombatBeat(BeatKind.enemyDied,
@@ -719,7 +722,10 @@ class WaveRunner implements CombatContext {
     // читается как ошибка отображения.
     final watched = feed != null ? enemies.indexOf(target) : -1;
     feed?.add(CombatBeat(BeatKind.enemyHit,
-        index: watched, amount: amount, crit: result.crit));
+        index: watched,
+        amount: amount,
+        crit: result.crit,
+        type: dealtType));
 
     if (target.takeDamage(amount)) {
       feed?.add(CombatBeat(BeatKind.enemyDied,

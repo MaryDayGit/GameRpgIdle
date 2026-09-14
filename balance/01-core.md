@@ -73,7 +73,8 @@
 | `stallProgressThreshold` | 0.01 |  |
 | `abilitySlots` | 4 |  |
 | `forkEveryFloors` | 5 | Развилка на входе на каждый N-й этаж. Было 3 — на восьмиминутном спуске решение выпадало каждые полминуты и перестало быть событием. |
-| `forkWaitSeconds` | 45 |  |
+| `forkWaitSeconds` | 45 | Сколько наёмник ждёт решения, считая только время с игроком — секунды в открытой игре. |
+| `forkWaitAwaySeconds` | 600 | Сколько он стоит, пока игры на экране нет. Сорок пять секунд не доживали до уведомления: будильник Android неточный, и игрок открывал игру уже на пустом месте. |
 | `boldForkLootBonus` | 0 |  |
 | `boldForkRarityBonus` | 0 |  |
 | `boldForkEchoBonus` | 0.35 |  |
@@ -92,6 +93,7 @@
 | `bossItems` | 1 |  |
 | `bigBossItems` | 1 |  |
 | `relicPityFloors` | 60 |  |
+| `bossRelicChance` | 0.12 |  |
 | `percentileMin` | 0.65 |  |
 | `percentileMax` | 1 |  |
 | `extractionPercentilePenalty` | 0.1 |  |

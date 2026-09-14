@@ -9,6 +9,7 @@ import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/state/game_controller.dart';
 import 'package:rift_app/ui/echo_tree_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Древо — единственное место, где тратится Эхо, и единственный выбор,
 /// переживающий смерть наёмника. Проверяется, что выбор действительно есть:
@@ -51,7 +52,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: EchoTreeScreen(controller: controller),
     ));
     await tester.pump();

@@ -87,7 +87,7 @@ abstract final class DemoProfile {
       for (final b in _buildOrder) {
         while (player.gold -
                     Roster.hireCost(MercRank.blade,
-                        maxDepthEver: player.maxDepthEver) >
+                        depth: player.hireDepth) >
                 player.outpost.upgradeCost(b) &&
             player.canUpgradeBuilding(b)) {
           if (!player.upgradeBuilding(b)) break;

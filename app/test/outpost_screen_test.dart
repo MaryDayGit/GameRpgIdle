@@ -16,7 +16,9 @@ import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/save_store.dart';
 import 'package:rift_app/data/settings_store.dart';
 import 'package:rift_app/state/game_controller.dart';
+import 'package:rift_app/ui/fork_card.dart';
 import 'package:rift_app/ui/outpost_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Цикл игры целиком, глазами игрока: нанял — отправил — дождался — забрал —
 /// вложил. Если он не проходится в тесте, он не проходится и на телефоне.
@@ -69,8 +71,14 @@ void main() {
   });
 
   Future<void> pumpScreen(WidgetTester tester) async {
+    // Экран телефона, а не 800×600 по умолчанию: после редизайна текст и
+    // карточки крупнее, и на коротком окне теста нужное уезжало за край —
+    // нажатие приходилось в пустоту.
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: OutpostScreen(controller: controller),
     ));
     await tester.pump();
@@ -148,7 +156,13 @@ void main() {
     final fork = contract.pendingFork!;
     expect(find.text(fork.options.first.name), findsOneWidget,
         reason: 'путь обязан быть назван, а не показан кнопкой «А»');
-    expect(find.text(fork.options.first.minus), findsOneWidget,
+    expect(
+        // Внутри карточки развилки: та же плата может стоять и в разломе дня,
+        // который на высоком экране попадает в кадр вместе с развилкой.
+        find.descendant(
+            of: find.byType(ForkCard),
+            matching: find.text(fork.options.first.minus)),
+        findsOneWidget,
         reason: 'плата за путь — половина решения');
 
     await tester.tap(find.text(fork.options.first.name));
@@ -636,7 +650,7 @@ void main() {
     await pumpScreen(tester);
     await tester.pump();
 
-    expect(find.text('Расселина'), findsOneWidget);
+    expect(find.text('Riftmark'), findsOneWidget);
     expect(find.textContaining('нанимаете тех, кто спускается'), findsOneWidget);
 
     await tester.tap(find.text('Понятно'));

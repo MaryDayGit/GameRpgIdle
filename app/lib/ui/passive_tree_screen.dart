@@ -5,6 +5,7 @@ import 'package:rift/core/model/passive_tree.dart';
 import '../state/game_controller.dart';
 import 'strings.dart';
 import 'passive_icons.dart';
+import 'theme.dart';
 
 /// Дерево пассивок — граф, а не список.
 ///
@@ -177,21 +178,21 @@ class _PassiveTreeScreenState extends State<PassiveTreeScreen> {
 /// один и тот же узел одинаково.
 const _clusterColors = {
   'root': Color(0xFFD9C8A9),
-  'flesh': Color(0xFFC7643F),
+  'flesh': RiftColors.ember,
   'stone': Color(0xFF8A7F77),
   'fang': Color(0xFFE0A87A),
-  'spark': Color(0xFF7FB069),
+  'spark': RiftColors.good,
   'wind': Color(0xFF5E7E92),
   'leech': Color(0xFF8E3A46),
   'mind': Color(0xFF5B8DD9),
   'hunt': Color(0xFFB7A05C),
   // Стихийные лучи: цвет узнаётся раньше подписи, и стихия — первое, что
   // игрок ищет глазами, когда собирает билд под свои умения.
-  'ember': Color(0xFFD9622B),
-  'frost': Color(0xFF6FB6D6),
-  'storm': Color(0xFFC9A227),
-  'abyss': Color(0xFF8B5FB0),
-  'arcane': Color(0xFF4FA88B),
+  'ember': RiftColors.fire,
+  'frost': RiftColors.cold,
+  'storm': RiftColors.lightning,
+  'abyss': RiftColors.voidTone,
+  'arcane': RiftColors.arcane,
 };
 
 /// Во сколько пикселей превращается условная единица координат из контента.
@@ -228,10 +229,9 @@ class _Header extends StatelessWidget {
                 left > 0
                     ? S.passivePointsFree(left)
                     : S.passiveNoPoints,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: left > 0 ? const Color(0xFFE0A87A) : Colors.white54,
+                style: RiftText.title.copyWith(
+                  fontSize: 17,
+                  color: left > 0 ? RiftColors.warn : RiftColors.inkMuted,
                 ),
               ),
             ),
@@ -242,7 +242,7 @@ class _Header extends StatelessWidget {
                 nextAt == null
                     ? S.passiveSpent(spent, total)
                     : S.passiveSpent(spent, total, nextAt: nextAt),
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
+                style: RiftText.caption,
               ),
             ),
           ],
@@ -276,10 +276,10 @@ class _NodeCard extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
+        decoration: const BoxDecoration(
+          color: RiftColors.surface,
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            top: BorderSide(color: RiftColors.lineStrong),
           ),
         ),
         child: Row(
@@ -292,7 +292,7 @@ class _NodeCard extends StatelessWidget {
               child: CustomPaint(
                 painter: _IconPainter(
                   icon: node.icon,
-                  color: _clusterColors[node.cluster] ?? Colors.white70,
+                  color: _clusterColors[node.cluster] ?? RiftColors.ink,
                 ),
               ),
             ),
@@ -309,9 +309,7 @@ class _NodeCard extends StatelessWidget {
                     runSpacing: 2,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(node.name,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(node.name, style: RiftText.heading),
                       // Класс узла назван словом. Три класса — это разные
                       // обещания: дорога, награда и размен; не сказать,
                       // который перед тобой, значит показать три одинаковых
@@ -319,20 +317,18 @@ class _NodeCard extends StatelessWidget {
                       if (_classLabel(node.kind) != null)
                         Text(_classLabel(node.kind)!,
                             style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 12.5,
                                 color: node.kind == PassiveKind.keystone
-                                    ? const Color(0xFFC7643F)
-                                    : const Color(0xFF7FB069))),
+                                    ? RiftColors.ember
+                                    : RiftColors.good)),
                       if (node.rule != null)
                         Text(S.passiveRuleMark,
                             style: TextStyle(
-                                fontSize: 11, color: Color(0xFF9AA7D0))),
+                                fontSize: 12.5, color: RiftColors.info)),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(node.text,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.white60)),
+                  Text(node.text, style: RiftText.small),
                 ],
               ),
             ),
@@ -445,7 +441,7 @@ class _TreePainter extends CustomPainter {
 
       // Взятая дорога светится цветом своего луча, а не белым: по цвету
       // видно, куда игрок уже вложился, не читая ни одной подписи.
-      final colour = _clusterColors[from.cluster] ?? Colors.white70;
+      final colour = _clusterColors[from.cluster] ?? RiftColors.ink;
 
       // Перемычка между лучами рисуется ДУГОЙ, огибающей центр. Прямая
       // прошла бы через чужой сектор и читалась бы как случайное
@@ -483,7 +479,7 @@ class _TreePainter extends CustomPainter {
     for (final node in tree.nodes) {
       final taken = tree.has(node.id);
       final available = !taken && tree.canAllocate(node.id, 1 << 30);
-      final color = _clusterColors[node.cluster] ?? Colors.white70;
+      final color = _clusterColors[node.cluster] ?? RiftColors.ink;
       final center = _at(node);
       // Размер говорит о классе узла раньше подписи: дорога мелкая, крупный
       // заметно больше, ключевой — самый большой.
@@ -584,8 +580,9 @@ class _TreePainter extends CustomPainter {
           text: TextSpan(
             text: node.name,
             style: TextStyle(
-              fontSize: 11,
-              color: Colors.white.withValues(alpha: taken ? 0.9 : 0.45),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: taken ? RiftColors.ink : RiftColors.inkMuted,
             ),
           ),
           textDirection: TextDirection.ltr,

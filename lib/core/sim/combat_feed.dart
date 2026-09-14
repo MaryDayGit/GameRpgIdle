@@ -14,6 +14,7 @@
 library;
 
 import '../model/grammar.dart';
+import '../model/tags.dart';
 
 enum BeatKind {
   /// Началась новая волна. В `amount` — сколько в ней мобов.
@@ -49,6 +50,7 @@ class CombatBeat {
     this.index = -1,
     this.amount = 0.0,
     this.crit = false,
+    this.type = DamageType.physical,
     this.id = '',
     this.name = '',
     this.gender = Gender.masculine,
@@ -61,6 +63,16 @@ class CombatBeat {
 
   final double amount;
   final bool crit;
+
+  /// Чем ударили. Нужен не механике — она своё уже посчитала, — а картинке и
+  /// звуку: удар Огнём обязан выглядеть и звучать иначе, чем удар Холодом,
+  /// иначе все пять стихий, за которые игрок платит слотами и аффиксами,
+  /// сливаются в одну белую вспышку.
+  ///
+  /// Здесь, в записи, а не выводится на экране из сборки героя: бьёт не
+  /// только герой и не только оружием. Горение, перескок Молнии, удар моба
+  /// — у каждого своя стихия, и на экране её взять больше неоткуда.
+  final DamageType type;
 
   /// `id` способности для [BeatKind.heroCast], иначе пусто.
   final String id;

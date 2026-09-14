@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// про шрифты и появление.
 @immutable
 class TrailerLine {
-  const TrailerLine(this.title, {this.text, this.top = false});
+  const TrailerLine(this.title, {this.text, this.top = false, this.card = false});
 
   final String title;
 
@@ -17,15 +17,23 @@ class TrailerLine {
   /// подпись легла бы ровно на то, что показывают.
   final bool top;
 
+  /// Финальная карточка: текст по центру на затемнённом кадре.
+  ///
+  /// Ролику нужен конец, а не затухание на общем плане. Последний кадр,
+  /// оставленный подписью в углу, читается как «запись оборвалась»; название
+  /// по центру — как «это было кино».
+  final bool card;
+
   @override
   bool operator ==(Object other) =>
       other is TrailerLine &&
       other.title == title &&
       other.text == text &&
-      other.top == top;
+      other.top == top &&
+      other.card == card;
 
   @override
-  int get hashCode => Object.hash(title, text, top);
+  int get hashCode => Object.hash(title, text, top, card);
 }
 
 /// Слой подписей.
@@ -41,15 +49,15 @@ class TrailerCaptionLayer extends StatelessWidget {
 
   /// Сколько высоты кадра занимает интерфейс ленты. Снизу больше: там
   /// подпись, звук и три кнопки.
-  static const safeTop = 0.14;
-  static const safeBottom = 0.16;
+  static const safeTop = 0.13;
+  static const safeBottom = 0.15;
 
-  /// Докуда достаёт затемнение под текстом.
-  ///
-  /// Только нижняя треть. Раньше оно шло до середины кадра, и вместе с
-  /// крупным заголовком подпись съедала пол-экрана — а показывать надо игру,
-  /// а не подписи к ней.
-  static const scrim = 0.42;
+  /// Ключ подложки. Нужен проверке: высота этой полосы и есть то, насколько
+  /// подпись закрывает игру, и мерить её глазами — значит мерить её на записи.
+  static const plate = ValueKey('trailer.caption.plate');
+
+  /// Ключ финальной карточки. Она закрывает кадр целиком — и должна.
+  static const cardPlate = ValueKey('trailer.caption.card');
 
   @override
   Widget build(BuildContext context) {
@@ -63,82 +71,61 @@ class TrailerCaptionLayer extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: LayoutBuilder(
-        builder: (context, constraints) {
-          final height = constraints.maxHeight;
+          builder: (context, constraints) {
+            final height = constraints.maxHeight;
+            final top = line?.top ?? false;
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // Затемнение под текстом. Интерфейс игры тёмный, но не всюду:
-              // без подложки заголовок ложится на светлую карточку и пропадает.
-              IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: line?.top ?? false
-                          ? Alignment.topCenter
-                          : Alignment.bottomCenter,
-                      // Конец градиента считается в долях от середины кадра:
-                      // -1 это край, 0 — середина. Держим его в трети.
-                      end: Alignment(
-                        0,
-                        (line?.top ?? false ? -1 : 1) * (1 - 2 * scrim),
-                      ),
-                      colors: [
-                        Colors.black.withValues(alpha: line == null ? 0 : 0.94),
-                        Colors.black.withValues(alpha: line == null ? 0 : 0.8),
-                        Colors.transparent,
-                      ],
-                      // Почти непрозрачное дно и быстрый спад. Ровный градиент
-                      // не спасал: под подписью просвечивал список наёмников,
-                      // и два текста читались одновременно.
-                      stops: const [0, 0.42, 1],
+            final card = line?.card ?? false;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                top: !card && top ? height * safeTop : 0,
+                bottom: !card && !top ? height * safeBottom : 0,
+              ),
+              child: Align(
+                alignment: card
+                    ? Alignment.center
+                    : top
+                        ? Alignment.topLeft
+                        : Alignment.bottomLeft,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 520),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position: Tween(
+                        begin: Offset(0, top ? -0.14 : 0.14),
+                        end: Offset.zero,
+                      ).animate(anim),
+                      child: child,
                     ),
                   ),
+                  child: line == null
+                      ? const SizedBox.shrink()
+                      : line.card
+                          ? _Card(line, key: ValueKey(line))
+                          : _Plate(line, key: ValueKey(line)),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: 22,
-                  right: 22,
-                  top: height * safeTop,
-                  bottom: height * safeBottom,
-                ),
-                child: Align(
-                  alignment: line?.top ?? false
-                      ? Alignment.topLeft
-                      : Alignment.bottomLeft,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 460),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, anim) => FadeTransition(
-                      opacity: anim,
-                      child: SlideTransition(
-                        position: Tween(
-                          begin: const Offset(0, 0.18),
-                          end: Offset.zero,
-                        ).animate(anim),
-                        child: child,
-                      ),
-                    ),
-                    child: line == null
-                        ? const SizedBox.shrink()
-                        : _Text(line, key: ValueKey(line)),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _Text extends StatelessWidget {
-  const _Text(this.line, {super.key});
+/// Подпись со своей подложкой.
+///
+/// Подложка ОБНИМАЕТ ТЕКСТ, а не закрывает треть кадра. Раньше это был
+/// градиент от края до 42 % высоты — постоянная тёмная полоса на две строки
+/// текста, из-за которой почти половина кадра показывала не игру, а фон под
+/// подписью. Теперь высота подложки равна высоте текста плюс поля, и оба её
+/// края растушёваны: она читается как полоска титра, а не как штора.
+class _Plate extends StatelessWidget {
+  const _Plate(this.line, {super.key});
 
   final TrailerLine line;
 
@@ -146,39 +133,111 @@ class _Text extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = line.text;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          line.title,
-          maxLines: 2,
-          style: const TextStyle(
-            fontSize: 25,
-            height: 1.18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            letterSpacing: -0.1,
-            shadows: [
-              Shadow(blurRadius: 16, color: Colors.black87),
-              Shadow(blurRadius: 3, color: Colors.black),
-            ],
-          ),
+    return Container(
+      key: TrailerCaptionLayer.plate,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.80),
+            Colors.black.withValues(alpha: 0.80),
+            Colors.transparent,
+          ],
+          stops: const [0, 0.26, 0.74, 1],
         ),
-        if (text != null) ...[
-          const SizedBox(height: 7),
+      ),
+      padding: const EdgeInsets.fromLTRB(22, 26, 22, 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            text,
+            line.title,
             maxLines: 2,
-            style: TextStyle(
-              fontSize: 14.5,
-              height: 1.32,
-              color: Colors.white.withValues(alpha: 0.8),
-              shadows: const [Shadow(blurRadius: 12, color: Colors.black87)],
+            style: const TextStyle(
+              fontSize: 23,
+              height: 1.16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              letterSpacing: -0.1,
+              shadows: [
+                Shadow(blurRadius: 16, color: Colors.black87),
+                Shadow(blurRadius: 3, color: Colors.black),
+              ],
             ),
           ),
+          if (text != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              text,
+              maxLines: 2,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.3,
+                color: Colors.white.withValues(alpha: 0.78),
+                shadows: const [Shadow(blurRadius: 12, color: Colors.black87)],
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
+    );
+  }
+}
+
+/// Финальная карточка: название по центру затемнённого кадра.
+///
+/// Игра под ней продолжает работать и продолжает двигаться — карточка
+/// прозрачна процентов на десять. Кадр, ушедший в глухой чёрный, обрывает
+/// ролик; кадр, сквозь который ещё видно Заставу, его закрывает.
+class _Card extends StatelessWidget {
+  const _Card(this.line, {super.key});
+
+  final TrailerLine line;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = line.text;
+
+    return Container(
+      key: TrailerCaptionLayer.cardPlate,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      color: Colors.black.withValues(alpha: 0.88),
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            line.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 40,
+              height: 1.1,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.4,
+            ),
+          ),
+          if (text != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.4,
+                color: Colors.white.withValues(alpha: 0.72),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

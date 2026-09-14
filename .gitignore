@@ -12,6 +12,13 @@ app/.dart_tool/
 *.apk
 *.aab
 
+# Ключи проекта Firebase. Не секрет в криптографическом смысле — их видно в
+# любом APK, — но и не то, что кладут в репозиторий: с чужим файлом сборка
+# другого разработчика начинает писать в ЖИВОЙ поток аналитики, и отличить
+# там игрока от отладки уже нечем. Как его получить — `docs/11-ANALYTICS.md` §2.
+app/android/app/google-services.json
+app/android/app/google-services.json.bak*
+
 # Локальные пути SDK: у каждой машины свои.
 app/android/local.properties
 app/android/.gradle/

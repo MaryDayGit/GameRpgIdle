@@ -18,6 +18,7 @@ import 'package:rift_app/ui/coach_mark.dart';
 import 'package:rift_app/ui/onboarding.dart';
 import 'package:rift_app/ui/mercenary_screen.dart';
 import 'package:rift_app/ui/outpost_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Сценарий первого запуска: то, что видит человек, впервые открывший игру.
 ///
@@ -99,14 +100,14 @@ void main() {
     WidgetTester tester,
     GameController c, {
     double textScale = 1.0,
-    Size size = const Size(400, 800),
+    Size size = const Size(412, 915),
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: MediaQuery(
         data: MediaQueryData(
           size: size,
@@ -320,12 +321,12 @@ void main() {
         }));
     addTearDown(c.dispose);
 
-    tester.view.physicalSize = const Size(400, 800);
+    tester.view.physicalSize = const Size(412, 915);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: MercenaryScreen(controller: c, mercenary: merc),
     ));
     await settle(tester);
@@ -444,7 +445,17 @@ void main() {
 
     await openOutpost(tester, c);
 
-    await tester.tap(find.byIcon(Icons.volume_up_outlined));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await settle(tester);
+
+    // Лист настроек прокручивается, и обучение стоит в нём последним: список
+    // ленивый, так что до прокрутки этой строки в дереве просто нет. С каждой
+    // новой настройкой она уезжает ещё ниже.
+    await tester.dragUntilVisible(
+      find.text('Обучение'),
+      find.byType(ListView).last,
+      const Offset(0, -60),
+    );
     await settle(tester);
 
     expect(find.text('Обучение'), findsOneWidget);
@@ -492,7 +503,7 @@ void main() {
     var closed = false;
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: TutorialLayer(
         mark: CoachMark(
           id: 'потерянный',
@@ -527,7 +538,7 @@ void main() {
     final key = GlobalKey();
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: MediaQuery(
         data: const MediaQueryData(
           size: size,

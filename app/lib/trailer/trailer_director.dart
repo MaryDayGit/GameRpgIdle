@@ -10,6 +10,7 @@ import '../state/game_controller.dart';
 import '../ui/coach_mark.dart';
 import 'trailer_camera.dart';
 import 'trailer_caption.dart';
+import 'trailer_film.dart';
 
 /// Часы трейлера.
 ///
@@ -38,6 +39,10 @@ class TrailerStage {
   final GlobalKey<NavigatorState> navigator;
   final TrailerClock clock;
 
+  /// Затемнение кадра. Им закрываются переходы: смену экрана зритель видеть
+  /// не должен — он должен видеть следующую сцену.
+  final TrailerVeil veil = TrailerVeil();
+
   /// Во сколько раз игровое время быстрее реального.
   ///
   /// Спуск целиком идёт около полуминуты — для рилса это вечность, для
@@ -62,7 +67,10 @@ class TrailerStage {
   Contract? get contract =>
       controller.activeContract ?? controller.collectableContract;
 
-  void stop() => _stopped = true;
+  void stop() {
+    _stopped = true;
+    veil.stop();
+  }
 
   Duration _sinceTick = Duration.zero;
 
@@ -87,21 +95,64 @@ class TrailerStage {
 
   // --- Что умеет площадка -----------------------------------------------
 
-  /// Открывает экран поверх Заставы.
-  Future<void> open(Widget screen) async {
+  /// Маршрут без выезда: экраны РАСТВОРЯЮТСЯ друг в друге.
+  ///
+  /// Штатный `MaterialPageRoute` увозит экран вбок, и на записи это читается
+  /// как чужое движение поверх кадра — камера ведёт в одну сторону, маршрут
+  /// уезжает в другую. Растворение не спорит с камерой ни с какой стороны.
+  static Route<void> _dissolve(Widget screen) => PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (context, anim, secondary) => screen,
+        transitionsBuilder: (context, anim, secondary, child) =>
+            FadeTransition(opacity: anim, child: child),
+      );
+
+  /// Открывает экран поверх Заставы — в темноте.
+  Future<void> open(Widget screen) => veil.dip(() => _push(screen));
+
+  /// Возвращается на Заставу — тоже в темноте.
+  Future<void> back() => veil.dip(_pop);
+
+  /// Сменить экран одним переходом: свернуть открытое и открыть новое.
+  ///
+  /// Раньше сценарий делал это парой `back()` + `open()`, и на пять разделов
+  /// подряд приходилось десять переходов: экран уезжал на Заставу, Застава
+  /// показывалась на треть секунды и уезжала обратно. Зритель успевал увидеть
+  /// мелькание, но не успевал ничего прочесть.
+  Future<void> show(Widget screen) => veil.dip(() async {
+        await _pop();
+        await _push(screen);
+      });
+
+  Future<void> _push(Widget screen) async {
     final nav = navigator.currentState;
     if (nav == null || _stopped) return;
-    unawaited(nav.push(MaterialPageRoute<void>(builder: (_) => screen)));
+    unawaited(nav.push(_dissolve(screen)));
     // Треть секунды на то, чтобы экран построился: камера ищет метку по
     // разметке, а до первого кадра разметки ещё нет.
     await pause(const Duration(milliseconds: 340));
+    await onScreenReady?.call();
   }
 
-  /// Возвращается на Заставу.
-  Future<void> back() async {
+  Future<void> _pop() async {
     navigator.currentState?.popUntil((route) => route.isFirst);
-    await pause(const Duration(milliseconds: 340));
+    await pause(const Duration(milliseconds: 240));
   }
+
+  /// Что сделать с только что открытым экраном, ПОКА КАДР ЕЩЁ ТЁМНЫЙ.
+  ///
+  /// Сюда режиссёр подставляет докрутку до метки. Без этого она случалась
+  /// после проявления: сцена появлялась, и первым, что видел зритель, был
+  /// самостоятельно едущий список. Прокрутка — работа по подготовке кадра, и
+  /// её место там же, где смена экрана, — в темноте.
+  Future<void> Function()? onScreenReady;
+
+  /// Вспышка на событии игры.
+  ///
+  /// Не на переходе: переход прячут темнотой, а вспышкой ставят точку. Она
+  /// стоит ровно там, где в игре случается необратимое, — на гибели.
+  Future<void> flash() => veil.flash();
 
   /// Отправляет вниз лучшего из резерва.
   void deployBest() {
@@ -326,10 +377,13 @@ class _TrailerHostState extends State<TrailerHost>
       if (list == null) return;
       final at = list.position;
       if (at.pixels >= at.maxScrollExtent) break;
+      // Шаг длиннее и с замедлением на концах. Короткие линейные рывки по
+      // 240 точек читались на записи как дёрганый список, а не как поиск: в
+      // кадре видно каждую остановку.
       await at.animateTo(
-        math.min(at.pixels + 240, at.maxScrollExtent),
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.linear,
+        math.min(at.pixels + 320, at.maxScrollExtent),
+        duration: const Duration(milliseconds: 340),
+        curve: Curves.easeInOutCubic,
       );
     }
 
@@ -357,24 +411,49 @@ class _TrailerHostState extends State<TrailerHost>
       // нет и наезд срывается в общий план.
       if (beat.line != _line) setState(() => _line = beat.line);
 
+      // Камера получает новый план ДО действия, а не после.
+      //
+      // Действие уходит в темноту, и переезд обязан уложиться туда же. Пока
+      // план ставился после, порядок был обратный: кадр проявлялся в старой
+      // рамке и только потом ехал в новую — то есть зритель видел переезд,
+      // ради сокрытия которого затемнение и придумано. Цель камера считает
+      // каждый кадр, поэтому наводиться на ещё не построенный экран ей не
+      // мешает: пока метки нет, она стоит на общем плане.
+      final started = DateTime.now();
+      setState(() {
+        _shot = beat.shot;
+        _move = beat.move;
+      });
+
+      final anchor = beat.shot.anchor;
+      // Докрутку отдаём площадке: если кадр открывает экран, она выполнит её
+      // в темноте перехода — до того, как картинка проявится.
+      widget.stage.onScreenReady =
+          anchor == null ? null : () => _reveal(anchor);
+
       try {
         await beat.act?.call(widget.stage);
       } catch (_) {
         // Кадр, который не удался, не должен ронять трейлер. Игра могла уйти
         // не туда — наёмник умер раньше развилки, сундук полон, — и это
         // повод пропустить кадр, а не оборвать дубль на середине.
+      } finally {
+        widget.stage.onScreenReady = null;
       }
-      // Докрутить до метки ДО того, как камера на неё наведётся: иначе она
-      // наводится на то, чего ещё нет в дереве, и срывается в общий план.
-      final anchor = beat.shot.anchor;
+
+      // Кадр без смены экрана докручивается здесь: прятать нечего, экран уже
+      // на месте, и живая прокрутка к цели читается как взгляд, а не как сбой.
       if (anchor != null) await _reveal(anchor);
 
       if (_done || !mounted) return;
-      setState(() {
-        _shot = beat.shot;
-        _move = beat.move;
-      });
-      await widget.stage.pause(beat.move + beat.hold);
+
+      // Держим кадр столько, сколько задано, минус то, что уже ушло на
+      // действие. Иначе кадры со сменой экрана стояли бы дольше остальных
+      // ровно на длину перехода — и ролик провисал бы там, где он и так
+      // ничего не показывал.
+      final left = beat.move - DateTime.now().difference(started);
+      await widget.stage
+          .pause((left.isNegative ? Duration.zero : left) + beat.hold);
     }
     if (!_done && mounted) widget.onLoop();
   }
@@ -387,10 +466,17 @@ class _TrailerHostState extends State<TrailerHost>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          TrailerCamera(
-            shot: _shot,
-            move: _move,
-            child: IgnorePointer(child: widget.child),
+          // Плёнка обнимает камеру, а не лежит поверх всего: виньетка и
+          // затемнение переходов — это про картинку, а подпись про неё же не
+          // должна темнеть вместе с ней. В темноте перехода текст остаётся —
+          // так читается смена сцены, а не сбой показа.
+          TrailerFilm(
+            veil: widget.stage.veil,
+            child: TrailerCamera(
+              shot: _shot,
+              move: _move,
+              child: IgnorePointer(child: widget.child),
+            ),
           ),
           TrailerCaptionLayer(line: _line),
           // Метка паузы: точка в углу. Оператору надо видеть, что показ

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/content/content_pack.dart';
 import 'package:rift/core/model/player_profile.dart';
 import 'package:rift_app/data/content.dart';
@@ -30,6 +31,7 @@ class _FakeNotifier implements DeathNotifier {
     required String mercName,
     required int depth,
     required bool atFork,
+    Duration? expiresAfter,
   }) async {
     scheduled.add({
       'id': id,
@@ -37,7 +39,17 @@ class _FakeNotifier implements DeathNotifier {
       'merc': mercName,
       'depth': depth,
       'atFork': atFork,
+      'expiresAfter': expiresAfter,
     });
+  }
+
+  /// Последнее, что поставлено на этот идентификатор. Уведомлений на контракт
+  /// два — зов к развилке и весть о гибели, — и спрашивать их надо по имени.
+  Map<String, Object?>? last(int id) {
+    for (final job in scheduled.reversed) {
+      if (job['id'] == id) return job;
+    }
+    return null;
   }
 
   @override
@@ -93,14 +105,62 @@ void main() {
     final merc = controller.profile.roster.reserve.first;
     final contract = controller.deploy(merc)!;
 
-    expect(notifier.scheduled, hasLength(1));
-    final job = notifier.scheduled.single;
+    final job = notifier.last(GameController.notificationIdFor(contract))!;
 
     expect(job['when'], contract.segmentEndsAtUtc);
     expect(job['merc'], merc.name);
     expect(job['depth'], contract.result!.maxDepth);
-    expect(job['id'], GameController.notificationIdFor(contract));
     expect(job['atFork'], isTrue);
+
+    // Зов к развилке живёт ровно столько, сколько наёмник стоит. Иначе он
+    // висит в шторке и после ухода наёмника — зовёт туда, где никого нет.
+    expect(job['expiresAfter'],
+        Duration(seconds: Tuning.forkWaitAwaySeconds.round()));
+  });
+
+  test('вместе с зовом к развилке ставится и весть о гибели', () {
+    // Пока приложение закрыто, переставить будильник некому: отрезок до
+    // развилки кончается раньше спуска, и на одном уведомлении игрок,
+    // проспавший развилку, не узнавал о спуске больше ничего — наёмник
+    // доходил и погибал в тишине.
+    final merc = controller.profile.roster.reserve.first;
+    final contract = controller.deploy(merc)!;
+
+    final ahead = notifier.last(GameController.runEndIdFor(contract))!;
+    expect(ahead['atFork'], isFalse, reason: 'это весть о гибели');
+    expect((ahead['when']! as DateTime).isAfter(contract.segmentEndsAtUtc!),
+        isTrue);
+    expect(ahead['expiresAfter'], isNull,
+        reason: 'добыча ждёт сколько угодно — этому уведомлению не истекать');
+
+    // И она сбывается: наёмник, не дождавшийся игрока, доходит спуск сам
+    // ровно к этому времени.
+    clock = contract.segmentEndsAtUtc!
+        .add(Duration(seconds: Tuning.forkWaitAwaySeconds.round() + 1));
+    controller.tick();
+
+    expect(contract.segmentEndsAtUtc!.difference(ahead['when']! as DateTime).abs(),
+        lessThan(const Duration(seconds: 2)),
+        reason: 'взгляд вперёд считал тот же спуск и тот же простой');
+  });
+
+  test('не дождавшийся наёмник переставляет уведомление на конец спуска', () {
+    final merc = controller.profile.roster.reserve.first;
+    final contract = controller.deploy(merc)!;
+    final arrivedAt = contract.segmentEndsAtUtc!;
+
+    clock = arrivedAt.add(const Duration(seconds: 1));
+    controller.tick();
+    expect(contract.atFork, isTrue);
+
+    clock = arrivedAt
+        .add(Duration(seconds: Tuning.forkWaitAwaySeconds.round() + 1));
+    controller.tick();
+
+    expect(contract.atFork, isFalse, reason: 'терпение кончилось');
+    final job = notifier.last(GameController.notificationIdFor(contract))!;
+    expect(job['atFork'], isFalse);
+    expect(job['when'], contract.segmentEndsAtUtc);
   });
 
   test('решение на развилке переставляет уведомление на следующий отрезок', () {
@@ -112,11 +172,18 @@ void main() {
     controller.tick();
     expect(contract.atFork, isTrue);
 
+    final aheadBefore =
+        notifier.last(GameController.runEndIdFor(contract))!['when'];
+
     expect(controller.chooseFork(contract, 0), isTrue);
-    expect(notifier.scheduled, hasLength(2));
-    expect(notifier.scheduled.last['when'], contract.segmentEndsAtUtc);
-    expect(notifier.scheduled.last['when'], isNot(first),
-        reason: 'новый отрезок — новое время');
+    final job = notifier.last(GameController.notificationIdFor(contract))!;
+    expect(job['when'], contract.segmentEndsAtUtc);
+    expect(job['when'], isNot(first), reason: 'новый отрезок — новое время');
+
+    // Решение игрока меняет и спуск, и то, когда он кончится: взгляд вперёд
+    // пересчитывается от нового пути, а не остаётся от предсказания приказа.
+    expect(notifier.last(GameController.runEndIdFor(contract))!['when'],
+        isNot(aheadBefore));
   });
 
   test('забор добычи снимает уведомление', () {
@@ -127,7 +194,12 @@ void main() {
     controller.tick();
     controller.collect(contract);
 
-    expect(notifier.cancelled, [GameController.notificationIdFor(contract)]);
+    expect(
+        notifier.cancelled,
+        containsAll([
+          GameController.notificationIdFor(contract),
+          GameController.runEndIdFor(contract),
+        ]));
   });
 
   test('разрешение спрашивается при отправке и один раз', () async {

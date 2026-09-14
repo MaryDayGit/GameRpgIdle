@@ -11,10 +11,18 @@ import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/player_profile.dart';
 import 'package:rift/core/save/save_data.dart';
+import 'package:rift/core/save/save_issue.dart';
+import 'package:rift/core/save/save_sync.dart';
+import 'package:rift/core/save/season.dart';
 import 'package:rift/core/sim/fork.dart';
 import 'package:rift/core/sim/forecast.dart';
 import 'package:rift/core/sim/rng.dart';
 
+import '../data/account_firebase.dart';
+import '../data/analytics.dart';
+import '../data/analytics_firebase.dart';
+import '../data/cloud_save_firestore.dart';
+import '../data/cloud_sync.dart';
 import '../data/content.dart';
 import '../data/feedback.dart';
 import '../data/notifications.dart';
@@ -39,30 +47,54 @@ class GameController extends ChangeNotifier {
     GameFeedback? feedback,
     SettingsStore? settings,
     AppSettings? initialSettings,
+    Analytics? analytics,
+    AccountService? account,
+    this.mirror,
     int? seed,
   })  : _profile = profile,
+        account = account ?? const NoAccountService(),
         _tavernSeed =
             seed ?? DateTime.now().microsecondsSinceEpoch & 0x7fffffff,
         _clock = clock ?? DateTime.now,
         _notifier = notifier,
         _settingsStore = settings,
         settings = initialSettings ?? AppSettings(),
+        // По умолчанию — в никуда. Тесты и дев-экраны поднимают контроллер
+        // десятками; каждый из них, разговаривающий с Firebase, испортил бы
+        // ту самую статистику, ради которой всё и делается.
+        analytics = analytics ?? Analytics(enabled: false),
         feedback = feedback ?? GameFeedback();
 
   /// Загружает контент и сейв. Новый сейв заводится, только если старого нет.
+  ///
+  /// ## Порядок здесь не случайный ни в одном месте
+  ///
+  /// **Настройки → контент.** От языка зависит, какие накладки перевода
+  /// накладывать при разборе, а разобрать контент дважды значит показать
+  /// первый кадр не на том языке.
+  ///
+  /// **Аккаунт → облако → сейв.** Сейв ищется по uid, поэтому вход идёт
+  /// раньше. И весь этот кусок идёт ДО первого кадра: с первого же кадра
+  /// игрок может нажать «отправить», а спуск, начатый в профиле, который
+  /// через секунду заменят облачным, — это спуск, которого не было.
+  ///
+  /// **Ни один отказ здесь не мешает играть.** Нет ключей Firebase, нет Play
+  /// Services, нет сети, кончилась квота — всё это ожидаемые исходы, после
+  /// каждого из которых игра идёт дальше на локальном сейве. Обратный
+  /// порядок означал бы, что игра не запускается в метро.
   static Future<GameController> boot() async {
-    // Настройки читаются ПЕРВЫМИ, до контента. От выбранного языка зависит,
-    // какие накладки перевода накладывать при разборе, а разобрать контент
-    // дважды — значит показать первый кадр не на том языке.
-    final store = await SaveStore.forApp();
-    final settingsStore = SettingsStore(store.directory);
+    final documents = await SaveStore.forApp();
+    final settingsStore = SettingsStore(documents.directory);
     final settings = settingsStore.load();
     Lang.current = settings.lang;
+    // Идентификатор устройства мог родиться только что — тогда его надо
+    // записать сразу. Сейв, выгруженный с устройства, которое при следующем
+    // запуске назовётся иначе, выглядит как сейв с другого телефона.
+    settingsStore.save(settings);
 
     final content = await ContentBundle.load(lang: settings.lang);
     content.pack.apply();
 
-    final saved = await store.load();
     final notifier = await LocalDeathNotifier.create();
 
     final feedback = GameFeedback(
@@ -71,6 +103,42 @@ class GameController extends ChangeNotifier {
     );
     await feedback.init();
 
+    // Аналитика поднимается ЗДЕСЬ, после настроек и до первого кадра: с
+    // первого же кадра игрок может нажать «отправить», а событие, отправленное
+    // в ещё не поднятый сток, теряется молча. Отказ Firebase подняться —
+    // штатный исход (см. `AnalyticsSetup`), игра идёт дальше.
+    final analytics = await AnalyticsSetup.create(enabled: settings.analytics);
+
+    // Хранилище заводится заново, уже с именем устройства и с жалобами,
+    // подключёнными к аналитике. До этого битый сейв и неудачная запись
+    // происходили молча — то есть игрок терял прогресс, а мы об этом не
+    // узнавали никогда.
+    final store = SaveStore(
+      documents.directory,
+      deviceId: settings.deviceId,
+      onTrouble: (kind, stage) => analytics.log(kind == 'recovered'
+          ? GameEvents.saveRecovered(stage)
+          : GameEvents.saveFailed(stage)),
+    );
+
+    // Вход молчаливый и анонимный: экран входа перед первым кадром — это
+    // стена ровно там, где игра обещала «открыл и играешь»
+    // (`account_firebase.dart`).
+    final account = await FirebaseAccountService.create();
+    await account.signInSilently();
+    store.accountId = account.current.uid;
+
+    final mirror = CloudMirror(
+      store: store,
+      cloud: await FirestoreCloudSaveStore.create(),
+      account: account,
+      onEvent: (kind, stage) {
+        if (kind == 'error') analytics.log(GameEvents.cloudError(stage));
+      },
+    );
+
+    final opening = await _openSave(store, mirror, analytics);
+
     final controller = GameController(
       content: content,
       store: store,
@@ -78,16 +146,98 @@ class GameController extends ChangeNotifier {
       feedback: feedback,
       settings: settingsStore,
       initialSettings: settings,
-      profile: saved?.profile ??
-          PlayerProfile.newGame(
-              seed: DateTime.now().millisecondsSinceEpoch & 0x7fffffff),
-    );
+      analytics: analytics,
+      account: account,
+      mirror: mirror,
+      profile: opening.profile,
+    )..pendingSync = opening.pending;
+
+    // Разрезы, в которых будет читаться всё остальное, ставятся до первого
+    // события: свойство, выставленное позже, не задним числом описывает уже
+    // отправленные события.
+    controller._syncAnalyticsProfile();
 
     // Разрешение на уведомления спрашивает ЭКРАН, а не загрузка (см.
     // `askForNotifications`): системный диалог, поднятый здесь, встаёт ровно
     // поверх вступительного окна первого запуска и закрывает ему середину.
     return controller;
   }
+
+  /// Открывает сейв: сводит локальный с облачным и решает, чем играть.
+  ///
+  /// Единственное место, где решение (`rift/core/save/save_sync.dart`)
+  /// превращается в действие. Правило считается в ядре и проверяется
+  /// headless; здесь только последствия — забрать облачный, убрать в архив
+  /// прошлый сезон, отложить вопрос игроку.
+  static Future<_Opening> _openSave(
+    SaveStore store,
+    CloudMirror mirror,
+    Analytics analytics,
+  ) async {
+    final sync = await mirror.resolveOnBoot();
+    analytics.log(GameEvents.saveSync(sync.decision));
+
+    switch (sync.decision.action) {
+      // Сейв прошлого сезона. Он не загружается и не удаляется: уезжает в
+      // архив под своим именем, и если однажды выяснится, что обнулили не
+      // то, вернуть его — это одно переименование (`season.dart`).
+      case SyncAction.newSeason:
+        final was = sync.decision.local?.seasonId ?? '';
+        await store.archiveSeason(was);
+        analytics.log(GameEvents.seasonStart(was, Season.current.id));
+
+        // В новом сезоне на этом аккаунте уже может быть сейв — с другого
+        // устройства. Второй раз в сеть за ним не ходим: он приехал вместе
+        // с решением.
+        final remote = sync.remote;
+        if (remote != null && Season.isCurrent(remote.head.seasonId)) {
+          return _Opening((await mirror.adopt(remote)).profile);
+        }
+        return _Opening(_newProfile());
+
+      case SyncAction.takeRemote:
+        final remote = sync.remote;
+        if (remote != null) {
+          try {
+            return _Opening((await mirror.adopt(remote)).profile);
+          } on Object catch (e) {
+            // Облачный сейв не открылся. Это не повод остаться без игры:
+            // падаем на локальный, каким бы он ни был.
+            if (kDebugMode) debugPrint('[save] облачный сейв не читается: $e');
+            analytics.log(GameEvents.saveFailed('adopt'));
+          }
+        }
+        return _Opening(await _loadLocal(store, analytics));
+
+      // Расхождение. Профиль берётся локальный — это то, во что игрок играл
+      // на этом телефоне, и до его ответа менять это нельзя. Вопрос
+      // откладывается до первого кадра: диалог, поднятый отсюда, поднимался
+      // бы до того, как есть, поверх чего его рисовать.
+      case SyncAction.ask:
+        return _Opening(await _loadLocal(store, analytics), pending: sync);
+
+      case SyncAction.keepLocal:
+        return _Opening(await _loadLocal(store, analytics));
+    }
+  }
+
+  /// Читает локальный сейв. Нечитаемый убирается в сторону, а не затирается:
+  /// он не открылся СЕГОДНЯШНЕЙ версией игры, и причина может оказаться
+  /// нашей ошибкой, которую починят завтра.
+  static Future<PlayerProfile> _loadLocal(
+      SaveStore store, Analytics analytics) async {
+    try {
+      final saved = await store.load();
+      return saved?.profile ?? _newProfile();
+    } on SaveException catch (e) {
+      if (kDebugMode) debugPrint('[save] сейв не читается: $e');
+      await store.quarantine();
+      return _newProfile();
+    }
+  }
+
+  static PlayerProfile _newProfile() => PlayerProfile.newGame(
+      seed: DateTime.now().millisecondsSinceEpoch & 0x7fffffff);
 
   /// Контент на текущем языке.
   ///
@@ -102,6 +252,34 @@ class GameController extends ChangeNotifier {
   /// Звук и вибрация. Экраны говорят, ЧТО случилось, а не как это озвучить.
   final GameFeedback feedback;
 
+  /// Аналитика. Экраны её не трогают вовсе.
+  ///
+  /// Событие снимается ЗДЕСЬ, в контроллере, по той же причине, по которой
+  /// здесь же лежит профиль: экран может позвать «отправить» из двух разных
+  /// мест, и одно из них рано или поздно забудут обвешать счётчиком. Все
+  /// действия игры проходят через этот объект — значит и все измерения тоже.
+  ///
+  /// Ядро при этом ничего не отправляет само: оно только УМЕЕТ построить
+  /// событие (`GameEvents`). Симуляция, дёргающая аналитику, перестала бы
+  /// быть headless.
+  final Analytics analytics;
+
+  /// Кто играет. Экраны спрашивают его только ради подписи в настройках.
+  final AccountService account;
+
+  /// Облачное зеркало сейва. `null` — сборка без Firebase: игра идёт целиком,
+  /// просто сейв никуда не уезжает.
+  final CloudMirror? mirror;
+
+  /// Расхождение, о котором надо спросить игрока.
+  ///
+  /// Заполняется на загрузке и ждёт первого кадра: диалог требует экрана,
+  /// а решение принимается раньше, чем экран существует. `null` — сводить
+  /// было нечего или свелось само.
+  CloudSyncResult? pendingSync;
+
+  bool get hasPendingSync => pendingSync?.needsPlayer ?? false;
+
   final SettingsStore? _settingsStore;
   final AppSettings settings;
 
@@ -113,6 +291,30 @@ class GameController extends ChangeNotifier {
     _settingsStore?.save(settings);
     notifyListeners();
   }
+
+  /// Включает или выключает отправку статистики.
+  ///
+  /// Выключение доходит до самого Firebase, а не только до наших вызовов:
+  /// иначе автоматические события SDK продолжали бы уходить, и галочка
+  /// выключала бы не то, что подписана выключать.
+  void setAnalytics(bool on) {
+    settings.analytics = on;
+    analytics.enabled = on;
+    if (on) _syncAnalyticsProfile();
+    _settingsStore?.save(settings);
+    notifyListeners();
+  }
+
+  /// Обновляет разрезы игрока. Зовётся там, где меняется то, что в них
+  /// входит: рекорд, Клеймо, древо, Застава, язык.
+  void _syncAnalyticsProfile() => analytics.setProperties(
+        GameEvents.properties(
+          _profile,
+          lang: settings.lang.code,
+          season: Season.current.id,
+          account: account.current.analyticsValue,
+        ),
+      );
 
   void setHaptics(bool on) {
     settings.haptics = on;
@@ -144,14 +346,21 @@ class GameController extends ChangeNotifier {
 
     settings.lang = lang;
     _settingsStore?.save(settings);
+    analytics.log(GameEvents.languageSet(lang.code));
+    _syncAnalyticsProfile();
     notifyListeners();
   }
 
   /// Обучение пройдено или пропущено — второй раз не показывается.
-  void finishTutorial() {
+  ///
+  /// [skipped] различает две очень разные вещи: игрок дочитал сценарий до
+  /// конца или закрыл его кнопкой. В отчёте это одно событие с разрезом, а
+  /// не два счётчика, — потому что интересна доля, а не абсолютные числа.
+  void finishTutorial({bool skipped = false}) {
     if (settings.tutorialDone) return;
     settings.tutorialDone = true;
     _settingsStore?.save(settings);
+    analytics.log(GameEvents.tutorialDone(skipped: skipped));
     notifyListeners();
   }
 
@@ -164,7 +373,13 @@ class GameController extends ChangeNotifier {
   void markTutorialSeen(Iterable<String> ids) {
     var changed = false;
     for (final id in ids) {
-      if (settings.tutorialSeen.add(id)) changed = true;
+      if (settings.tutorialSeen.add(id)) {
+        changed = true;
+        // Шаг снимается один раз за игру — множество уже это гарантирует.
+        // Воронка первого запуска строится по этим событиям, и повтор в ней
+        // выглядел бы как возврат игрока на пройденный шаг.
+        analytics.log(GameEvents.tutorialStep(id));
+      }
     }
     if (!changed) return;
     _settingsStore?.save(settings);
@@ -205,10 +420,19 @@ class GameController extends ChangeNotifier {
   Future<void> askForNotifications() async {
     if (_askedForNotifications) return;
     _askedForNotifications = true;
-    await _notifier.ensurePermission();
+    final granted = await _notifier.ensurePermission();
+    analytics.log(GameEvents.notificationsAnswer(granted: granted));
   }
 
-  final PlayerProfile _profile;
+  /// Профиль игрока.
+  ///
+  /// Не `final` — по той же причине, что и [content]: его целиком заменяют.
+  /// Замена ровно одна и происходит ровно в одном месте — когда игрок в
+  /// диалоге расхождения выбрал облачный сейв ([takeCloudSave]). Экраны от
+  /// этого не страдают: они читают профиль через геттер на каждой перестройке
+  /// и своей копии не держат — свою копию держал бы тот, у кого золото на
+  /// экране разъехалось бы с золотом в сейве.
+  PlayerProfile _profile;
   PlayerProfile get profile => _profile;
 
   /// Сид для таверны и спусков. Хранится, чтобы обновление списка кандидатов
@@ -237,7 +461,18 @@ class GameController extends ChangeNotifier {
     _timer ??= Timer.periodic(const Duration(seconds: 1), (_) => tick());
     _scheduler ??= SaveScheduler(
       store: store,
-      snapshot: () => SaveData(lastSeenUtc: now, profile: _profile),
+      snapshot: () => SaveData(
+        lastSeenUtc: now,
+        profile: _profile,
+        seasonId: Season.current.id,
+      ),
+      // Выгрузка в облако решается зеркалом, а не расписанием сейва: файл
+      // пишется раз в минуту, а Firestore даёт 20 000 записей в сутки на
+      // весь проект (`cloud_sync.dart`). `leaving` — уход в фон, последний
+      // момент, когда сейв ещё можно выгрузить: процесс после него снимают
+      // без предупреждения.
+      onSaved: (saved, {required leaving}) =>
+          unawaited(mirror?.push(saved, force: leaving) ?? Future<void>.value()),
     )
       ..start();
     tick();
@@ -262,17 +497,188 @@ class GameController extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Последний тик по настенным часам. По нему считается, сколько прошло
+  /// «при игроке»: часы тикают, только пока игра на экране.
+  DateTime? _tickedAtUtc;
+
+  /// Насколько большой шаг часов ещё считается непрерывным присутствием.
+  ///
+  /// Шаг ровно секунда, и три секунды — это запас на подтормаживание кадра.
+  /// Всё, что больше, означает, что приложение сворачивали: движок Flutter в
+  /// фоне засыпает вместе с таймерами, и проснувшийся тик приносит на себе
+  /// весь перерыв. Засчитать его наёмнику значило бы записать ночь в фоне как
+  /// ночь при игроке.
+  static const _attendedStepCap = Duration(seconds: 3);
+
   /// Шаг часов: переводит дошедшие до конца контракты в «ждёт получения».
   void tick() {
+    // Рекорд запоминается ДО обновления: `refreshContracts` его и поднимает,
+    // и спросив после, мы бы сравнивали новый рекорд сам с собой — каждый
+    // спуск оказался бы рекордным.
+    final recordBefore = _profile.maxDepthEver;
+
+    _countAttendance();
+
+    // Концы отрезков ДО пересчёта: по их смене видно, что наёмник перестал
+    // ждать и пошёл дальше сам, — а это новый отрезок и новое время, на
+    // которое надо переставить будильник (`_scheduleContractNotice`).
+    final segmentsBefore = {
+      for (final c in _profile.contracts) c: c.segmentEndsAtUtc,
+    };
+    final atForkBefore = {
+      for (final c in _profile.contracts) if (c.atFork) c,
+    };
+
     final finished = _profile.refreshContracts(now);
     if (finished.isNotEmpty) {
       justFinished.addAll(finished);
       feedback.play(Sfx.death, bump: Bump.heavy);
+      for (final contract in finished) {
+        _reportRunEnded(contract, recordBefore: recordBefore);
+      }
+      _syncAnalyticsProfile();
+
+      // Конец спуска выгружается в облако немедленно, минуя промежуток между
+      // выгрузками. Это тот момент, после которого игрок закрывает игру чаще
+      // всего: наёмник погиб, добыча ждёт, делать до утра нечего. Отложить
+      // выгрузку на пять минут здесь значит регулярно терять в облаке
+      // последний спуск.
+      unawaited(saveNow(toCloud: true));
     }
+
+    for (final contract in _profile.contracts) {
+      if (!contract.descending && !contract.atFork) continue;
+      if (segmentsBefore[contract] == contract.segmentEndsAtUtc) continue;
+      _scheduleContractNotice(contract);
+    }
+
+    if (_profile.contracts
+        .any((c) => c.atFork && !atForkBefore.contains(c))) {
+      feedback.play(Sfx.fork, bump: Bump.medium);
+    }
+
     notifyListeners();
   }
 
-  Future<void> saveNow() => _scheduler?.saveNow() ?? Future<void>.value();
+  /// Засчитывает прошедшую секунду стоящим на развилке — как время с игроком.
+  void _countAttendance() {
+    final at = now;
+    final was = _tickedAtUtc;
+    _tickedAtUtc = at;
+    if (was == null) return;
+
+    final step = at.difference(was);
+    if (step <= Duration.zero || step > _attendedStepCap) return;
+    _profile.attendForks(step.inMilliseconds / 1000.0);
+  }
+
+  /// Снимает `run_ended` — главное событие игры (`docs/11-ANALYTICS.md` §3).
+  ///
+  /// Одно место на все три конца спуска: гибель, отзыв, упор в лимит. Разнеси
+  /// их по методам — и в отчёте появились бы три несравнимых события вместо
+  /// одного с разрезом `ending`, а вопрос «какая доля спусков кончается
+  /// отзывом» перестал бы иметь ответ.
+  void _reportRunEnded(Contract contract, {required int recordBefore}) {
+    final result = contract.result;
+    if (result == null) return;
+
+    analytics.log(GameEvents.runEnded(
+      contract,
+      result,
+      _profile,
+      record: result.maxDepth > recordBefore,
+    ));
+
+    // Предохранители шины сработали в живом спуске. На своих прогонах их
+    // ноль, и интересен ровно обратный случай.
+    if (result.anomalies > 0) {
+      analytics.log(GameEvents.anomaly(contract, result));
+    }
+  }
+
+  /// Сохраняет немедленно. [toCloud] отменяет промежуток между выгрузками:
+  /// так уходит в облако конец спуска — событие, после которого игрок
+  /// закрывает игру чаще всего.
+  Future<void> saveNow({bool toCloud = false}) =>
+      _scheduler?.saveNow(leaving: toCloud) ?? Future<void>.value();
+
+  // --- Аккаунт и облако ------------------------------------------------------
+
+  /// Привязывает аккаунт к Google.
+  ///
+  /// Единственное место, где игра показывает системный экран, и зовётся оно
+  /// только по кнопке в настройках. Возвращает исход как есть: `alreadyInUse`
+  /// — это не ошибка, а игрок, который уже играл под этим Google, и разговор
+  /// с ним другой (`account.dart`).
+  Future<LinkOutcome> linkGoogle() async {
+    final outcome = await account.linkGoogle();
+    analytics.log(GameEvents.accountLink(outcome.name));
+
+    if (outcome == LinkOutcome.ok || outcome == LinkOutcome.alreadyInUse) {
+      store.accountId = account.current.uid;
+      mirror?.reset();
+      _syncAnalyticsProfile();
+
+      // Вошли в чужой (точнее, в свой второй) аккаунт — значит под ним может
+      // лежать другой сейв. Сводим заново тем же правилом, что и на запуске.
+      if (outcome == LinkOutcome.alreadyInUse) {
+        pendingSync = await mirror?.resolveOnBoot();
+        if (pendingSync != null) {
+          analytics.log(GameEvents.saveSync(pendingSync!.decision));
+        }
+      } else {
+        // Привязали пустой аккаунт к своему сейву — выгружаем немедленно.
+        // Ради этого привязку и нажимали.
+        await saveNow(toCloud: true);
+      }
+    }
+    _changed();
+    return outcome;
+  }
+
+  /// Выходит из аккаунта. Сейв на устройстве остаётся: выход — это не
+  /// удаление прогресса, и превращать одно в другое нельзя.
+  Future<void> signOutAccount() async {
+    await account.signOut();
+    store.accountId = null;
+    mirror?.reset();
+    _syncAnalyticsProfile();
+    _changed();
+  }
+
+  /// Ответ игрока на расхождение сейвов.
+  ///
+  /// [takeCloud] — взять облачный. Локальный при этом не пропадает бесследно:
+  /// он становится резервной копией обычным порядком записи
+  /// (`SaveStore.save`).
+  Future<void> resolveSync({required bool takeCloud}) async {
+    final pending = pendingSync;
+    pendingSync = null;
+    if (pending == null) return;
+
+    analytics.log(GameEvents.saveConflictResolved(
+      tookRemote: takeCloud,
+      local: pending.decision.local?.progress,
+      remote: pending.decision.remote?.progress,
+    ));
+
+    final remote = pending.remote;
+    if (takeCloud && remote != null) {
+      try {
+        _profile = (await mirror!.adopt(remote)).profile;
+      } on Object catch (e) {
+        if (kDebugMode) debugPrint('[save] облачный сейв не читается: $e');
+        analytics.log(GameEvents.saveFailed('adopt'));
+      }
+      _syncAnalyticsProfile();
+    } else {
+      // Игрок оставил своё — значит облако обязано об этом узнать сейчас, а
+      // не через пять минут: до тех пор второе устройство считает хозяином
+      // себя, и следующий запуск здесь снова спросил бы то же самое.
+      await saveNow(toCloud: true);
+    }
+    _changed();
+  }
 
   // --- Действия --------------------------------------------------------------
 
@@ -286,6 +692,7 @@ class GameController extends ChangeNotifier {
     final done = _profile.hire(m);
     if (done) {
       feedback.bump(Bump.light);
+      analytics.log(GameEvents.mercHired(m.rank.name, _profile));
       _changed();
     }
     return done;
@@ -310,6 +717,11 @@ class GameController extends ChangeNotifier {
 
     feedback.play(Sfx.deploy, bump: Bump.medium);
 
+    // Снимается здесь, а не при гибели: сборка заперта на весь контракт, и
+    // это единственный момент, когда решение игрока — решение, а не
+    // задокументированный итог.
+    analytics.log(GameEvents.runStarted(contract, _profile));
+
     // Разрешение на уведомления спрашивается здесь — в момент, когда оно
     // впервые о чём-то. Не ждём ответа: спуск уже идёт.
     unawaited(askForNotifications());
@@ -319,41 +731,86 @@ class GameController extends ChangeNotifier {
     return contract;
   }
 
-  /// Ставит уведомление на конец текущего ОТРЕЗКА спуска.
+  /// Ставит уведомления на конец текущего ОТРЕЗКА спуска — и, если отрезок
+  /// упирается в развилку, на конец всего спуска заодно.
   ///
   /// Отрезок кончается либо гибелью, либо развилкой, и уведомление нужно в
   /// обоих случаях: гибель зовёт забрать добычу, развилка — принять решение,
   /// пока наёмник ждёт. Пересчитывается при каждом решении, потому что новый
   /// отрезок — это новое время.
+  ///
+  /// **Почему уведомлений два.** Пока приложение закрыто, игра не считает
+  /// ничего: переставить будильник в момент, когда наёмник устал ждать и
+  /// пошёл дальше, некому. Одно уведомление на отрезок означало, что игрок,
+  /// проспавший развилку, о спуске больше не слышал ничего — наёмник доходил
+  /// и погибал в тишине. Поэтому вместе с зовом к развилке ставится и весть
+  /// о гибели, посчитанная вперёд по приказу
+  /// ([PlayerProfile.projectUnattendedEnd]). Придёт игрок и решит сам —
+  /// обе переставятся по факту решения.
   void _scheduleContractNotice(Contract contract) {
     final endsAt = contract.segmentEndsAtUtc;
     if (endsAt == null) return;
 
+    final atFork = contract.result?.awaitingFork ?? false;
+    final name = contract.mercenary.name;
+
     unawaited(_notifier.scheduleContractEvent(
       id: notificationIdFor(contract),
       whenUtc: endsAt,
-      mercName: contract.mercenary.name,
+      mercName: name,
       depth: contract.result?.maxDepth ?? 0,
-      atFork: contract.result?.awaitingFork ?? false,
+      atFork: atFork,
+      // Зов к развилке живёт ровно столько, сколько наёмник стоит. Дальше он
+      // зовёт туда, где никого нет, — и именно это игрок и увидел на пробе:
+      // открыл игру по уведомлению, а развилки там уже не было.
+      expiresAfter: atFork
+          ? Duration(seconds: Tuning.forkWaitAwaySeconds.round())
+          : null,
+    ));
+
+    final ahead = atFork ? _profile.projectUnattendedEnd(contract) : null;
+    if (ahead == null) {
+      // Отрезок последний: вести о гибели, посчитанной вперёд, больше нет —
+      // её место занимает уведомление выше, и старая обязана уйти.
+      unawaited(_notifier.cancel(runEndIdFor(contract)));
+      return;
+    }
+
+    unawaited(_notifier.scheduleContractEvent(
+      id: runEndIdFor(contract),
+      whenUtc: ahead.endsAtUtc,
+      mercName: name,
+      depth: ahead.depth,
+      atFork: false,
     ));
   }
 
   /// Сколько наёмник ещё простоит на этой развилке, прежде чем решит сам.
-  Duration forkWaitLeft(Contract contract, DateTime at) {
-    final arrived = contract.forkArrivedAtUtc;
-    if (arrived == null) return Duration.zero;
-    final waiting =
-        at.toUtc().difference(arrived).inMilliseconds / 1000.0;
-    final left = Tuning.forkWaitSeconds - waiting;
-    return left <= 0 ? Duration.zero : Duration(seconds: left.ceil());
-  }
+  Duration forkWaitLeft(Contract contract, DateTime at) =>
+      contract.forkWaitLeftAt(at);
 
   /// Выбор пути на развилке. Возвращает `false`, если наёмник не ждёт.
   ///
   /// Ради этого метода переписывался спуск: до него игра не спрашивала игрока
   /// ни о чём между отправкой и гибелью — восемь минут без единого решения.
   bool chooseFork(Contract contract, int option) {
+    // Снимается ДО выбора: решение продолжает спуск, и `result` после вызова
+    // описывает уже следующий отрезок — глубина в нём другая.
+    final depth = contract.result?.maxDepth ?? 0;
+    final arrived = contract.forkArrivedAtUtc;
+    final waited = arrived == null
+        ? 0
+        : now.difference(arrived).inSeconds;
+
     if (!_profile.chooseFork(contract, option, now)) return false;
+
+    analytics.log(GameEvents.forkChoice(
+      depth: depth,
+      option: option,
+      byPlayer: true,
+      waitedSeconds: waited,
+      policy: contract.forkPolicy.name,
+    ));
 
     feedback.play(Sfx.deploy, bump: Bump.light);
     _scheduleContractNotice(contract);
@@ -369,18 +826,21 @@ class GameController extends ChangeNotifier {
   bool keepLoot(Item item) {
     if (!_profile.keepLoot(item)) return false;
     feedback.play(Sfx.deploy, bump: Bump.light);
+    _logLoot('keep', item);
     _changed();
     return true;
   }
 
   bool meltLoot(Item item) {
     if (!_profile.meltLoot(item)) return false;
+    _logLoot('melt', item);
     _changed();
     return true;
   }
 
   bool sellLoot(Item item) {
     if (!_profile.sellLoot(item)) return false;
+    _logLoot('sell', item);
     _changed();
     return true;
   }
@@ -388,19 +848,39 @@ class GameController extends ChangeNotifier {
   /// Разобрать остальное за игрока: лучшее в сундук, прочее в золото.
   void autoSortLoot() {
     if (!_profile.hasPendingLoot) return;
+
+    // Список снимается до разбора: после него `pendingLoot` пуст, и сказать,
+    // сколько вещей игрок отдал автомату, будет уже нечем.
+    final handed = [..._profile.pendingLoot];
     _profile.autoSortLoot();
+    for (final item in handed) {
+      _logLoot('auto', item, auto: true);
+    }
     _changed();
   }
+
+  void _logLoot(String kind, Item item, {bool auto = false}) =>
+      analytics.log(
+        GameEvents.lootDecision(kind: kind, ilvl: item.ilvl, auto: auto),
+      );
 
   /// Идентификатор уведомления контракта. Выводится из сида, а не из счётчика:
   /// после перезапуска счётчик начался бы заново и отменял чужие уведомления.
   static int notificationIdFor(Contract contract) =>
       contract.seed.abs() % 100000;
 
+  /// Идентификатор вести о гибели, посчитанной вперёд. Своё число, а не то же
+  /// самое: зов к развилке и весть о гибели висят одновременно и говорят
+  /// разное, и вторая не имеет права затереть первую.
+  static int runEndIdFor(Contract contract) =>
+      notificationIdFor(contract) + 100000;
+
   /// Выставляет Клеймо Бездны на следующий спуск (GDD §2.5). Ранг выше
   /// открытого не ставится — открывает его достигнутая глубина.
   bool setBrandRank(int rank) {
     if (!_profile.setBrandRank(rank)) return false;
+    analytics.log(GameEvents.brandRank(_profile.brandRank, _profile));
+    _syncAnalyticsProfile();
     _changed();
     return true;
   }
@@ -409,7 +889,8 @@ class GameController extends ChangeNotifier {
   bool allocatePassive(String nodeId) {
     final done = _profile.allocatePassive(nodeId);
     if (done) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
+      analytics.log(GameEvents.passiveAlloc(nodeId, _profile));
       _changed();
     }
     return done;
@@ -427,16 +908,27 @@ class GameController extends ChangeNotifier {
   void resetPassives() {
     _profile.passives.reset();
     feedback.bump(Bump.medium);
+    analytics.log(GameEvents.passiveReset(_profile));
     _changed();
   }
 
   /// Отзывает наёмника: контракт закрывается здесь и сейчас, добыча ждёт
   /// получения. Штрафа нет — см. `PlayerProfile.recall`.
   bool recall(Contract contract) {
+    final recordBefore = _profile.maxDepthEver;
     if (!_profile.recall(contract, now)) return false;
 
+    // Отзыв — такой же конец спуска, как гибель, и снимается тем же событием:
+    // «какая доля спусков не дошла до смерти» — вопрос про баланс, а не про
+    // интерфейс, и ответить на него можно только если оба конца в одном
+    // разрезе (`ending`).
+    _reportRunEnded(contract, recordBefore: recordBefore);
+    _syncAnalyticsProfile();
+
     // Уведомление о гибели больше не про что: наёмник возвращается живым.
+    // Оба: и зов к развилке, и посчитанная вперёд весть о гибели.
     unawaited(_notifier.cancel(notificationIdFor(contract)));
+    unawaited(_notifier.cancel(runEndIdFor(contract)));
     _changed();
     return true;
   }
@@ -479,8 +971,22 @@ class GameController extends ChangeNotifier {
   Haul? collect(Contract contract) {
     if (!contract.awaitingCollection) return null;
     unawaited(_notifier.cancel(notificationIdFor(contract)));
+    unawaited(_notifier.cancel(runEndIdFor(contract)));
+
+    // Сколько добыча пролежала. Снимается до `collect`, потому что дальше
+    // контракт закрыт и момент его конца — уже история.
+    final endedAt = contract.segmentEndsAtUtc;
+    final latency =
+        endedAt == null ? 0 : now.difference(endedAt).inSeconds.clamp(0, 1 << 30);
+
     final haul = _profile.collect(contract);
-    feedback.play(Sfx.reward, bump: Bump.medium);
+    analytics.log(GameEvents.haulCollected(haul, latencySeconds: latency));
+    // Реликт в добыче звучит своим звуком: самая редкая находка игры не
+    // должна узнаваться только из журнала.
+    feedback.play(
+      haul.items.any((item) => item.isRelic) ? Sfx.relic : Sfx.reward,
+      bump: Bump.medium,
+    );
     justFinished.remove(contract);
     _changed();
     return haul;
@@ -583,7 +1089,7 @@ class GameController extends ChangeNotifier {
   double? salvage(Item item) {
     final gold = _profile.salvage(item);
     if (gold != null) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
       _changed();
     }
     return gold;
@@ -592,7 +1098,7 @@ class GameController extends ChangeNotifier {
   Shard? extractShard(Item item, int affixIndex) {
     final shard = _profile.extractShard(item, affixIndex);
     if (shard != null) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
       _changed();
     }
     return shard;
@@ -606,7 +1112,7 @@ class GameController extends ChangeNotifier {
       rng: Rng(now.microsecondsSinceEpoch),
     );
     if (result != null) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
       _changed();
     }
     return result;
@@ -619,7 +1125,7 @@ class GameController extends ChangeNotifier {
       Rng(now.microsecondsSinceEpoch ^ affixIndex),
     );
     if (result != null) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
       _changed();
     }
     return result;
@@ -628,7 +1134,7 @@ class GameController extends ChangeNotifier {
   Item? deepenRelic(Item item) {
     final result = _profile.deepenRelic(item);
     if (result != null) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
       _changed();
     }
     return result;
@@ -637,7 +1143,9 @@ class GameController extends ChangeNotifier {
   bool upgrade(Building building) {
     final done = _profile.upgradeBuilding(building);
     if (done) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
+      analytics.log(GameEvents.outpostUpgrade(building, _profile));
+      _syncAnalyticsProfile();
       _changed();
     }
     return done;
@@ -648,7 +1156,9 @@ class GameController extends ChangeNotifier {
   bool buyEchoNode(String nodeId) {
     final done = _profile.buyEchoNode(nodeId);
     if (done) {
-      feedback.play(Sfx.reward, bump: Bump.light);
+      feedback.play(Sfx.buy, bump: Bump.light);
+      analytics.log(GameEvents.echoNode(nodeId, _profile));
+      _syncAnalyticsProfile();
       _changed();
     }
     return done;
@@ -692,4 +1202,16 @@ class GameController extends ChangeNotifier {
     notifyListeners();
     unawaited(saveNow());
   }
+}
+
+/// Чем открылся сейв: профиль и, если сейвы разошлись, отложенный вопрос
+/// игроку.
+///
+/// Отдельный тип, а не пара, потому что второе поле легко потерять: `ask`
+/// без заданного вопроса — это молча выбранный за игрока сейв.
+class _Opening {
+  const _Opening(this.profile, {this.pending});
+
+  final PlayerProfile profile;
+  final CloudSyncResult? pending;
 }

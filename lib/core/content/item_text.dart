@@ -56,7 +56,23 @@ class ItemText {
     final relicId = item.relicId;
     if (relicId != null) {
       final def = pack?.relic(relicId);
-      if (def != null) out.add(def.text);
+      if (def != null) {
+        out.add(def.text);
+
+        // Откуда вещь. Строка нужна не найденному предмету — он уже в руках,
+        // — а ТОМУ, ЧЕГО НЕТ: игрок, увидевший «Роняет: Владыка Пепла» на
+        // чужой находке в журнале или в справочнике, получает адрес. Без неё
+        // источник существует только в коде, и «сходить за конкретной вещью»
+        // остаётся знанием для тех, кто читал файлы контента.
+        final source = def.source;
+        if (source != null) {
+          final boss = pack?.bosses.where((b) => b.id == source).firstOrNull;
+          if (boss != null) {
+            out.add('${const Phrase('Роняет', 'Dropped by').text}: '
+                '${boss.name}');
+          }
+        }
+      }
     }
 
     return out;

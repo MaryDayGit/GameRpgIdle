@@ -32,6 +32,7 @@ import 'package:rift_app/ui/outpost_screen.dart';
 import 'package:rift_app/ui/passive_tree_screen.dart';
 import 'package:rift_app/ui/quests_screen.dart';
 import 'package:rift_app/ui/stash_screen.dart';
+import 'package:rift_app/ui/theme.dart';
 
 /// Вёрстка: текст не вылезает за экран и не превращается в «…».
 ///
@@ -180,7 +181,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(brightness: Brightness.dark),
+      theme: riftTheme(),
       home: MediaQuery(
         data: MediaQueryData(
           size: size,
