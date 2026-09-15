@@ -117,7 +117,8 @@ class Outpost {
           Building.altar => 'переплавка возвращает ${pct(o.salvageRate)} цены',
           Building.cartographer => 'видно на ${o.forecastFloors} этажей вперёд',
           Building.campfire =>
-            'отдых вернёт ещё ${pct(o.restHealBonus)} здоровья',
+            'отдых вернёт ещё ${pct(o.restHealBonus)} здоровья'
+                '${o.relayPerSlot > 0 ? ', сменщиков на слот: ${o.relayPerSlot}' : ''}',
         },
       Lang.en => switch (b) {
           Building.tavern => '${o.tavernCandidates} candidates to choose from',
@@ -132,7 +133,8 @@ class Outpost {
           Building.cartographer =>
             '${o.forecastFloors} floors visible ahead',
           Building.campfire =>
-            'rest restores another ${pct(o.restHealBonus)} health',
+            'rest restores another ${pct(o.restHealBonus)} health'
+                '${o.relayPerSlot > 0 ? ', ${o.relayPerSlot} relief per slot' : ''}',
         },
     };
   }
@@ -226,6 +228,24 @@ class Outpost {
   /// Костёр: прибавка к доле HP, восстанавливаемой между этажами.
   double get restHealBonus =>
       Tuning.restHealPerLevel * levelOf(Building.campfire);
+
+  /// Костёр: сколько сменщиков ждёт у огня на каждый слот спуска (GDD §9.4).
+  ///
+  /// Места открываются уровнями, а не золотом за штуку: смена — это то, что
+  /// спуск делает без игрока, и её длина обязана быть целью, а не покупкой.
+  /// Сами сменщики покупаются задатком, как и любой наёмник.
+  int get relayPerSlot {
+    final level = levelOf(Building.campfire);
+    var places = 0;
+    for (final gate in [
+      Tuning.relayFirstLevel,
+      Tuning.relaySecondLevel,
+      Tuning.relayThirdLevel,
+    ]) {
+      if (level >= gate) places++;
+    }
+    return places;
+  }
 
   /// Суммарный вклад Заставы в силу спуска.
   ///

@@ -26,6 +26,7 @@ class SaveMigrations {
     SaveMigration(3, _accountAndSeason),
     SaveMigration(4, _recentDepths),
     SaveMigration(5, _lairs),
+    SaveMigration(6, _relayAndResonance),
   ];
 
   final List<SaveMigration> steps;
@@ -175,6 +176,21 @@ Map<String, dynamic> _lairs(Map<String, dynamic> raw) {
   if (profile is Map) {
     profile['lairCircles'] ??= <String, dynamic>{};
     profile['lairAttempts'] ??= 0;
+  }
+  return raw;
+}
+
+/// 6 → 7: смена у Костра и Отзвук глубины (раунд 40).
+///
+/// Пустая смена и нулевой Отзвук — и это правда: ни того ни другого до этой
+/// версии не было. Проставляется явно по правилу миграции 1 → 2: сейв говорит,
+/// что было, а не полагается на умолчание читателя.
+Map<String, dynamic> _relayAndResonance(Map<String, dynamic> raw) {
+  final profile = raw['profile'];
+  if (profile is Map) {
+    profile['echoResonance'] ??= 0;
+    final roster = profile['roster'];
+    if (roster is Map) roster['relay'] ??= <dynamic>[];
   }
   return raw;
 }

@@ -27,6 +27,8 @@ class CurveConfig {
     this.startDepthShare = 0.30,
     this.echoNodeBaseCost = 30.0,
     this.echoNodeCostGrowth = 2.6,
+    this.echoResonancePower = 0.005,
+    this.echoResonanceCostGrowth = 2.0,
     this.passivePointPerFloors = 5,
     this.passivePointCap = 60,
     this.lairUnlockDepth = 150,
@@ -90,6 +92,20 @@ class CurveConfig {
   /// Цена узла древа Эха: `base * growth^(куплено / 4)`.
   final double echoNodeBaseCost;
   final double echoNodeCostGrowth;
+
+  /// «Отзвук глубины» — бесконечный узел за выкупленным древом (GDD §8.3.1).
+  ///
+  /// Уровень множит всю силу наёмника на `1 + power` — так же, как её множит
+  /// ранг, — а стоит в `costGrowth` раз дороже предыдущего.
+  ///
+  /// **Прибавка силы здесь не остаётся прибавкой.** Первые числа (0.01 и
+  /// 1.25) считались по прямому эффекту — пара этажей — и дали +38 % рекорда
+  /// к сто пятидесятому контракту: сила уводит глубже, глубже падают вещи
+  /// выше уровнем, а цикл добычи усиливает сам себя (`Curves.lootLoopGain`
+  /// больше единицы). Подобрано замером `--campaign 150` на двух сидах:
+  /// 0.005 и 2 дают +2 % при двух десятках уровней (раунд 40).
+  final double echoResonancePower;
+  final double echoResonanceCostGrowth;
 
   /// Дерево пассивок: сколько этажей рекорда стоит одно очко и где потолок.
   ///
@@ -165,6 +181,8 @@ class CurveConfig {
         startDepthShare: _d(j, 'startDepthShare', 0.30),
         echoNodeBaseCost: _d(j, 'echoNodeBaseCost', 30.0),
         echoNodeCostGrowth: _d(j, 'echoNodeCostGrowth', 2.6),
+        echoResonancePower: _d(j, 'echoResonancePower', 0.01),
+        echoResonanceCostGrowth: _d(j, 'echoResonanceCostGrowth', 1.25),
         passivePointPerFloors: _i(j, 'passivePointPerFloors', 5),
         passivePointCap: _i(j, 'passivePointCap', 60),
         lairUnlockDepth: _i(j, 'lairUnlockDepth', 150),

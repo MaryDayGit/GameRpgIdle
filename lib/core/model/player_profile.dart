@@ -108,6 +108,7 @@ class Contract {
     List<String>? abilities,
     this.echoTreeBonus = 0.0,
     Iterable<String>? echoNodes,
+    this.echoResonance = 0,
     Iterable<String>? passiveNodes,
     this.startDepthBonus = 0,
     this.forkPolicy = ForkPolicy.loot,
@@ -141,6 +142,10 @@ class Contract {
   /// причине, что снаряжение: древо между отправкой и гибелью растёт, а повтор
   /// обязан показать тот бой, который уже записан.
   final List<String> echoNodes;
+
+  /// Уровень Отзвука глубины на момент отправки — часть снимка по той же
+  /// причине, что и узлы: он растёт, пока наёмник внизу.
+  final int echoResonance;
 
   /// Взятые узлы дерева пассивок на момент отправки. Снимок по той же
   /// причине: дерево растёт, пока наёмник внизу.
@@ -291,7 +296,7 @@ class Contract {
         gear: loadout.copy(),
         abilities: abilities,
         echoTreeBonus: echoTreeBonus,
-        tree: EchoTree(bought: echoNodes),
+        tree: EchoTree(bought: echoNodes, resonance: echoResonance),
         passives: PassiveTree(allocated: passiveNodes),
         startDepthBonus: startDepthBonus,
         powerMultiplier: mercenary.rank.statMultiplier,
@@ -512,9 +517,24 @@ class PlayerProfile {
     var bought = 0;
     while (true) {
       final node = tree.nextByBalancedPolicy();
-      if (node == null || !buyEchoNode(node)) return bought;
+      if (node == null || !buyEchoNode(node)) break;
       bought++;
     }
+    // За выкупленным древом — Отзвук, и автоматика вкладывает в него всё:
+    // выбора там нет, есть только «сколько».
+    while (buyResonance()) {
+      bought++;
+    }
+    return bought;
+  }
+
+  /// Покупает уровень Отзвука глубины. `false` — древо не выкуплено или не
+  /// хватает Эха.
+  bool buyResonance() {
+    final left = tree.buyResonance(echo);
+    if (left == null) return false;
+    echo = left;
+    return true;
   }
 
   /// Очки дерева пассивок: даёт достигнутая глубина, тратит дерево.
@@ -633,6 +653,52 @@ class PlayerProfile {
 
   /// Есть ли свободный слот спуска.
   bool get canDeploy => roster.canDeployWithin(deploySlots);
+
+  // --- Смена (GDD §9.4) -----------------------------------------------------
+  //
+  // Раунд 40. Слот спуска освобождался только забором добычи, и ночь без
+  // игрока стоила ровно одного контракта: наёмник гибнет в 23:20, слот стоит
+  // до утра. Смена — это наёмники, нанятые заранее, которые уходят вниз в
+  // секунду гибели предыдущего и в его сборке.
+
+  /// Сколько мест для сменщиков у Костра на каждый слот спуска.
+  int get relayPerSlot => relayPerSlotOverride ?? outpost.relayPerSlot;
+
+  /// Длина очереди, подставленная балансировщиком: `sim_cli --daily`
+  /// сравнивает очереди разной длины, не перестраивая Костёр. В сейв не
+  /// пишется, в игре всегда `null`.
+  int? relayPerSlotOverride;
+
+  /// Сколько сменщиков помещается всего.
+  int get relayCapacity => relayPerSlot * deploySlots;
+
+  /// Есть ли место в смене.
+  bool get canQueueRelay => roster.relay.length < relayCapacity;
+
+  /// Ставит наёмника из резерва в смену.
+  ///
+  /// Его собственное снаряжение сразу возвращается в сундук: сменщик уйдёт
+  /// вниз в вещах павшего, а комплект, запертый на человеке, который его
+  /// никогда не наденет, — это молча потерянный комплект.
+  bool queueRelay(Mercenary m) {
+    if (!canQueueRelay || !roster.reserve.contains(m)) return false;
+    stash.addAll(m.gear.unequipAll());
+    roster.reserve.remove(m);
+    roster.relay.add(m);
+    return true;
+  }
+
+  /// Возвращает сменщика в резерв.
+  bool unqueueRelay(Mercenary m) {
+    if (!roster.relay.remove(m)) return false;
+    roster.reserve.add(m);
+    return true;
+  }
+
+  /// Насколько поздно игра может заметить гибель, чтобы это ещё считалось
+  /// «при игроке». Часы экрана тикают раз в секунду; всё, что дольше, — это
+  /// догон после закрытого приложения.
+  static const relayPresenceWindow = Duration(seconds: 5);
 
   /// С какого этажа начинается спуск.
   ///
@@ -979,7 +1045,7 @@ class PlayerProfile {
       gear: m.gear.copy(),
       abilities: List.of(m.abilities),
       echoTreeBonus: outpost.descentPowerBonus,
-      tree: EchoTree(bought: List.of(tree.bought)),
+      tree: EchoTree(bought: List.of(tree.bought), resonance: tree.resonance),
       passives: PassiveTree(allocated: List.of(passives.allocated)),
       startDepthBonus: startDepthBonus,
       powerMultiplier: m.rank.statMultiplier,
@@ -1119,7 +1185,11 @@ class PlayerProfile {
     final finished = <Contract>[];
     final utc = now.toUtc();
 
-    for (final contract in contracts) {
+    // По индексу, а не итератором: сменщик, ушедший вниз вместо павшего,
+    // дописывается в этот же список и догоняется в этом же проходе. Иначе за
+    // ночь смена проходила бы по одному человеку на каждый запуск игры.
+    for (var i = 0; i < contracts.length; i++) {
+      final contract = contracts[i];
       // Догоняем всё, что случилось, пока приложение было закрыто. Циклом, а
       // не одним шагом: за ночь наёмник успевает дойти до развилки, простоять
       // весь бюджет и доспуститься по приказу — три перехода подряд, и любой
@@ -1146,6 +1216,7 @@ class PlayerProfile {
 
         contract.state = ContractState.awaitingCollection;
         finished.add(contract);
+        _relieve(contract, endsAt, utc);
         break;
       }
     }
@@ -1233,6 +1304,8 @@ class PlayerProfile {
   /// контракт не закрыт, ход у игрока есть.
   bool get isStranded =>
       roster.reserve.isEmpty &&
+      // Сменщика можно вернуть в резерв — значит ход есть.
+      roster.relay.isEmpty &&
       roster.deployed.isEmpty &&
       gold < Roster.hireCost(MercRank.ragged);
 
@@ -1308,6 +1381,48 @@ class PlayerProfile {
 
     roster.deploy(m, limit: deploySlots);
 
+    // Сид разлома общий для всех и на все сутки: перекатить его, закрыв
+    // приложение, нельзя.
+    final today = rift ? DailyRift.on(now ?? DateTime.now()) : null;
+
+    // Сутки засчитываются в момент ОТПРАВКИ, а не забора добычи. Иначе игрок,
+    // не забравший вчерашний разлом, сегодня попал бы в него второй раз.
+    if (today != null) riftDoneOn = today.day;
+
+    return _launch(
+      m,
+      seed: today?.seed ?? seed,
+      brandRank: brand,
+      startedAtUtc: (now ?? DateTime.now()).toUtc(),
+      forkPolicy: forkPolicy,
+      ropeRecord: maxDepthEver,
+      riftDay: today?.day,
+    );
+  }
+
+  /// Уводит наёмника вниз: снимок, первый отрезок, запись контракта.
+  ///
+  /// Одно место на обе дороги вниз — отправку руками и смену. Две сборки
+  /// одного контракта разошлись бы молча, и повтор сменщика показал бы не тот
+  /// бой, что записан.
+  ///
+  /// [ropeRecord] — рекорд, от которого спущена верёвка. У отправки это
+  /// рекорд игрока; у сменщика — ещё и глубина павшего, чья добыча не забрана:
+  /// до верёвки ему дела нет, забрали добычу или нет.
+  ///
+  /// [unattended] — наёмник уходит, когда игрока нет, и на развилках не
+  /// встаёт. По глубине это тот же спуск, что простоявший срок и пошедший по
+  /// приказу, — без десяти минут стояния, которые некому прервать.
+  Contract _launch(
+    Mercenary m, {
+    required int seed,
+    required int brandRank,
+    required DateTime startedAtUtc,
+    required ForkPolicy forkPolicy,
+    required int ropeRecord,
+    int? riftDay,
+    bool unattended = false,
+  }) {
     // СБОРКА ИГРОКА УХОДИТ ВНИЗ КАК ЕСТЬ.
     //
     // Раньше отправка пересобирала снаряжение заново — «наёмник берёт лучшее
@@ -1328,38 +1443,31 @@ class PlayerProfile {
         onlyEmpty: true,
         skipRelics: true);
 
-    // Разлом дня: сид общий для всех и на все сутки, значит перекатить его,
-    // закрыв приложение, нельзя.
-    final today = rift ? DailyRift.on(now ?? DateTime.now()) : null;
-
     final contract = Contract(
       mercenary: m,
-      seed: today?.seed ?? seed,
-      brandRank: brand,
-      startedAtUtc: (now ?? DateTime.now()).toUtc(),
+      seed: seed,
+      brandRank: brandRank,
+      startedAtUtc: startedAtUtc,
       loadout: m.gear.copy(),
       abilities: m.abilities,
       echoTreeBonus: outpost.descentPowerBonus,
       echoNodes: tree.bought,
+      echoResonance: tree.resonance,
       passiveNodes: passives.allocated,
       // Верёвка плюс узлы «Бездны», одним числом и снимком: рекорд может
       // вырасти, пока наёмник внизу, а повтор обязан начаться там же, где
       // начался посчитанный ран.
-      startDepthBonus: startDepthBonus + startDepth - 1,
+      startDepthBonus: startDepthBonus + Curves.startDepth(ropeRecord) - 1,
       forkPolicy: forkPolicy,
       outpost: outpostSnapshot,
-      riftDay: today?.day,
-    );
-
-    // Сутки засчитываются в момент ОТПРАВКИ, а не забора добычи. Иначе игрок,
-    // не забравший вчерашний разлом, сегодня попал бы в него второй раз.
-    if (today != null) riftDoneOn = today.day;
+      riftDay: riftDay,
+    )..forkWaitingSpent = unattended;
 
     // Профиль спуска собирается ИЗ СНИМКА контракта — тем же
     // `replayProfile()`, которым его собирает повтор и каждый следующий
     // отрезок. Один источник: отрезки считаются много раз за спуск, и любая
     // вторая сборка профиля рано или поздно разошлась бы с первой.
-    _simulateSegment(contract);
+    _simulateSegment(contract, pause: !unattended);
 
     // Отрезок посчитан целиком прямо сейчас, но игроку он открывается не
     // раньше, чем наёмник до его конца дошёл бы. Контракт остаётся в спуске:
@@ -1369,6 +1477,61 @@ class PlayerProfile {
 
     contracts.add(contract);
     return contract;
+  }
+
+  /// Сменщик уходит вниз вместо павшего — в секунду гибели и в его сборке.
+  ///
+  /// **Секунда гибели, а не момент, когда игра это заметила.** Догон после
+  /// ночи находит гибель в 23:20 только утром, но сменщик ушёл тогда же:
+  /// спуск — функция от снимка и сида, и начать его задним числом так же
+  /// честно, как досчитать развилку, простоявшую срок.
+  ///
+  /// **Сборка павшего.** Игрок собирает билд один раз, смена — это те же руки
+  /// и другие жизни: снаряжение переходит на сменщика слот в слот, вместе с
+  /// умениями и приказом. Ранг и черта остаются свои — это и есть то, за что
+  /// платили задатком. Добыча, золото и Эхо павшего ждут получения, как
+  /// ждали бы без смены: повод вернуться в игру никуда не девается.
+  ///
+  /// Отзыв смену не зовёт: отзывает игрок, и раз он здесь, решает он.
+  void _relieve(Contract fallen, DateTime at, DateTime utc) {
+    if (roster.relay.isEmpty) return;
+    final next = roster.relay.first;
+    final predecessor = fallen.mercenary;
+
+    for (var slot = 0; slot < Equipment.slotCount; slot++) {
+      next.gear.equipAt(slot, predecessor.gear.at(slot));
+      predecessor.gear.equipAt(slot, null);
+    }
+    next.abilities
+      ..clear()
+      ..addAll(fallen.abilities);
+    next.forkPolicy = fallen.forkPolicy;
+    roster.relieve(next);
+
+    _launch(
+      next,
+      seed: relaySeed(fallen, next),
+      // Клеймо павшего, а не выставленное сейчас: смена продолжает спуск,
+      // который игрок отправил, а не начинает новый.
+      brandRank: fallen.brandRank,
+      startedAtUtc: at,
+      forkPolicy: fallen.forkPolicy,
+      ropeRecord: math.max(maxDepthEver, fallen.result?.maxDepth ?? 0),
+      unattended: utc.difference(at) > relayPresenceWindow,
+    );
+  }
+
+  /// Сид сменщика: из сида павшего и имени сменщика.
+  ///
+  /// Не `hashCode` строки — он не обязан совпадать между запусками, а прогноз
+  /// смены (`RelayForecast`) и настоящий догон обязаны посчитать один и тот же
+  /// спуск.
+  static int relaySeed(Contract fallen, Mercenary next) {
+    var hash = 0x811c9dc5;
+    for (final unit in next.id.codeUnits) {
+      hash = ((hash ^ unit) * 0x01000193) & 0xffffffff;
+    }
+    return (fallen.seed * 31 + hash) & 0x7fffffff;
   }
 
   /// Пересчитывает незаконченные спуски после загрузки сохранения.

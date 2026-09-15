@@ -26,6 +26,7 @@ Future<void> showMercenarySheet(
   VoidCallback? onHire,
   VoidCallback? onBuild,
   VoidCallback? onDeploy,
+  VoidCallback? onRelay,
   String? note,
   int abilitySlots = 4,
   HeroProfile Function()? profileFor,
@@ -41,6 +42,7 @@ Future<void> showMercenarySheet(
       onHire: onHire,
       onBuild: onBuild,
       onDeploy: onDeploy,
+      onRelay: onRelay,
       note: note,
       abilitySlots: abilitySlots,
       profileFor: profileFor,
@@ -58,6 +60,7 @@ class _MercBody extends StatelessWidget {
     this.abilitySlots = 4,
     this.profileFor,
     this.onDeploy,
+    this.onRelay,
     this.note,
   });
 
@@ -75,6 +78,9 @@ class _MercBody extends StatelessWidget {
   /// бы силу билда, с которой он вниз не пойдёт.
   final HeroProfile Function()? profileFor;
   final VoidCallback? onDeploy;
+
+  /// Поставить в смену у Костра. `null` — мест в смене нет.
+  final VoidCallback? onRelay;
   final String? note;
 
   @override
@@ -197,6 +203,18 @@ class _MercBody extends StatelessWidget {
                   onDeploy!();
                 },
                 child: Text(S.sendIntoAbyss),
+              ),
+            ],
+            if (onRelay != null) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onRelay!();
+                },
+                icon: const Icon(Icons.local_fire_department_outlined,
+                    size: 18),
+                label: Text(S.toRelayLong),
               ),
             ],
           ],

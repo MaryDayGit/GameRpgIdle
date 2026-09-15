@@ -680,6 +680,7 @@ class ContentPack {
     'startDepthShare',
     'passivePointPerFloors', 'passivePointCap',
     'echoNodeBaseCost', 'echoNodeCostGrowth',
+    'echoResonancePower', 'echoResonanceCostGrowth',
     'lairUnlockDepth', 'lairFirstDepth', 'lairDepthPerCircle',
     'lairOfferingFloors', 'lairRelicChance', 'lairReferenceDepth',
     'lairFirstKillPoints', 'lairGuardianMight',
@@ -733,5 +734,6 @@ class ContentPack {
     'shardSalvageLevel', 'shardSalvageChance', 'salvageRatePerLevel',
     'forecastFloorsBase', 'forecastFloorsPerLevel',
     'restHealPerLevel',
+    'relayFirstLevel', 'relaySecondLevel', 'relayThirdLevel',
   };
 }

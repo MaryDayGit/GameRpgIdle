@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rift/core/balance/tuning.dart';
 import 'package:rift/core/content/content_pack.dart';
+import 'package:rift/core/model/mercenary.dart';
+import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/player_profile.dart';
+import 'package:rift/core/sim/rng.dart';
 import 'package:rift_app/data/content.dart';
 import 'package:rift_app/data/notifications.dart';
 import 'package:rift_app/data/save_store.dart';
@@ -50,6 +53,22 @@ class _FakeNotifier implements DeathNotifier {
       if (job['id'] == id) return job;
     }
     return null;
+  }
+
+  @override
+  Future<void> scheduleRelayEnd({
+    required int id,
+    required DateTime whenUtc,
+    required int runs,
+    required int depth,
+  }) async {
+    scheduled.add({
+      'id': id,
+      'when': whenUtc,
+      'runs': runs,
+      'depth': depth,
+      'relay': true,
+    });
   }
 
   @override
@@ -200,6 +219,80 @@ void main() {
           GameController.notificationIdFor(contract),
           GameController.runEndIdFor(contract),
         ]));
+  });
+
+  group('смена у Костра', () {
+    // Под сменой гибель — не повод звать игрока: вниз и так уйдёт следующий.
+    // Весть о каждой гибели будила бы ночью ради того, что случится без него;
+    // конец всей смены сообщает одно уведомление.
+    late GameController relayController;
+
+    setUp(() {
+      final profile = PlayerProfile(
+        outpost: Outpost({Building.campfire: Tuning.relayFirstLevel}),
+        maxDepthEver: 40,
+      );
+      profile.roster.reserve.addAll([
+        MercFactory.roll(Rng(1), idPrefix: 'down'),
+        MercFactory.roll(Rng(2), idPrefix: 'next'),
+      ]);
+      relayController = GameController(
+        content: content,
+        store: SaveStore(dir),
+        profile: profile,
+        clock: () => clock,
+        notifier: notifier,
+      );
+    });
+
+    tearDown(() => relayController.dispose());
+
+    test('гибель под сменой молчит, конец смены — одно уведомление', () {
+      final reserve = relayController.profile.roster.reserve;
+      final contract = relayController.deploy(reserve.first)!;
+      expect(notifier.last(GameController.runEndIdFor(contract)), isNotNull,
+          reason: 'пока смены нет, весть о гибели нужна');
+
+      expect(relayController.queueRelay(reserve.first), isTrue);
+
+      expect(notifier.cancelled, contains(GameController.runEndIdFor(contract)));
+      final relay = notifier.last(GameController.relayNoticeId)!;
+      expect(relay['relay'], isTrue);
+      expect(relay['runs'], 1);
+    });
+
+    test('конец смены наступает тогда, когда обещало уведомление', () {
+      final reserve = relayController.profile.roster.reserve;
+      relayController.deploy(reserve.first);
+      relayController.queueRelay(reserve.first);
+      final promised =
+          notifier.last(GameController.relayNoticeId)!['when']! as DateTime;
+
+      clock = clock.add(const Duration(days: 1));
+      relayController.tick();
+
+      final contracts = relayController.profile.contracts;
+      expect(contracts, hasLength(2), reason: 'сменщик ушёл вниз');
+      expect(contracts.last.segmentEndsAtUtc, promised,
+          reason: 'прогноз считал тот же спуск, что и настоящий догон');
+      expect(notifier.cancelled, contains(GameController.relayNoticeId),
+          reason: 'смена пуста — уведомлять больше не о чем');
+    });
+
+    test('вернули сменщика — весть о гибели вернулась', () {
+      final reserve = relayController.profile.roster.reserve;
+      final contract = relayController.deploy(reserve.first)!;
+      final merc = reserve.first;
+      relayController.queueRelay(merc);
+      final before = notifier.scheduled.length;
+
+      expect(relayController.unqueueRelay(merc), isTrue);
+
+      final again = notifier.scheduled
+          .skip(before)
+          .where((j) => j['id'] == GameController.runEndIdFor(contract));
+      expect(again, isNotEmpty);
+    });
   });
 
   test('разрешение спрашивается при отправке и один раз', () async {

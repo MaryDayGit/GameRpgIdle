@@ -819,6 +819,14 @@ const helpSections = <HelpSection>[
           'A branch opens in order: what went into damage did not go into '
               'survival.',
         ),
+        Phrase(
+          'За выкупленным древом открывается Отзвук глубины — бесконечный '
+              'узел. Каждый уровень немного добавляет силы всем наёмникам и '
+              'стоит дороже предыдущего: Эхо больше не копится впустую.',
+          'Beyond the finished tree lies the Echo of the Deep — an endless '
+              'node. Every level adds a little power to every mercenary and '
+              'costs more than the last: Echo no longer piles up for nothing.',
+        ),
       ]),
       HelpBlock(Phrase('Дерево пассивок', 'The passive tree'), [
         Phrase(
@@ -947,6 +955,26 @@ const helpSections = <HelpSection>[
           'With nobody left and nothing to pay with, the Tavern hands over a '
               'volunteer for nothing. There is always someone desperate '
               'enough to walk into the rift.',
+        ),
+      ]),
+      HelpBlock(Phrase('Смена у Костра', 'Relief at the campfire'), [
+        Phrase(
+          'Нанятого наёмника можно поставить в смену. Когда тот, кто внизу, '
+              'погибнет, сменщик уйдёт следом в ту же секунду — в его '
+              'снаряжении, с его умениями и приказом. Так спуск идёт, пока '
+              'вас нет.',
+          'A hired mercenary can be put on relief. When the one below falls, '
+              'the relief goes down that very second — in the same gear, with '
+              'the same skills and orders. That is how a descent keeps going '
+              'while you are away.',
+        ),
+        Phrase(
+          'Добыча каждого павшего ждёт вас на Заставе. Места в смене даёт '
+              'Костёр, а обещание одно: уведомление придёт, когда погибнет '
+              'последний.',
+          'Every fallen mercenary’s haul waits for you at the Outpost. The '
+              'Campfire opens relief places, and there is one promise: the '
+              'notification comes when the last one falls.',
         ),
       ]),
     ],

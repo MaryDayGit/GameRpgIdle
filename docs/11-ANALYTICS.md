@@ -132,7 +132,9 @@ Gradle-плагин применяется только когда файл кл
 | `fork_choice` | игрок выбрал путь | глубина, ожидание, вариант |
 | `haul_collected` | забрал добычу | `latency` — через сколько вернулся |
 | `loot_decision` | решение над вещью | `keep` / `melt` / `sell` / `auto` |
-| `outpost_upgrade`, `echo_node`, `passive_alloc`, `passive_reset`, `brand_rank`, `merc_hired` | мета-прогресс | что берут и в каком порядке |
+| `outpost_upgrade`, `echo_node`, `passive_alloc`, `passive_reset`, `brand_rank`, `merc_hired` | мета-прогресс | что берут и в каком порядке; Отзвук глубины — `echo_node` с `node = resonance` |
+| `relay_queued` | наёмник встал в смену у Костра | `queued` против `capacity` — пользуются ли сменой |
+| `relay_takeover` | сменщик ушёл вниз вместо павшего | `unattended` — без игрока; доля таких уходов — главный замер смены |
 | `tutorial_step`, `tutorial_done` | первый запуск | воронка и доля пропусков |
 | `notifications_answer` | ответ на системный запрос | от него зависит вся петля отсутствия |
 | `language_set` | смена языка | |

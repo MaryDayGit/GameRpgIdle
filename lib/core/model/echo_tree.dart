@@ -19,8 +19,12 @@ import 'stat_key.dart';
 /// потому что Эхо экспоненциально по глубине (GDD §8.2): только так число
 /// новых узлов за ран остаётся константой, а не затухает к десятому рану.
 class EchoTree {
-  EchoTree({double? baseCost, double? costGrowth, Iterable<String>? bought})
-      : _baseCost = baseCost,
+  EchoTree({
+    double? baseCost,
+    double? costGrowth,
+    Iterable<String>? bought,
+    this.resonance = 0,
+  })  : _baseCost = baseCost,
         _costGrowth = costGrowth,
         _bought = {...?bought};
 
@@ -84,6 +88,45 @@ class EchoTree {
     final left = (available - nextNodeCost).floor();
     _bought.add(nodeId);
     return left;
+  }
+
+  // --- Отзвук глубины --------------------------------------------------------
+  //
+  // Раунд 40: к тридцать пятому контракту древо выкуплено, а спуск приносит
+  // миллиарды Эха, которые некуда деть. Валюта, которой нечего купить,
+  // перестаёт быть наградой ровно так же, как золото в раунде 27.
+
+  /// Уровень «Отзвука глубины» — бесконечного узла за выкупленным древом.
+  int resonance;
+
+  /// Во сколько раз Отзвук умножает силу наёмника.
+  ///
+  /// Умножает, а не прибавляет: каждый уровень обязан стоить примерно столько
+  /// же глубины, сколько предыдущий, иначе за уровнем двухсотым покупка
+  /// перестала бы что-либо значить. Не разгоняется цена: см.
+  /// `Curves.echoResonanceCostGrowth`.
+  double get resonanceMultiplier =>
+      math.pow(1.0 + Curves.echoResonancePower, resonance).toDouble();
+
+  /// Цена следующего уровня. Первый стоит столько, сколько стоил бы следующий
+  /// узел древа, будь он в нём, — лестница продолжается, а не начинается
+  /// заново с дешёвой ступени.
+  double get resonanceCost =>
+      baseCost *
+      math.pow(costGrowth, totalNodes / 4.0).toDouble() *
+      math.pow(Curves.echoResonanceCostGrowth, resonance).toDouble();
+
+  /// Открыт ли Отзвук: только за выкупленным древом. Раньше он отнимал бы Эхо
+  /// у узлов, которые меняют правила, а не числа.
+  bool get resonanceOpen => complete;
+
+  /// Покупает уровень Отзвука. Возвращает остаток Эха или `null`.
+  int? buyResonance(int available) {
+    if (!resonanceOpen) return null;
+    final cost = resonanceCost;
+    if (available < cost) return null;
+    resonance++;
+    return (available - cost).floor();
   }
 
   /// Все купленные узлы одним списком.

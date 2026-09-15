@@ -227,6 +227,49 @@ void main() {
     });
   });
 
+  group('своя мощь стража', () {
+    // Раунд 40: одна мощь на всех держала замысел ровно у одного стража. Своя
+    // мощь правит логово, не трогая чисел, которые выверяет аудит.
+    EnemyArchetype copyOf(EnemyArchetype g, {double? lairMight}) =>
+        EnemyArchetype(
+          id: g.id,
+          name: g.name,
+          hpMult: g.hpMult,
+          dpsMult: g.dpsMult,
+          attackSpeed: g.attackSpeed,
+          armorMult: g.armorMult,
+          damageType: g.damageType,
+          resists: g.resists,
+          isBoss: true,
+          traits: g.traits,
+          embodies: g.embodies,
+          skills: g.skills,
+          lairMight: lairMight,
+        );
+
+    double hpOf(EnemyArchetype who) => LairFight.start(
+          profile: HeroProfile(),
+          guardian: who,
+          depth: Curves.lairDepth(1),
+          seed: 1,
+        ).enemies.first.maxHp;
+
+    test('без своей мощи страж берёт общую, со своей — свою', () {
+      final shared = copyOf(guardian());
+      final own = copyOf(guardian(), lairMight: 5.0);
+
+      expect(hpOf(own) / hpOf(shared),
+          closeTo(5.0 / Curves.lairGuardianMight, 1e-9));
+    });
+
+    test('мощь не больше нуля контент не пропускает', () {
+      final raw = readContentJson();
+      final enemies = raw['enemies'] as Map<String, dynamic>;
+      ((enemies['guardians'] as List).first as Map)['lairMight'] = 0.0;
+      expect(() => ContentPack.parse(raw), throwsA(anything));
+    });
+  });
+
   test('поражение: наёмник гибнет, подношение не возвращается', () {
     final p = _player(maxDepth: Curves.lairUnlockDepth, gold: 1e30);
     final g = guardian();

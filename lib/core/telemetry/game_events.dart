@@ -235,6 +235,25 @@ abstract final class GameEvents {
         'gold': p.gold.round(),
       });
 
+  /// Сменщик встал в смену (GDD §9.4). Длина смены против вместимости — то,
+  /// по чему видно, пользуются ли ею вообще.
+  static AnalyticsEvent relayQueued(PlayerProfile p) =>
+      AnalyticsEvent('relay_queued', {
+        'queued': p.roster.relay.length,
+        'capacity': p.relayCapacity,
+        'max_depth_ever': p.maxDepthEver,
+      });
+
+  /// Сменщик ушёл вниз вместо павшего. `unattended` — без игрока: ради таких
+  /// уходов смена и заведена, и их доля — её главный замер.
+  static AnalyticsEvent relayTakeover(Contract c, PlayerProfile p) =>
+      AnalyticsEvent('relay_takeover', {
+        'merc_rank': c.mercenary.rank.name,
+        'unattended': c.forkWaitingSpent,
+        'left': p.roster.relay.length,
+        'max_depth_ever': p.maxDepthEver,
+      });
+
   // --- Первый запуск и здоровье ---------------------------------------------
 
   /// Шаг обучения показан. Воронка первого запуска: где именно из неё

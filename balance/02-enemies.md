@@ -85,14 +85,37 @@
 
 Тот же босс, но в своём логове и в полную силу. Числа у них свои, потому что роли разные: в бездне босс попадается каждые несколько этажей и не должен останавливать спуск, а к стражу игрок приходит нарочно — и вот перед ним и положено думать, чем идти. Подбираются не на глаз: `dart run tool/audit_cli.dart --bosses` гоняет четыре эталонные сборки и четыре «Проводника» против каждого и требует, чтобы каждого стража ломала хотя бы одна сборка, каждый сдавался хотя бы одной стихии и ничей профиль не повторял чужой.
 
-<!-- balance: file=enemies path=guardians kind=wide -->
-| id | название | `hpMult` | `dpsMult` | `attackSpeed` | `armorMult` | `resists.fire` | `resists.cold` | `resists.voidType` | `resists.lightning` |
-|---|---|---|---|---|---|---|---|---|---|
-| `warden_ash` | Владыка Пепельных залов | 14 | 1.5 | 1.1 | 0.3 | 60 | -30 |  |  |
-| `warden_void` | Хозяин Пустотных нор | 19 | 1.6 | 0.55 | 0.4 |  |  | 60 | -30 |
-| `warden_storm` | Владыка Грозового предела | 15 | 1.5 | 1.8 | 0.6 |  |  | -30 | 60 |
-| `warden_frost` | Патриарх Морозной тверди | 11 | 1.05 | 0.7 | 0.7 | -30 | 65 |  |  |
-
+<!-- balance: file=enemies path=guardians kind=long -->
+| id | название | параметр | значение |
+|---|---|---|---|
+| `warden_ash` | Владыка Пепельных залов | `lairMight` | 5 |
+| `warden_ash` | Владыка Пепельных залов | `hpMult` | 14 |
+| `warden_ash` | Владыка Пепельных залов | `dpsMult` | 1.5 |
+| `warden_ash` | Владыка Пепельных залов | `attackSpeed` | 1.1 |
+| `warden_ash` | Владыка Пепельных залов | `armorMult` | 0.3 |
+| `warden_ash` | Владыка Пепельных залов | `resists.fire` | 60 |
+| `warden_ash` | Владыка Пепельных залов | `resists.cold` | -30 |
+| `warden_void` | Хозяин Пустотных нор | `lairMight` | 5 |
+| `warden_void` | Хозяин Пустотных нор | `hpMult` | 19 |
+| `warden_void` | Хозяин Пустотных нор | `dpsMult` | 1.6 |
+| `warden_void` | Хозяин Пустотных нор | `attackSpeed` | 0.55 |
+| `warden_void` | Хозяин Пустотных нор | `armorMult` | 0.4 |
+| `warden_void` | Хозяин Пустотных нор | `resists.voidType` | 60 |
+| `warden_void` | Хозяин Пустотных нор | `resists.lightning` | -30 |
+| `warden_storm` | Владыка Грозового предела | `lairMight` | 3.5 |
+| `warden_storm` | Владыка Грозового предела | `hpMult` | 15 |
+| `warden_storm` | Владыка Грозового предела | `dpsMult` | 1.5 |
+| `warden_storm` | Владыка Грозового предела | `attackSpeed` | 1.8 |
+| `warden_storm` | Владыка Грозового предела | `armorMult` | 0.6 |
+| `warden_storm` | Владыка Грозового предела | `resists.lightning` | 60 |
+| `warden_storm` | Владыка Грозового предела | `resists.voidType` | -30 |
+| `warden_frost` | Патриарх Морозной тверди | `lairMight` | 5.5 |
+| `warden_frost` | Патриарх Морозной тверди | `hpMult` | 11 |
+| `warden_frost` | Патриарх Морозной тверди | `dpsMult` | 1.05 |
+| `warden_frost` | Патриарх Морозной тверди | `attackSpeed` | 0.7 |
+| `warden_frost` | Патриарх Морозной тверди | `armorMult` | 0.7 |
+| `warden_frost` | Патриарх Морозной тверди | `resists.cold` | 65 |
+| `warden_frost` | Патриарх Морозной тверди | `resists.fire` | -30 |
 
 ---
 

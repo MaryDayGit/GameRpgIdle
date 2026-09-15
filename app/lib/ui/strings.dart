@@ -266,6 +266,29 @@ class S {
       : '${pluralEn(bought, "node")} of $total bought. '
           'Each purchase raises the price of the next.';
 
+  static String get resonanceTitle =>
+      const Phrase('Отзвук глубины', 'Echo of the Deep').text;
+
+  static String resonanceAbout(int level, String multiplier, String step) =>
+      Lang.current == Lang.ru
+          ? 'Уровень $level · сила наёмника ×$multiplier. Каждый уровень '
+              'добавляет $step ко всей силе и стоит дороже предыдущего.'
+          : 'Level $level · mercenary power ×$multiplier. Each level adds '
+              '$step to all power and costs more than the last.';
+
+  static String get resonanceLocked => const Phrase(
+        'Бесконечный узел за выкупленным древом: каждый уровень добавляет '
+            'силы всем наёмникам. Откроется, когда будут куплены все узлы.',
+        'An endless node beyond the finished tree: every level adds power '
+            'to every mercenary. Opens once all nodes are bought.',
+      ).text;
+
+  static String resonanceBuy(String cost) =>
+      Lang.current == Lang.ru ? 'Купить за $cost' : 'Buy for $cost';
+
+  static String get resonanceBuyAll =>
+      const Phrase('На всё Эхо', 'Spend it all').text;
+
   // --- Дерево пассивок -------------------------------------------------------
 
   static String get passiveTreeTitle =>
@@ -880,6 +903,17 @@ class S {
           : 'Stopped at a fork below floor $depth. Pick the path while '
               '${she ? "she" : "he"} is still standing there.';
 
+  static String get notifyRelayTitle =>
+      const Phrase('Смена закончилась', 'The relief is over').text;
+
+  static String notifyRelayBody({required int runs, required int depth}) =>
+      Lang.current == Lang.ru
+          ? 'Сменщиков ушло вниз: $runs, глубже всех — этаж $depth. '
+              'Добыча ждёт на Заставе.'
+          : '$runs relief ${runs == 1 ? "mercenary" : "mercenaries"} went '
+              'down, the deepest reached floor $depth. The haul waits at the '
+              'Outpost.';
+
   static String get helpTitle => const Phrase('Справка', 'Help').text;
 
   // --- Застава ---------------------------------------------------------------
@@ -1028,6 +1062,57 @@ class S {
   static String get send => const Phrase('Отправить', 'Send').text;
   static String get slotsBusy =>
       const Phrase('Слоты заняты', 'Slots are busy').text;
+
+  // --- Смена (GDD §9.4) ------------------------------------------------------
+
+  static String get toRelay => const Phrase('В смену', 'To relief').text;
+
+  static String get toRelayLong =>
+      const Phrase('Поставить в смену', 'Put on relief').text;
+
+  static String get fromRelay => const Phrase('Вернуть', 'Take back').text;
+
+  static String relayTitle(int used, int total) => Lang.current == Lang.ru
+      ? 'Смена у Костра · ${outOf(used, total)}'
+      : 'Relief at the campfire · ${outOf(used, total)}';
+
+  static String get relayAboutTitle => const Phrase('Смена', 'Relief').text;
+
+  static String get relayAbout => const Phrase(
+        'Сменщики ждут у Костра. Когда наёмник гибнет, следующий уходит вниз '
+            'в ту же секунду — в его снаряжении, с его умениями и приказом '
+            'на развилку. Ранг и черта у сменщика свои.\n\n'
+            'Добыча павшего ждёт вас на Заставе, как и без смены. Если вас '
+            'нет в игре, сменщик идёт по приказу и на развилках не стоит.\n\n'
+            'Места в смене даёт Костёр.',
+        'Relief mercenaries wait at the campfire. When a mercenary falls, '
+            'the next one goes down that very second — in the same gear, '
+            'with the same skills and fork orders. Rank and trait are their '
+            'own.\n\n'
+            'The fallen one’s haul waits for you at the Outpost, same as '
+            'without a relief. If you are not in the game, the relief follows '
+            'orders and does not stop at forks.\n\n'
+            'The Campfire opens relief places.',
+      ).text;
+
+  static String relayEmpty(int free) => Lang.current == Lang.ru
+      ? 'Свободно мест: $free. Поставьте наёмника из резерва — он уйдёт вниз, '
+          'когда погибнет тот, кто внизу.'
+      : '$free free ${free == 1 ? "place" : "places"}. Put a mercenary from '
+          'the reserve here — they go down when the one below falls.';
+
+  static String relayWaiting(int count) => Lang.current == Lang.ru
+      ? 'Следом уйдут сменщики: $count'
+      : 'Relief waiting to follow: $count';
+
+  static String get awayTitle =>
+      const Phrase('Пока вас не было', 'While you were away').text;
+
+  static String awaySummary(int runs, int deepest) => Lang.current == Lang.ru
+      ? 'Спусков закончено: $runs, глубже всех — этаж $deepest. '
+          'Добыча каждого ждёт в своём журнале.'
+      : '${pluralEn(runs, "descent")} ended, the deepest at floor $deepest. '
+          'Each haul waits in its own journal.';
 
   static String get dailyRift => const Phrase('Разлом дня', 'The Daily Rift').text;
 

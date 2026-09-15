@@ -417,7 +417,7 @@ class _OutpostScreenState extends State<OutpostScreen> {
                       child: _Destination(
                         icon: Icons.hub_outlined,
                         label: S.echoTreeTitle,
-                        marked: c.canBuyEchoNode,
+                        marked: c.canBuyEchoNode || c.canBuyResonance,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => EchoTreeScreen(controller: c),
@@ -621,6 +621,10 @@ class _DescentCard extends StatelessWidget {
         cards.add(_fork(context, contract, marked: first));
         first = false;
       }
+      // Несколько спусков закончились без игрока — чаще всего это смена,
+      // прошедшая за ночь. Первый вопрос «что было» получает ответ одной
+      // карточкой, журналы остаются по одному.
+      if (ready.length >= 2) cards.add(_awayReport(ready));
       first = true;
       for (final contract in ready) {
         cards.add(_ready(context, contract, marked: first));
@@ -656,6 +660,36 @@ class _DescentCard extends StatelessWidget {
             ? S.sendDownFrom(start)
             : S.sendDown,
         style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
+      ),
+    );
+  }
+
+  /// Сводка спусков, чья добыча ждёт (GDD §9.4).
+  Widget _awayReport(List<Contract> ready) {
+    final deepest = ready.fold<int>(
+        0, (best, c) => c.result!.maxDepth > best ? c.result!.maxDepth : best);
+
+    return _Panel(
+      title: S.awayTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            S.awaySummary(ready.length, deepest),
+            style: const TextStyle(fontSize: 14.5, color: RiftColors.ink),
+          ),
+          const SizedBox(height: 6),
+          for (final contract in ready)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '${contract.mercenary.name} — '
+                '${S.floorNumber(contract.result!.maxDepth)}',
+                style: const TextStyle(
+                    fontSize: 13.5, color: RiftColors.inkMuted),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -738,6 +772,14 @@ class _DescentCard extends StatelessWidget {
                     : S.recordIs(record),
             style: const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
           ),
+          if (controller.profile.roster.relay.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              S.relayWaiting(controller.profile.roster.relay.length),
+              style:
+                  const TextStyle(fontSize: 12.5, color: RiftColors.inkFaint),
+            ),
+          ],
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => _watch(context, contract),
@@ -846,6 +888,9 @@ class _RosterSection extends StatelessWidget {
           : controller.profile.maxDepthEver,
       onBuild: () => _openLoadout(context, merc),
       onDeploy: canDeploy ? () => controller.deploy(merc) : null,
+      onRelay: controller.profile.canQueueRelay
+          ? () => controller.queueRelay(merc)
+          : null,
       note: canDeploy
           ? null
           : '${S.allSlotsBusy(controller.profile.roster.deployed.length, controller.profile.deploySlots)}.',
@@ -858,6 +903,7 @@ class _RosterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final reserve = controller.profile.roster.reserve;
     final canDeploy = controller.profile.canDeploy;
+    final canRelay = !canDeploy && controller.profile.canQueueRelay;
 
     return _Panel(
       title: S.mercenariesCount(reserve.length),
@@ -874,8 +920,18 @@ class _RosterSection extends StatelessWidget {
               _MercRow(
                 merc: merc,
                 abilitySlots: controller.profile.abilitySlotsFor(merc),
-                action: canDeploy ? S.send : S.slotsBusy,
-                onTap: canDeploy ? () => controller.deploy(merc) : null,
+                // Слоты заняты, а в смене есть место — кнопка не гаснет, а
+                // предлагает то, что сейчас можно: уйти следом.
+                action: canDeploy
+                    ? S.send
+                    : canRelay
+                        ? S.toRelay
+                        : S.slotsBusy,
+                onTap: canDeploy
+                    ? () => controller.deploy(merc)
+                    : canRelay
+                        ? () => controller.queueRelay(merc)
+                        : null,
                 onOpen: () => _openCard(context, merc),
                 onBuild: () => _openLoadout(context, merc),
                 // Метки обучения — только на первой строке: два виджета с
@@ -883,6 +939,14 @@ class _RosterSection extends StatelessWidget {
                 // на кого-то одного.
                 marked: index == 0,
               ),
+
+          // Смена — здесь же: поставить в неё — то же решение, что
+          // «отправить», только отложенное до чужой гибели. До первого места
+          // у Костра её нет, как и любого рычага, которым нечего двигать.
+          if (controller.profile.relayCapacity > 0) ...[
+            const SizedBox(height: 12),
+            _RelayBlock(controller: controller),
+          ],
 
           // Клеймо стоит рядом с «Отправить», потому что это решение перед
           // КАЖДЫМ спуском (GDD §2.5), а не настройка, которую выставили
@@ -910,6 +974,79 @@ class _RosterSection extends StatelessWidget {
               child: _RiftRow(controller: controller, merc: reserve.first),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Смена у Костра (GDD §9.4): кто уйдёт вниз следом за погибшим.
+class _RelayBlock extends StatelessWidget {
+  const _RelayBlock({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = controller.profile;
+    final relay = profile.roster.relay;
+    final capacity = profile.relayCapacity;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+      decoration: BoxDecoration(
+        color: RiftColors.raised,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(color: RiftColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  S.relayTitle(relay.length, capacity),
+                  style: RiftText.heading,
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.info_outline,
+                    size: 18, color: RiftColors.inkFaint),
+                onPressed: () =>
+                    showAbout(context, S.relayAboutTitle, S.relayAbout),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (relay.isEmpty)
+            Text(
+              S.relayEmpty(capacity),
+              style:
+                  const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
+            )
+          else
+            for (final (index, merc) in relay.indexed)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${index + 1}. ${merc.name} · '
+                      '${merc.rank.forGender(merc.gender)} · '
+                      '${merc.trait.forGender(merc.gender)}',
+                      style: const TextStyle(
+                          fontSize: 13.5, color: RiftColors.ink),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => controller.unqueueRelay(merc),
+                    child: Text(S.fromRelay),
+                  ),
+                ],
+              ),
         ],
       ),
     );

@@ -624,6 +624,62 @@ void main() {
     expect(find.textContaining('${second.name} в бездне'), findsOneWidget);
   });
 
+  testWidgets('слоты заняты, а в смене есть место — наёмник встаёт в смену',
+      (tester) async {
+    // Кнопка у второго наёмника не гаснет «Слоты заняты», а предлагает то,
+    // что сейчас можно: уйти следом за тем, кто внизу (GDD §9.4).
+    controller.dispose();
+    final profile = PlayerProfile(
+      outpost: Outpost({Building.campfire: Tuning.relayFirstLevel}),
+      maxDepthEver: 40,
+      gold: 100000,
+    );
+    for (var i = 0; i < 2; i++) {
+      profile.roster.reserve
+          .add(MercFactory.roll(Rng(i + 7), idPrefix: 'relay$i'));
+    }
+    controller = GameController(
+      content: content,
+      store: SaveStore(dir),
+      profile: profile,
+      clock: () => DateTime.utc(2026, 7, 1),
+      initialSettings: AppSettings(tutorialDone: true),
+    );
+
+    await pumpScreen(tester);
+    controller.deploy(profile.roster.reserve.first);
+    await tester.pump();
+
+    final next = profile.roster.reserve.single;
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(find.text('В смену'), 200,
+        scrollable: scrollable);
+    // «Видна» по мнению прокрутки — это край карточки у нижней кромки:
+    // нажатие туда уходит мимо экрана.
+    await tester.ensureVisible(find.text('В смену'));
+    await tester.pump();
+    expect(find.textContaining('Смена у Костра'), findsOneWidget);
+
+    await tester.tap(find.text('В смену'));
+    await tester.pump();
+
+    expect(profile.roster.relay, [next]);
+    await tester.scrollUntilVisible(find.text('Вернуть'), 200,
+        scrollable: scrollable);
+    expect(find.textContaining('1. ${next.name}'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+        find.textContaining('Следом уйдут сменщики: 1'), -200,
+        scrollable: scrollable);
+    expect(find.textContaining('Следом уйдут сменщики: 1'), findsOneWidget);
+  });
+
+  testWidgets('без мест у Костра смены на экране нет', (tester) async {
+    await pumpScreen(tester);
+    expect(controller.profile.relayCapacity, 0);
+    expect(find.textContaining('Смена у Костра'), findsNothing);
+  });
+
   testWidgets('пока слот один, второй наёмник ждёт и это сказано',
       (tester) async {
     await pumpScreen(tester);

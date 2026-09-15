@@ -57,6 +57,7 @@ class SaveCodec {
           'relicsFound': p.quests.relicsFound,
         },
         'echoNodes': p.tree.bought.toList(),
+        'echoResonance': p.tree.resonance,
         'passiveNodes': p.passives.allocated.toList(),
         'outpost': p.outpost.toJson(),
         'roster': encodeRoster(p.roster),
@@ -86,7 +87,10 @@ class SaveCodec {
     final profile = PlayerProfile(
       outpost: Outpost.fromJson(_map(j['outpost'])),
       roster: roster,
-      tree: EchoTree(bought: _strings(j['echoNodes'])),
+      tree: EchoTree(
+        bought: _strings(j['echoNodes']),
+        resonance: _int(j['echoResonance']),
+      ),
       passives: PassiveTree(allocated: _strings(j['passiveNodes'])),
       gold: _double(j['gold']),
       echo: _int(j['echo']),
@@ -152,6 +156,7 @@ class SaveCodec {
         ...roster.candidates,
         ...roster.reserve,
         ...roster.deployed,
+        ...roster.relay,
         ...roster.fallen,
       ])
         m.id: m,
@@ -181,6 +186,7 @@ class SaveCodec {
         'candidates': [for (final m in r.candidates) encodeMercenary(m)],
         'reserve': [for (final m in r.reserve) encodeMercenary(m)],
         'deployed': [for (final m in r.deployed) encodeMercenary(m)],
+        'relay': [for (final m in r.relay) encodeMercenary(m)],
         'fallen': [for (final m in r.fallen) encodeMercenary(m)],
       };
 
@@ -198,6 +204,7 @@ class SaveCodec {
     fill(roster.candidates, 'candidates');
     fill(roster.reserve, 'reserve');
     fill(roster.deployed, 'deployed');
+    fill(roster.relay, 'relay');
     fill(roster.fallen, 'fallen');
     return roster;
   }
@@ -416,6 +423,7 @@ class SaveCodec {
         'abilities': c.abilities,
         'echoTreeBonus': c.echoTreeBonus,
         'echoNodes': c.echoNodes,
+        if (c.echoResonance > 0) 'echoResonance': c.echoResonance,
         'passiveNodes': c.passiveNodes,
         'startDepthBonus': c.startDepthBonus,
         'forkPolicy': c.forkPolicy.name,
@@ -464,6 +472,7 @@ class SaveCodec {
       abilities: _abilities(j['abilities'], issues, 'contracts'),
       echoTreeBonus: _double(j['echoTreeBonus']),
       echoNodes: _strings(j['echoNodes']),
+      echoResonance: _int(j['echoResonance']),
       passiveNodes: _strings(j['passiveNodes']),
       startDepthBonus: _int(j['startDepthBonus']),
       // Приказ — часть снимка: спуск, посчитанный с одной политикой, нельзя

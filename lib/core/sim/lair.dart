@@ -78,8 +78,8 @@ class LairFight {
   /// Бой, готовый к пошаговому проигрыванию. Наружу — ради экрана, который
   /// обязан показать ТОТ бой, чей исход уже записан.
   /// [might] — множитель здоровья и урона стража поверх выверенного аудитом.
-  /// По умолчанию из контента; явное число нужно только замеру, который его
-  /// подбирает (`sim_cli --lair-probe`).
+  /// По умолчанию из контента: своя мощь стража, а без неё — общая. Явное
+  /// число нужно только замеру, который её подбирает (`sim_cli --lair-probe`).
   static WaveRunner start({
     required HeroProfile profile,
     required EnemyArchetype guardian,
@@ -88,7 +88,7 @@ class LairFight {
     CombatFeed? feed,
     double? might,
   }) {
-    final power = might ?? Curves.lairGuardianMight;
+    final power = might ?? guardian.lairMight ?? Curves.lairGuardianMight;
     final bus = EventBus();
     final rig = HeroRig.of(profile, bus);
 

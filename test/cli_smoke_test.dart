@@ -38,6 +38,11 @@ void main() {
       timeout: _slow);
   test('политики развилки', () => runsCleanly(['--forks', '--runs', '2']),
       timeout: _slow);
+  test('рубеж логов', () => runsCleanly(['--lair-probe', '2']),
+      timeout: _slow);
+  test('черты и ранги', () => runsCleanly(['--traits', '2']), timeout: _slow);
+  test('сутки со сменой', () => runsCleanly(['--daily', '1', '--relay', '1']),
+      timeout: _slow);
 }
 
 /// Каждый запуск поднимает свою VM — секунды, а не миллисекунды.

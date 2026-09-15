@@ -164,6 +164,10 @@ class Curves {
   static double get echoNodeBaseCost => _config.echoNodeBaseCost;
   static double get echoNodeCostGrowth => _config.echoNodeCostGrowth;
 
+  /// «Отзвук глубины»: прибавка силы за уровень и рост цены уровня.
+  static double get echoResonancePower => _config.echoResonancePower;
+  static double get echoResonanceCostGrowth => _config.echoResonanceCostGrowth;
+
   /// Очки дерева пассивок за достигнутую глубину.
   ///
   /// Считается от РЕКОРДА: очко подтверждает, что игрок там был. Считать от

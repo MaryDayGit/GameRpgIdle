@@ -73,6 +73,8 @@ void main() {
         GameEvents.passiveReset(p),
         GameEvents.brandRank(2, p),
         GameEvents.mercHired('ragged', p),
+        GameEvents.relayQueued(p),
+        GameEvents.relayTakeover(contract, p),
         GameEvents.tutorialStep('first_deploy'),
         GameEvents.tutorialDone(skipped: false),
         GameEvents.notificationsAnswer(granted: true),

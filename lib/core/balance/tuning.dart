@@ -91,6 +91,9 @@ class TuningConfig {
     this.forecastFloorsBase = 3,
     this.forecastFloorsPerLevel = 1,
     this.restHealPerLevel = 0.02,
+    this.relayFirstLevel = 2,
+    this.relaySecondLevel = 5,
+    this.relayThirdLevel = 8,
     this.rerollCostBase = 40.0,
     this.rerollCostGrowth = 1.6,
     this.rerollRarityMultiplier = const {
@@ -346,6 +349,13 @@ class TuningConfig {
   final int forecastFloorsPerLevel;
   final double restHealPerLevel;
 
+  /// Уровни Костра, на которых у него появляется ещё одно место сменщика
+  /// (GDD §9.4). Три числа, а не шаг: места открываются не равномерно, а там,
+  /// где игроку уже есть на что их занять.
+  final int relayFirstLevel;
+  final int relaySecondLevel;
+  final int relayThirdLevel;
+
   // --- Крафт (GDD §5.3, §6.3) -----------------------------------------------
 
   /// Цена реролла: `base × itemScale(ilvl) × редкость × growth^повторов`.
@@ -476,6 +486,9 @@ class TuningConfig {
       forecastFloorsPerLevel:
           _i(outpost, 'forecastFloorsPerLevel', d.forecastFloorsPerLevel),
       restHealPerLevel: _d(outpost, 'restHealPerLevel', d.restHealPerLevel),
+      relayFirstLevel: _i(outpost, 'relayFirstLevel', d.relayFirstLevel),
+      relaySecondLevel: _i(outpost, 'relaySecondLevel', d.relaySecondLevel),
+      relayThirdLevel: _i(outpost, 'relayThirdLevel', d.relayThirdLevel),
       rerollCostBase: _d(crafting, 'rerollCostBase', d.rerollCostBase),
       rerollCostGrowth: _d(crafting, 'rerollCostGrowth', d.rerollCostGrowth),
       rerollRarityMultiplier: _rarityMap(
@@ -655,6 +668,9 @@ class Tuning {
   static int get forecastFloorsBase => _config.forecastFloorsBase;
   static int get forecastFloorsPerLevel => _config.forecastFloorsPerLevel;
   static double get restHealPerLevel => _config.restHealPerLevel;
+  static int get relayFirstLevel => _config.relayFirstLevel;
+  static int get relaySecondLevel => _config.relaySecondLevel;
+  static int get relayThirdLevel => _config.relayThirdLevel;
 
   static double get rerollCostBase => _config.rerollCostBase;
   static double get rerollCostGrowth => _config.rerollCostGrowth;

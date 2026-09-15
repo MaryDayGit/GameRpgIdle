@@ -16,6 +16,7 @@ import 'package:rift/core/save/save_sync.dart';
 import 'package:rift/core/save/season.dart';
 import 'package:rift/core/sim/fork.dart';
 import 'package:rift/core/sim/forecast.dart';
+import 'package:rift/core/sim/relay_forecast.dart';
 import 'package:rift/core/sim/rng.dart';
 
 import '../data/account_firebase.dart';
@@ -471,8 +472,12 @@ class GameController extends ChangeNotifier {
       // весь проект (`cloud_sync.dart`). `leaving` — уход в фон, последний
       // момент, когда сейв ещё можно выгрузить: процесс после него снимают
       // без предупреждения.
-      onSaved: (saved, {required leaving}) =>
-          unawaited(mirror?.push(saved, force: leaving) ?? Future<void>.value()),
+      onSaved: (saved, {required leaving}) {
+        // Уход в фон — последний момент, когда смену ещё можно посчитать
+        // вперёд: дальше игра не считает ничего до следующего открытия.
+        if (leaving) _scheduleRelayNotice();
+        unawaited(mirror?.push(saved, force: leaving) ?? Future<void>.value());
+      },
     )
       ..start();
     tick();
@@ -529,7 +534,19 @@ class GameController extends ChangeNotifier {
       for (final c in _profile.contracts) if (c.atFork) c,
     };
 
+    final countBefore = _profile.contracts.length;
     final finished = _profile.refreshContracts(now);
+
+    // Сменщики, ушедшие вниз за этот тик: смена дописывает их контракты в
+    // конец списка. Прогноз конца смены после этого другой — людей в очереди
+    // стало меньше.
+    if (_profile.contracts.length > countBefore) {
+      for (final contract in _profile.contracts.skip(countBefore)) {
+        analytics.log(GameEvents.relayTakeover(contract, _profile));
+      }
+      _scheduleRelayNotice();
+    }
+
     if (finished.isNotEmpty) {
       justFinished.addAll(finished);
       feedback.play(Sfx.death, bump: Bump.heavy);
@@ -726,6 +743,7 @@ class GameController extends ChangeNotifier {
     // впервые о чём-то. Не ждём ответа: спуск уже идёт.
     unawaited(askForNotifications());
     _scheduleContractNotice(contract);
+    _scheduleRelayNotice();
 
     _changed();
     return contract;
@@ -754,21 +772,33 @@ class GameController extends ChangeNotifier {
     final atFork = contract.result?.awaitingFork ?? false;
     final name = contract.mercenary.name;
 
-    unawaited(_notifier.scheduleContractEvent(
-      id: notificationIdFor(contract),
-      whenUtc: endsAt,
-      mercName: name,
-      depth: contract.result?.maxDepth ?? 0,
-      atFork: atFork,
-      // Зов к развилке живёт ровно столько, сколько наёмник стоит. Дальше он
-      // зовёт туда, где никого нет, — и именно это игрок и увидел на пробе:
-      // открыл игру по уведомлению, а развилки там уже не было.
-      expiresAfter: atFork
-          ? Duration(seconds: Tuning.forkWaitAwaySeconds.round())
-          : null,
-    ));
+    // Смена ждёт — значит гибель этого наёмника не конец: вниз в ту же секунду
+    // уйдёт следующий. Весть о каждой гибели будила бы игрока ночью ради того,
+    // что случится и без него, поэтому гибели под сменой молчат, а конец всей
+    // смены сообщает одно уведомление (`_scheduleRelayNotice`). Зов к развилке
+    // остаётся: решать на ней по-прежнему игроку.
+    final relieved = _profile.roster.relay.isNotEmpty;
 
-    final ahead = atFork ? _profile.projectUnattendedEnd(contract) : null;
+    if (atFork || !relieved) {
+      unawaited(_notifier.scheduleContractEvent(
+        id: notificationIdFor(contract),
+        whenUtc: endsAt,
+        mercName: name,
+        depth: contract.result?.maxDepth ?? 0,
+        atFork: atFork,
+        // Зов к развилке живёт ровно столько, сколько наёмник стоит. Дальше он
+        // зовёт туда, где никого нет, — и именно это игрок и увидел на пробе:
+        // открыл игру по уведомлению, а развилки там уже не было.
+        expiresAfter: atFork
+            ? Duration(seconds: Tuning.forkWaitAwaySeconds.round())
+            : null,
+      ));
+    } else {
+      unawaited(_notifier.cancel(notificationIdFor(contract)));
+    }
+
+    final ahead =
+        atFork && !relieved ? _profile.projectUnattendedEnd(contract) : null;
     if (ahead == null) {
       // Отрезок последний: вести о гибели, посчитанной вперёд, больше нет —
       // её место занимает уведомление выше, и старая обязана уйти.
@@ -814,8 +844,63 @@ class GameController extends ChangeNotifier {
 
     feedback.play(Sfx.deploy, bump: Bump.light);
     _scheduleContractNotice(contract);
+    _scheduleRelayNotice();
     _changed();
     return true;
+  }
+
+  // --- Смена (GDD §9.4) ------------------------------------------------------
+
+  /// Идентификатор уведомления о конце смены. Одно на всю игру: смена общая
+  /// для всех слотов, и конец у неё один. Вне диапазона контрактов:
+  /// [notificationIdFor] и [runEndIdFor] не выходят за 200 000.
+  static const relayNoticeId = 300000;
+
+  /// Ставит наёмника из резерва в смену у Костра.
+  bool queueRelay(Mercenary m) {
+    if (!_profile.queueRelay(m)) return false;
+    feedback.bump(Bump.light);
+    analytics.log(GameEvents.relayQueued(_profile));
+    _rescheduleForRelay();
+    _changed();
+    return true;
+  }
+
+  /// Возвращает сменщика в резерв.
+  bool unqueueRelay(Mercenary m) {
+    if (!_profile.unqueueRelay(m)) return false;
+    feedback.bump(Bump.light);
+    _rescheduleForRelay();
+    _changed();
+    return true;
+  }
+
+  /// Смена появилась или опустела — уведомления о гибели идущих вниз
+  /// меняются вместе с ней: под сменой они молчат, без неё — возвращаются.
+  void _rescheduleForRelay() {
+    for (final contract in activeContracts) {
+      _scheduleContractNotice(contract);
+    }
+    _scheduleRelayNotice();
+  }
+
+  /// Ставит уведомление на гибель последнего наёмника смены.
+  ///
+  /// Пока приложение закрыто, переставить будильник в момент, когда сменщик
+  /// ушёл вниз, некому, — поэтому вся смена считается вперёд
+  /// (`RelayForecast`), и уведомление одно. Пересчитывается всякий раз, когда
+  /// меняется то, из чего смена считается: отправка, развилка, отзыв, очередь,
+  /// уход сменщика вниз и уход игры в фон.
+  void _scheduleRelayNotice() {
+    unawaited(_notifier.cancel(relayNoticeId));
+    final forecast = RelayForecast.of(_profile);
+    if (forecast == null) return;
+    unawaited(_notifier.scheduleRelayEnd(
+      id: relayNoticeId,
+      whenUtc: forecast.endsAtUtc,
+      runs: forecast.runs,
+      depth: forecast.depth,
+    ));
   }
 
   // --- Разбор добычи ---------------------------------------------------------
@@ -946,6 +1031,9 @@ class GameController extends ChangeNotifier {
     // Оба: и зов к развилке, и посчитанная вперёд весть о гибели.
     unawaited(_notifier.cancel(notificationIdFor(contract)));
     unawaited(_notifier.cancel(runEndIdFor(contract)));
+    // Отзыв смену не зовёт, а прогноз её конца считал этого наёмника
+    // погибшим позже — и со сменщиком следом.
+    _scheduleRelayNotice();
     _changed();
     return true;
   }
@@ -1214,6 +1302,30 @@ class GameController extends ChangeNotifier {
   /// больше не считается: узлы разные, и покупаются по одному.
   bool get canBuyEchoNode =>
       !_profile.tree.complete && _profile.echo >= _profile.tree.nextNodeCost;
+
+  /// Хватает ли Эха на уровень Отзвука глубины (GDD §8.3.1).
+  bool get canBuyResonance =>
+      _profile.tree.resonanceOpen &&
+      _profile.echo >= _profile.tree.resonanceCost;
+
+  /// Покупает уровень Отзвука. [all] — столько, сколько хватает Эха.
+  ///
+  /// Здесь «вложить всё» можно, а в древе нельзя: узлы древа разные, и кнопка
+  /// «всё» отняла бы выбор. У Отзвука выбора нет — только «сколько», а за
+  /// ночь смены Эха набегает на десятки уровней.
+  bool buyResonance({bool all = false}) {
+    var bought = 0;
+    while (_profile.buyResonance()) {
+      bought++;
+      if (!all) break;
+    }
+    if (bought == 0) return false;
+    feedback.play(Sfx.buy, bump: Bump.light);
+    analytics.log(GameEvents.echoNode('resonance', _profile));
+    _syncAnalyticsProfile();
+    _changed();
+    return true;
+  }
 
   void _changed() {
     notifyListeners();

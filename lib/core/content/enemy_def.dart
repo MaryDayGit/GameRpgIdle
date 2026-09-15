@@ -69,7 +69,7 @@ class EnemyParser {
   static const _guardianKeys = {
     'id', 'ru', 'gender', 'role', 'boss', 'hpMult', 'dpsMult',
     'attackSpeed', 'armorMult', 'damageType', 'resists', 'traits', 'phases',
-    'skills',
+    'skills', 'lairMight',
   };
 
   static const _skillKeys = {
@@ -81,6 +81,13 @@ class EnemyParser {
   static EnemyArchetype parseGuardian(JsonNode node) {
     node.checkKeys(_guardianKeys);
 
+    // Своя мощь необязательна: без неё страж берёт общую из кривых.
+    final lairMight = node.has('lairMight') ? node.dbl('lairMight') : null;
+    if (lairMight != null && lairMight <= 0.0) {
+      node.issues.add('${node.path}.lairMight',
+          'мощь стража должна быть больше нуля — иначе он без здоровья');
+    }
+
     return _common(
       node,
       isBoss: true,
@@ -90,6 +97,7 @@ class EnemyParser {
       phases: node.strList('phases'),
       embodies: node.str('boss'),
       skills: [for (final s in node.children('skills')) _skill(s)],
+      lairMight: lairMight,
     );
   }
 
@@ -172,6 +180,7 @@ class EnemyParser {
     String? embodies,
     List<String> phases = const [],
     List<GuardianSkill> skills = const [],
+    double? lairMight,
   }) {
     final attackSpeed = node.dbl('attackSpeed');
     final hpMult = node.dbl('hpMult');
@@ -210,6 +219,7 @@ class EnemyParser {
       phases: phases,
       embodies: embodies,
       skills: skills,
+      lairMight: lairMight,
     );
   }
 }

@@ -21,6 +21,7 @@ import 'package:rift/core/model/passive_tree.dart';
 import 'package:rift/core/model/player_profile.dart';
 import 'package:rift/core/model/stat_key.dart';
 import 'package:rift/core/model/tags.dart';
+import 'package:rift/core/sim/abilities.dart';
 import 'package:rift/core/sim/descent.dart';
 import 'package:rift/core/sim/fork.dart';
 import 'package:rift/core/sim/rng.dart';
@@ -39,7 +40,15 @@ void main(List<String> args) {
   // Балансировщик обязан мерить ТОТ баланс, который попадёт в игру. Значения
   // по умолчанию в коде существуют только для тестов формул; настраивать
   // по ним — значит настраивать не ту игру (`docs/02-TECH.md` §1).
-  loadContentFromDisk().apply();
+  final raw = readContentJson();
+  for (final (path, value) in opts.overrides) {
+    _applyOverride(raw, path, value);
+  }
+  ContentPack.parse(raw).apply();
+  if (opts.overrides.isNotEmpty) {
+    print('Переопределено: '
+        '${[for (final (p, v) in opts.overrides) '$p=$v'].join(', ')}');
+  }
 
   switch (opts.mode) {
     case 'curve':
@@ -64,11 +73,33 @@ void main(List<String> args) {
       _compareForkPlay(opts);
     case 'lair-probe':
       _lairProbe(opts);
+    case 'traits':
+      _measureTraits(opts);
+    case 'daily':
+      _runDaily(opts);
     case 'runs':
       _runDistribution(opts);
     default:
       _printUsage();
   }
+}
+
+/// `--set curves.echoResonanceCostGrowth=2` — число баланса на один прогон.
+///
+/// Нужен подбору: сравнивать варианты, не переписывая `balance.json` между
+/// запусками и не рискуя закоммитить промежуточное число. Опечатка в ключе
+/// не проходит молча — её ловит валидатор контента при разборе.
+void _applyOverride(Map<String, Object?> raw, String path, double value) {
+  final parts = path.split('.');
+  Object? node = raw['balance'];
+  if (node is! Map || parts.length < 2) {
+    throw ArgumentError('--set $path: ожидается раздел.ключ из balance.json');
+  }
+  for (final part in parts.take(parts.length - 1)) {
+    node = (node as Map)[part];
+    if (node is! Map) throw ArgumentError('--set $path: нет раздела «$part»');
+  }
+  (node as Map)[parts.last] = value;
 }
 
 // ---------------------------------------------------------------------------
@@ -1183,50 +1214,60 @@ Item? _answerConduit(Iterable<Item> items, EnemyArchetype guardian) {
 // Режим: сила стража против героя позднего этапа
 // ---------------------------------------------------------------------------
 
-/// Подбор `lairGuardianMight`.
+/// Тяжесть логова на РУБЕЖЕ: первый круг не мельче рекорда, четыре сборки,
+/// четыре значения мощи.
 ///
-/// Аудит мерит стража против голого снаряжения — так видна форма боя. Но к
-/// логову игрок приходит с деревом пассивок, древом Эха и Легендой, и замер
-/// кампании показал: против такого героя стражи падают почти всегда. Этот
-/// режим отвечает на вопрос, какой множитель делает круг у рекорда настоящим
-/// боем: без ответа — гибель, с подходящим Проводником — победа, но не даром.
+/// Раунд 38 подбирал `lairGuardianMight` на круге не глубже рекорда и одной
+/// сборкой на оружии. Раунд 40 поправил оба места: рубеж — это круг, куда
+/// игрок идёт дальше, то есть не мельче рекорда, а сборка на чарах держит
+/// стража иначе, чем сборка на оружии. Вопрос режима прежний — без ответа круг
+/// не берётся, с Проводником берётся, но не даром.
 void _lairProbe(_Options o) {
-  _header('ЛОГОВА · страж против героя после ${o.metaRuns} контрактов');
+  _header('ЛОГОВА · рубеж после ${o.metaRuns} контрактов');
 
   final player = _playCampaign(o, runs: o.metaRuns, onStop: print);
   final record = player.maxDepthEver;
+  final merc = MercFactory.roll(Rng(o.seed + 99),
+      idPrefix: 'probe', rank: MercRank.legend);
 
+  // Круг один на всех стражей — первый, что не мельче рекорда. Первая версия
+  // режима брала у каждого стража его следующий невзятый круг, и сравнение
+  // врало: у автоигрока они разные, а пятнадцать этажей между кругами — это
+  // урон мобов втрое. Громовой на тринадцатом круге выглядел безобидным, на
+  // четырнадцатом — стеной, и дело было в глубине, а не в страже.
   var circle = 1;
-  while (Curves.lairDepth(circle + 1) <= record) {
+  while (Curves.lairDepth(circle) < record) {
     circle++;
   }
   final depth = Curves.lairDepth(circle);
 
-  final merc = MercFactory.roll(Rng(o.seed + 99),
-      idPrefix: 'probe', rank: MercRank.legend);
-  merc.gear.equipFrom(player.stash,
-      base: Tuning.heroBase,
-      depth: record,
-      loadout: BuildPower.loadoutOf(merc.abilities),
-      onlyEmpty: true,
-      skipRelics: true);
-
-  print('Рекорд $record, круг $circle на этаже $depth. '
-      'Наёмник: Легенда, пассивок ${player.passives.spent}, '
-      'узлов древа ${player.tree.nodesBought}.');
+  print('Рекорд $record, пассивок ${player.passivePoints}, узлов древа '
+      '${player.tree.nodesBought}, Отзвук ${player.tree.resonance}. '
+      'Наёмник: Легенда.');
+  print('Круг $circle на этаже $depth — первый не мельче рекорда, один на '
+      'всех стражей. Сборке подобраны снаряжение из сундука кампании и '
+      'пассивки под её теги.');
   print('Клетка — побед из 9 и средний остаток здоровья у победы.');
+  print('Мощь в игре: ${[
+    for (final g in Bestiary.guardians)
+      '${g.id} x${(g.lairMight ?? Curves.lairGuardianMight).toStringAsFixed(1)}',
+  ].join(', ')}.');
   print('');
 
-  HeroProfile profileWith(Equipment gear) => HeroProfile(
-        gear: gear,
-        abilities: merc.abilities,
-        echoTreeBonus: player.outpost.descentPowerBonus,
-        tree: player.tree,
-        passives: player.passives,
-        startDepthBonus: player.startDepthBonus,
-        powerMultiplier: merc.rank.statMultiplier,
-        traitStats: merc.trait.apply,
-      );
+  const probeBuilds = ['Стартовый', 'Клинок в огне', 'Холод', 'Молния'];
+  // `null` — мощь из контента: строка «игра» проверяет ровно то, что уйдёт
+  // в игру, остальные показывают, куда её двигать.
+  const mights = <double?>[null, 3.0, 4.0, 6.0];
+
+  // Сборки собираются один раз: пассивки перераспределяются на игроке, и
+  // собирать их внутри цикла по стражам значило бы делать это двенадцать раз.
+  final builds = {
+    for (final name in probeBuilds)
+      name: _probeBuild(player, _builds[name]!, depth: record),
+  };
+
+  _row(['страж · круг', 'сборка', 'мощь', 'без ответа', 'с Проводником']);
+  _rule(5);
 
   // Проводник берётся из контента, а не из сундука: вопрос режима — может ли
   // игрок С ОТВЕТОМ взять круг, а не повезло ли автоигроку с добычей.
@@ -1239,47 +1280,84 @@ void _lairProbe(_Options o) {
             relic: def),
   ];
 
-  const mights = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0];
-  _row(['страж', 'мощь', 'без ответа', 'с Проводником']);
-  _rule(4);
-
   for (final guardian in Bestiary.guardians) {
     final answer = _answerConduit(conduits, guardian);
-    final withConduit = merc.gear.copy();
-    if (answer != null) {
-      withConduit.equipTo(withConduit.slotsFor(answer.kind).first, answer);
-    }
+    var firstRow = true;
 
-    String cell(Equipment gear, double might) {
-      var wins = 0;
-      var hp = 0.0;
-      for (var s = 1; s <= 9; s++) {
-        final r = LairFight.run(
-          profile: profileWith(gear.copy()),
-          guardian: guardian,
-          depth: depth,
-          seed: s * 7919,
-          might: might,
-        );
-        if (r.won) {
-          wins++;
-          hp += r.hpLeft;
-        }
+    for (final name in probeBuilds) {
+      final abilities = _builds[name]!;
+      final build = builds[name]!;
+      final withConduit = build.gear.copy();
+      if (answer != null) {
+        withConduit.equipTo(withConduit.slotsFor(answer.kind).first, answer);
       }
-      return wins == 0
-          ? '0/9'
-          : '$wins/9 ${(hp / wins * 100).round()} %';
-    }
 
-    for (final might in mights) {
-      _row([
-        might == mights.first ? guardian.id : '',
-        'x${might.toStringAsFixed(1)}',
-        cell(merc.gear, might),
-        answer == null ? '—' : cell(withConduit, might),
-      ]);
+      String cell(Equipment gear, double? might) {
+        var wins = 0;
+        var hp = 0.0;
+        for (var s = 1; s <= 9; s++) {
+          final r = LairFight.run(
+            profile: HeroProfile(
+              gear: gear.copy(),
+              abilities: abilities,
+              echoTreeBonus: player.outpost.descentPowerBonus,
+              tree: player.tree,
+              passives: build.passives,
+              startDepthBonus: player.startDepthBonus,
+              powerMultiplier: merc.rank.statMultiplier,
+              traitStats: merc.trait.apply,
+            ),
+            guardian: guardian,
+            depth: depth,
+            seed: s * 7919,
+            might: might,
+          );
+          if (r.won) {
+            wins++;
+            hp += r.hpLeft;
+          }
+        }
+        return wins == 0 ? '0/9' : '$wins/9 ${(hp / wins * 100).round()} %';
+      }
+
+      for (final might in mights) {
+        _row([
+          firstRow ? guardian.id : '',
+          might == mights.first ? name : '',
+          might == null
+              ? 'игра x${(guardian.lairMight ?? Curves.lairGuardianMight).toStringAsFixed(1)}'
+              : 'x${might.toStringAsFixed(1)}',
+          cell(build.gear, might),
+          answer == null ? '—' : cell(withConduit, might),
+        ]);
+        firstRow = false;
+      }
     }
   }
+}
+
+/// Сборка для замера: снаряжение из сундука под лоадаут и пассивки под его
+/// теги.
+///
+/// Сундук игрока не трогается — вещи надеваются из копии. Пассивки
+/// перераспределяются на самом игроке: замер идёт после кампании, и дальше
+/// профиль никому не нужен.
+({Equipment gear, PassiveTree passives}) _probeBuild(
+  PlayerProfile player,
+  List<String> abilities, {
+  required int depth,
+}) {
+  player.passives.reset();
+  _spendPassivePoints(player, _usefulTags(abilities));
+  final passives = PassiveTree(allocated: List.of(player.passives.allocated));
+
+  final gear = Equipment()
+    ..equipFrom([...player.stash],
+        base: Tuning.heroBase,
+        depth: depth,
+        loadout: BuildPower.loadoutOf(abilities),
+        skipRelics: true);
+  return (gear: gear, passives: passives);
 }
 
 /// Тратит излишек золота на перекат худших аффиксов.
@@ -1410,9 +1488,11 @@ void _runCampaign(_Options o) {
 
   // Время спуска печатается рядом с глубиной: на поздних контрактах вопрос не
   // только «насколько глубоко», но и «через сколько наёмник вернётся».
+  // «Запас» — золото в задатках Легенды. Без него сотни миллиардов на рубеже
+  // читаются как инфляция, хотя это полтора задатка (раунд 40).
   _row(['№', 'наёмник', 'ранг', 'глубина', 'Клеймо', 'пассивки', 'золото',
-      'Застава', 'логова', 'спуск', 'всего']);
-  _rule(11);
+      'запас', 'Застава', 'логова', 'спуск', 'всего']);
+  _rule(12);
 
   var cumulativeSeconds = 0.0;
 
@@ -1438,6 +1518,7 @@ void _runCampaign(_Options o) {
         '$brand',
         '${player.passives.spent}/${player.passivePoints}',
         _sci(player.gold),
+        _stock(player),
         '${_buildTotal(player.outpost)}/'
             '${Building.values.length * Building.maxLevel}',
         '${player.lairTrophies}',
@@ -1460,6 +1541,9 @@ void _runCampaign(_Options o) {
       '(только если игрока нет)');
   print('Максимальная глубина    : ${player.maxDepthEver}');
   print('Узлов древа Эха         : ${player.tree.nodesBought}');
+  print('Отзвук глубины          : уровень ${player.tree.resonance} '
+      '(сила ×${player.tree.resonanceMultiplier.toStringAsFixed(2)})');
+  print('Запас золота            : ${_stock(player)} задатка Легенды');
   print('Сундук Заставы          : ${player.stash.length}/${player.outpost.stashSlots}');
   print('Павших наёмников        : ${player.roster.fallen.length}');
   print('Логова                  : побед $_lairWins, поражений $_lairLosses, '
@@ -1495,6 +1579,256 @@ void _runCampaign(_Options o) {
 int _buildTotal(Outpost o) =>
     Building.values.fold(0, (a, b) => a + o.levelOf(b));
 
+/// Запас золота в задатках Легенды.
+///
+/// Единственная мера, по которой видно, копится ли золото на самом деле
+/// (раунд 40). Абсолютные числа растут вместе с доходом: сотни миллиардов на
+/// рубеже — это полтора задатка, потому что цена найма растёт тем же темпом.
+String _stock(PlayerProfile player) {
+  final deposit = Roster.hireCost(MercRank.legend, depth: player.hireDepth);
+  return '×${(player.gold / deposit).toStringAsFixed(1)}';
+}
+
+String _signed(int v) => v > 0 ? '+$v' : '$v';
+
+// ---------------------------------------------------------------------------
+// Режим: черты и ранги
+// ---------------------------------------------------------------------------
+
+/// Сколько глубины дают черта и ранг (ROADMAP §4.6, раунд 40).
+///
+/// Восемь черт, каждая — процент к чему-то, и ни одного замера, что
+/// «Погорелец» и «Живучий» дают сопоставимую пользу. Здесь — медиана глубины
+/// на тех же 24 сидах для каждой черты и ранга, в трёх сборках, на Клейме и
+/// верёвке игрока после кампании. Одинаковые сиды на все варианты: разница в
+/// строке — это черта, а не другой спуск.
+void _measureTraits(_Options o) {
+  _header('ЧЕРТЫ И РАНГИ · после ${o.metaRuns} контрактов');
+
+  final player = _playCampaign(o, runs: o.metaRuns, onStop: print);
+  final record = math.max(10, player.maxDepthEver);
+  final brand = player.brandRank;
+  final rope = player.startDepthBonus + Curves.startDepth(record) - 1;
+
+  print('Рекорд $record, Клеймо $brand, верёвка с этажа ${rope + 1}. '
+      'Медиана глубины на 24 сидах.');
+  print('«Удачливый» глубины не даёт по построению: он про добычу, не про бой.');
+
+  const traitBuilds = ['Стартовый', 'Клинок в огне', 'Холод'];
+  for (final name in traitBuilds) {
+    final abilities = _builds[name]!;
+    final build = _probeBuild(player, abilities, depth: record);
+
+    int median({MercRank rank = MercRank.legend, MercTrait? trait}) {
+      final depths = <int>[];
+      for (var s = 1; s <= 24; s++) {
+        final r = DescentSimulator(
+          profile: HeroProfile(
+            gear: build.gear.copy(),
+            abilities: abilities,
+            tree: player.tree,
+            passives: build.passives,
+            startDepthBonus: rope,
+            powerMultiplier: rank.statMultiplier,
+            traitStats: trait?.apply,
+          ),
+          seed: o.seed * 7919 + s,
+          brandRank: brand,
+        ).run(floorCap: o.floorCap, recordFloors: false);
+        depths.add(r.maxDepth);
+      }
+      depths.sort();
+      return _p(depths, 0.50);
+    }
+
+    print('');
+    print('Сборка «$name»');
+    _row(['вариант', 'глубина', 'разница']);
+    _rule(3);
+    final base = median();
+    _row(['Легенда без черты', '$base', '—']);
+    for (final trait in MercTrait.values) {
+      final d = median(trait: trait);
+      _row([trait.title, '$d', _signed(d - base)]);
+    }
+    for (final rank in MercRank.values.reversed.skip(1)) {
+      final d = median(rank: rank);
+      _row(['ранг ${rank.title}', '$d', _signed(d - base)]);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Режим: сутки игрока со сменой
+// ---------------------------------------------------------------------------
+
+/// Игрок по настенным часам: заходы в заданные часы, догон между ними, смена
+/// разной длины (раунд 40).
+///
+/// Кампания мерит игру в КОНТРАКТАХ — сколько их нужно до рубежа. Смена меняет
+/// не это, а сколько контрактов помещается в сутки у игрока, который заходит
+/// несколько раз в день. Отсюда и выбирается её длина: сколько дней до логов
+/// и до сотого контракта и какую долю суток слоты спуска не простаивают.
+void _runDaily(_Options o) {
+  _header('СУТКИ ИГРОКА · ${o.days} дн., заходы в ${o.sessions.join(', ')} ч');
+  print('На заходе игрок забирает всё, разбирает, строит, нанимает, '
+      'отправляет в свободные слоты и ставит сменщиков. На развилках не '
+      'отвечает.');
+  print('');
+
+  final relays = o.relay >= 0 ? [o.relay] : const [0, 1, 2, 3];
+  final rows = <List<String>>[];
+
+  for (final relay in relays) {
+    final r = _playDaily(o, relay: relay);
+    rows.add([
+      '$relay',
+      (r.closed / o.days).toStringAsFixed(1),
+      '${(r.busyShare * 100).round()} %',
+      '${r.record}',
+      '${r.trophies}',
+      r.dayLairs?.toString() ?? '—',
+      r.day40?.toString() ?? '—',
+      r.day100?.toString() ?? '—',
+    ]);
+  }
+
+  _row(['смена/слот', 'контр./сут', 'занятость', 'рекорд', 'кругов',
+      'день логов', 'день 40 к.', 'день 100 к.']);
+  _rule(8);
+  rows.forEach(_row);
+  print('');
+  print('Занятость — доля суток, которую слоты спуска были заняты наёмником.');
+  print('День — с первого; «—» — не достигнуто за замер.');
+}
+
+({
+  int closed,
+  double busyShare,
+  int record,
+  int trophies,
+  int? dayLairs,
+  int? day40,
+  int? day100,
+}) _playDaily(_Options o, {required int relay}) {
+  final player = PlayerProfile()..relayPerSlotOverride = relay;
+  player.roster.reserve.add(Mercenary(
+    id: 'starter',
+    name: 'Корвин Ржавый',
+    rank: MercRank.ragged,
+    trait: MercTrait.hardy,
+  ));
+
+  final start = DateTime.utc(2026, 1, 1);
+  var closed = 0;
+  var busy = 0.0;
+  var capacity = 0.0;
+  int? dayLairs;
+  int? day40;
+  int? day100;
+  DateTime? previous;
+  var index = 0;
+
+  for (var day = 0; day < o.days; day++) {
+    for (final hour in o.sessions) {
+      final now = start.add(Duration(days: day, hours: hour));
+      if (previous != null) {
+        capacity += player.deploySlots * now.difference(previous).inSeconds;
+      }
+
+      player.refreshContracts(now);
+      for (final contract in [...player.contracts]) {
+        if (!contract.awaitingCollection) continue;
+        busy += contract.segmentEndsAtUtc!
+            .difference(contract.startedAtUtc)
+            .inSeconds;
+        player.collect(contract);
+        closed++;
+        if (closed >= 40) day40 ??= day + 1;
+        if (closed >= 100) day100 ??= day + 1;
+      }
+      if (player.lairsOpen) dayLairs ??= day + 1;
+
+      _dailyChores(player, o, index, now);
+      previous = now;
+      index++;
+    }
+
+    if (_traceCampaign) {
+      print('  смена $relay, день ${day + 1}: контрактов $closed, '
+          'рекорд ${player.maxDepthEver}, кругов ${player.lairTrophies}, '
+          'запас ${_stock(player)}, Отзвук ${player.tree.resonance}');
+    }
+  }
+
+  return (
+    closed: closed,
+    busyShare: capacity <= 0 ? 0.0 : (busy / capacity).clamp(0.0, 1.0),
+    record: player.maxDepthEver,
+    trophies: player.lairTrophies,
+    dayLairs: dayLairs,
+    day40: day40,
+    day100: day100,
+  );
+}
+
+/// Всё, что игрок делает за заход, кроме забора добычи: тот же порядок, что
+/// в кампании, плюс отправка во все свободные слоты и смена.
+void _dailyChores(PlayerProfile player, _Options o, int index, DateTime now) {
+  player.autoSortLoot();
+  player.autoSpendEcho();
+  _spendPassivePoints(player, _usefulTags(starterAbilityIds()));
+
+  for (final b in _buildOrder) {
+    while (player.gold -
+                Roster.hireCost(MercRank.blade, depth: player.hireDepth) >
+            player.outpost.upgradeCost(b) &&
+        player.canUpgradeBuilding(b)) {
+      if (!player.upgradeBuilding(b)) break;
+    }
+  }
+
+  _challengeLairs(player, Rng(o.seed + index * 15485863));
+
+  final rng = Rng.stream(o.seed, index, 0, RngPurpose.offline);
+  bool hireBest() {
+    List<Mercenary> affordable() => player.tavernCandidates
+        .where((m) => player.hireCostOf(m) <= player.gold)
+        .toList()
+      ..sort((a, b) => b.rank.index.compareTo(a.rank.index));
+
+    player.refreshTavern(rng);
+    var rerolls = 0;
+    while (affordable().isEmpty && ++rerolls <= 20) {
+      player.refreshTavern(rng);
+    }
+    final pool = affordable();
+    return pool.isNotEmpty && player.hire(pool.first);
+  }
+
+  var launched = 0;
+  while (player.canDeploy) {
+    if (player.roster.reserve.isEmpty && !hireBest()) break;
+    player.roster.reserve.sort((a, b) => b.rank.index.compareTo(a.rank.index));
+    final brand = player.brandRankUnlocked;
+    player.setBrandRank(brand);
+    player.deploy(
+      player.roster.reserve.first,
+      seed: o.seed + index * 7919 + launched++,
+      brandRank: brand,
+      now: now,
+    );
+  }
+
+  while (player.canQueueRelay) {
+    if (player.roster.reserve.isEmpty && !hireBest()) break;
+    player.roster.reserve.sort((a, b) => b.rank.index.compareTo(a.rank.index));
+    player.queueRelay(player.roster.reserve.first);
+  }
+
+  _craft(player, Rng(o.seed + index * 104729));
+}
+
 // ---------------------------------------------------------------------------
 // Вспомогательное
 // ---------------------------------------------------------------------------
@@ -1509,7 +1843,20 @@ class _Options {
     required this.power,
     required this.floorCap,
     required this.forkPlay,
+    this.days = 14,
+    this.relay = -1,
+    this.sessions = const [8, 13, 19, 23],
+    this.overrides = const [],
   });
+
+  /// `--set`: числа баланса, подменённые на этот прогон.
+  final List<(String, double)> overrides;
+
+  /// `--daily`: сколько дней, какая длина смены на слот (−1 — сравнить 0..3)
+  /// и в какие часы игрок заходит.
+  final int days;
+  final int relay;
+  final List<int> sessions;
 
   final String mode;
   final int runs;
@@ -1532,6 +1879,10 @@ class _Options {
     var power = 1.0;
     var floorCap = 2000;
     var forkPlay = ForkPlay.absent;
+    var days = 14;
+    var relay = -1;
+    var sessions = const [8, 13, 19, 23];
+    final overrides = <(String, double)>[];
 
     for (var i = 0; i < args.length; i++) {
       final a = args[i];
@@ -1581,6 +1932,25 @@ class _Options {
           mode = 'lair-probe';
           final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
           if (v != null) metaRuns = int.parse(next());
+        case '--traits':
+          mode = 'traits';
+          final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
+          if (v != null) metaRuns = int.parse(next());
+        case '--daily':
+          mode = 'daily';
+          final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
+          if (v != null) days = int.parse(next());
+        case '--relay':
+          relay = int.tryParse(next()) ?? relay;
+        case '--sessions':
+          final parsed = [
+            for (final s in next().split(',')) int.tryParse(s.trim()),
+          ].whereType<int>().toList();
+          if (parsed.isNotEmpty) sessions = parsed;
+        case '--set':
+          final pair = next().split('=');
+          final value = pair.length == 2 ? double.tryParse(pair[1]) : null;
+          if (value != null) overrides.add((pair[0], value));
         case '--trace':
           _traceCampaign = true;
         case '--forkplay':
@@ -1603,6 +1973,10 @@ class _Options {
       power: power,
       floorCap: floorCap,
       forkPlay: forkPlay,
+      days: days,
+      relay: relay,
+      sessions: sessions,
+      overrides: overrides,
     );
   }
 }
@@ -1629,8 +2003,14 @@ void _printUsage() {
   --floor-cap N   потолок этажей на ран (2000)
   --forkplay S    кто отвечает на развилки: absent|plain|bold|smart (absent)
   --forks-vs      сравнение всех четырёх стратегий по многим сидам
-  --lair-probe N  кампания N контрактов, потом бои со стражами у рекорда при
-                  разной мощи — подбор lairGuardianMight
+  --lair-probe N  кампания N контрактов, потом бои на следующем невзятом круге
+                  каждого стража: четыре сборки, мощь x2/x3/x4
+  --traits N      кампания N контрактов, потом глубина каждой черты и ранга
+  --daily D       D дней игрока по настенным часам со сменой 0..3 на слот
+  --relay N       только одна длина смены для --daily
+  --sessions H,H  часы заходов для --daily (8,13,19,23)
+  --set K=V       число из balance.json на один прогон, например
+                  --set curves.echoResonanceCostGrowth=2
 ''');
 }
 

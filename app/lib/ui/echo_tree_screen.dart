@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:rift/core/balance/curves.dart' as balance;
 import 'package:rift/core/content/echo_tree_def.dart';
+import 'package:rift/core/content/text_template.dart';
 
 import '../state/game_controller.dart';
+import 'format.dart';
 import 'strings.dart';
 import 'theme.dart';
 
@@ -60,6 +63,11 @@ class _EchoTreeScreenState extends State<EchoTreeScreen> {
                 S.echoTreeAbout(tree.nodesBought, tree.totalNodes),
                 style: const TextStyle(fontSize: 13.5, color: RiftColors.inkFaint),
               ),
+              const SizedBox(height: 16),
+              // Отзвук — над ветками: за выкупленным древом он единственное,
+              // на что тратится Эхо, и искать его в конце списка не должен
+              // никто.
+              _ResonanceCard(controller: c),
               const SizedBox(height: 20),
 
               for (final branch in tree.branches) ...[
@@ -79,6 +87,84 @@ class _EchoTreeScreenState extends State<EchoTreeScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Отзвук глубины (GDD §8.3.1): бесконечный узел за выкупленным древом.
+///
+/// До выкупа виден закрытым, а не спрятан: цель, которую видно заранее,
+/// тянет к последним узлам сильнее, чем сюрприз после них.
+class _ResonanceCard extends StatelessWidget {
+  const _ResonanceCard({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final tree = controller.profile.tree;
+    final open = tree.resonanceOpen;
+    final canBuy = controller.canBuyResonance;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: RiftColors.raised,
+        borderRadius: BorderRadius.circular(RiftSize.radius),
+        border: Border.all(
+          color: open ? RiftColors.echo.withValues(alpha: 0.6) : RiftColors.line,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            S.resonanceTitle,
+            style: RiftText.title.copyWith(
+              color: open ? RiftColors.echo : RiftColors.inkFaint,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            open
+                ? S.resonanceAbout(
+                    tree.resonance,
+                    tree.resonanceMultiplier.toStringAsFixed(2),
+                    TextTemplate.percent(balance.Curves.echoResonancePower),
+                  )
+                : S.resonanceLocked,
+            style: const TextStyle(fontSize: 13.5, color: RiftColors.inkMuted),
+          ),
+          if (open) ...[
+            const SizedBox(height: 10),
+            // `Wrap`: цена доходит до миллиардов, и две кнопки в одну строку
+            // на узком экране не помещаются.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: canBuy ? controller.buyResonance : null,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: RiftColors.echo,
+                    side: BorderSide(
+                      color: canBuy
+                          ? RiftColors.echo.withValues(alpha: 0.6)
+                          : RiftColors.line,
+                    ),
+                  ),
+                  child: Text(S.resonanceBuy(money(tree.resonanceCost))),
+                ),
+                TextButton(
+                  onPressed:
+                      canBuy ? () => controller.buyResonance(all: true) : null,
+                  child: Text(S.resonanceBuyAll),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

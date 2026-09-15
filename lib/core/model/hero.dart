@@ -94,7 +94,10 @@ class HeroProfile {
     // множитель всего билда.
     final withTree = tree?.applyTo(geared) ?? geared;
     final withPassives = passives?.applyTo(withTree) ?? withTree;
-    final full = withPassives.scaled(buildMultiplier);
+    // Отзвук глубины множит силу так же, как ранг: вместе со снаряжением и
+    // деревьями, а не отдельно от них.
+    final full = withPassives
+        .scaled(buildMultiplier * (tree?.resonanceMultiplier ?? 1.0));
     return traitStats?.call(full) ?? full;
   }
 

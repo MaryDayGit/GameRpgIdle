@@ -33,6 +33,17 @@ abstract class DeathNotifier {
     Duration? expiresAfter,
   });
 
+  /// Конец смены: погиб последний наёмник очереди (GDD §9.4).
+  ///
+  /// Одно уведомление на всю смену, а не по одному на гибель: под сменой
+  /// гибель — не повод звать игрока, вниз и так уйдёт следующий.
+  Future<void> scheduleRelayEnd({
+    required int id,
+    required DateTime whenUtc,
+    required int runs,
+    required int depth,
+  });
+
   Future<void> cancel(int id);
 }
 
@@ -51,6 +62,14 @@ class NoDeathNotifier implements DeathNotifier {
     required int depth,
     required bool atFork,
     Duration? expiresAfter,
+  }) async {}
+
+  @override
+  Future<void> scheduleRelayEnd({
+    required int id,
+    required DateTime whenUtc,
+    required int runs,
+    required int depth,
   }) async {}
 
   @override
@@ -146,6 +165,36 @@ class LocalDeathNotifier implements DeathNotifier {
       // Неточный будильник намеренно: точный требует отдельного разрешения,
       // которое Google Play выдаёт под обоснование, а опоздание на несколько
       // минут для сообщения «наёмник погиб» ничего не меняет.
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  @override
+  Future<void> scheduleRelayEnd({
+    required int id,
+    required DateTime whenUtc,
+    required int runs,
+    required int depth,
+  }) async {
+    if (!_ready) return;
+
+    final when = tz.TZDateTime.from(whenUtc.toUtc(), tz.UTC);
+    if (when.isBefore(tz.TZDateTime.now(tz.UTC))) return;
+
+    await _plugin.zonedSchedule(
+      id: id,
+      title: S.notifyRelayTitle,
+      body: S.notifyRelayBody(runs: runs, depth: depth),
+      scheduledDate: when,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: S.notificationChannelAbout,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+      ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }

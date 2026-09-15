@@ -127,6 +127,7 @@ class EnemyArchetype {
     this.phases = const [],
     this.embodies,
     this.skills = const [],
+    this.lairMight,
   });
 
   final String id;
@@ -183,6 +184,18 @@ class EnemyArchetype {
 
   /// Умения стража. У мобов и боссов бездны пусто: там они ритм, а не цель.
   final List<GuardianSkill> skills;
+
+  /// Мощь СТРАЖА в логове — своя, поверх общей `Curves.lairGuardianMight`.
+  /// `null` — общая.
+  ///
+  /// Раунд 40: одна мощь на четырёх стражей держала замысел ровно у одного.
+  /// Проба рубежа (`sim_cli --lair-probe`) на общей ×3: Громовой без ответа
+  /// не берётся, с Проводником берётся на треть здоровья — как задумано; а
+  /// Ледяной без всякого ответа отдаёт круг с половиной здоровья героя.
+  /// Правится здесь, а не здоровьем и уроном стража: те проверяет аудит
+  /// (`audit_cli --bosses`) против голого снаряжения, и форма боя должна
+  /// остаться той, что он выверил.
+  final double? lairMight;
 
   double resistFor(DamageType type) => resists[type] ?? 0.0;
 
