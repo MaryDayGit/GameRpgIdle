@@ -313,6 +313,32 @@ class SaveStore {
     _revisionKnown = true;
   }
 
+  /// Стирает ВСЁ, что осталось от игрока на телефоне: сейв с копией и
+  /// меткой синхронизации, отложенный в карантин битый сейв и архивы
+  /// прошлых сезонов.
+  ///
+  /// [deleteAll] про текущий сейв и оставляет архивы — это правильно для
+  /// обнуления сезона, где доказанное не пропадает (`season.dart`). Удаление
+  /// аккаунта — другое: «удалить мои данные» с архивом на диске было бы
+  /// неправдой. Файл настроек не трогается: язык и звук — не данные игрока.
+  Future<void> deleteEverything() async {
+    await deleteAll();
+    final dot = fileName.indexOf('.');
+    final stem = dot <= 0 ? fileName : fileName.substring(0, dot);
+    final rest = dot <= 0 ? '' : fileName.substring(dot);
+    // Имена — как их строят `SaveSync.archiveName` и [quarantine]:
+    // `rift.save.json.broken`, `rift.<сезон>.save.json`.
+    bool ours(String name) =>
+        name.startsWith('$fileName.') ||
+        (rest.isNotEmpty && name.startsWith('$stem.') && name.endsWith(rest));
+    if (!directory.existsSync()) return;
+    for (final entity in directory.listSync()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.last;
+      if (ours(name)) await entity.delete();
+    }
+  }
+
   int _readMirrored() {
     if (!_sync.existsSync()) return 0;
     try {

@@ -1,8 +1,30 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Ключ загрузки для Google Play (`docs/13-RELEASE.md` §3.1).
+//
+// Пароли и путь к ключу лежат в `app/android/key.properties`, который, как и
+// сам `*.jks`, в `.gitignore`: ключ — единственная вещь в проекте, которую
+// нельзя восстановить из репозитория. Файла нет — релиз подписывается
+// отладочным ключом, как раньше, и сборка об этом кричит: `flutter run
+// --release` на своём телефоне должен работать без ключа, а в магазин такая
+// сборка не уйдёт — Play её не примет.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
+if (!hasUploadKey) {
+    logger.lifecycle(
+        "key.properties не найден — релиз подписан ОТЛАДОЧНЫМ ключом, " +
+            "в Google Play такую сборку не загрузить (docs/13-RELEASE.md §3.1)",
+    )
 }
 
 // Firebase подключается, только если ключи проекта лежат на месте.
@@ -54,11 +76,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasUploadKey) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (hasUploadKey) "release" else "debug")
         }
     }
 }

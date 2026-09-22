@@ -177,6 +177,79 @@ class FirebaseAccountService implements AccountService {
     _current = Account.none;
   }
 
+  @override
+  Future<DeleteOutcome> confirmForDeletion() async {
+    final user = _auth.currentUser;
+    if (user == null || !_isGoogle(user)) return DeleteOutcome.ok;
+
+    // Google-аккаунт Firebase удаляет только после свежего входа
+    // (`requires-recent-login`). Входим заново ЗДЕСЬ, до удаления облака:
+    // закрытое окно выбора аккаунта должно оставить всё как было.
+    try {
+      await GoogleSignIn.instance.initialize();
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) return _deleteFail('token', 'Google не выдал idToken');
+      await user.reauthenticateWithCredential(
+          GoogleAuthProvider.credential(idToken: idToken));
+      return DeleteOutcome.ok;
+    } on GoogleSignInException catch (e) {
+      return e.code == GoogleSignInExceptionCode.canceled
+          ? DeleteOutcome.cancelled
+          : _deleteFail('google', e);
+    } on Object catch (e) {
+      // В том числе `user-mismatch`: выбран другой Google-аккаунт. Удалять
+      // чужой аккаунт по входу в свой нельзя, и Firebase это правильно режет.
+      return _deleteFail('reauth', e);
+    }
+  }
+
+  @override
+  Future<DeleteOutcome> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      _current = Account.none;
+      return DeleteOutcome.ok;
+    }
+    final google = _isGoogle(user);
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      // Анонимный аккаунт после долгой игры тоже просит свежего входа, а
+      // войти заново в анонимный нельзя. О человеке в нём нет ничего — только
+      // uid, облако под которым уже стёрто, — поэтому выходим, и запись
+      // остаётся сиротой без данных. Google-аккаунт сюда не доходит: его
+      // подтвердили только что, в [confirmForDeletion].
+      if (e.code == 'requires-recent-login' && !google) {
+        await _auth.signOut();
+      } else {
+        return _deleteFail('delete', e);
+      }
+    } on Object catch (e) {
+      return _deleteFail('delete', e);
+    }
+
+    // Отзываем и разрешение, выданное игре Google-аккаунтом: иначе
+    // следующая привязка молча вошла бы без вопроса, как будто удаления не было.
+    if (google) {
+      try {
+        await GoogleSignIn.instance.disconnect();
+      } on Object catch (e) {
+        if (kDebugMode) debugPrint('[account] отзыв Google не удался: $e');
+      }
+    }
+    _current = Account.none;
+    return DeleteOutcome.ok;
+  }
+
+  static bool _isGoogle(User user) =>
+      user.providerData.any((p) => p.providerId == 'google.com');
+
+  static DeleteOutcome _deleteFail(String stage, Object error) {
+    if (kDebugMode) debugPrint('[account] удаление ($stage): $error');
+    return DeleteOutcome.failed;
+  }
+
   Account _read(User? user) {
     if (user == null) return Account.none;
     final google =

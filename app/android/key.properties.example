@@ -1,0 +1,13 @@
+# Шаблон. Скопируйте в `key.properties` рядом с этим файлом и заполните.
+# `key.properties` и сам ключ `*.jks` в .gitignore — в репозиторий не кладутся.
+#
+# Ключ создаётся один раз (docs/13-RELEASE.md §3.1):
+#   keytool -genkey -v -keystore D:/keys/riftmark-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Потеряли ключ — сброс через поддержку Google Play, это дни простоя.
+# Держите две копии ключа и паролей в разных местах.
+
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=D:/keys/riftmark-upload.jks

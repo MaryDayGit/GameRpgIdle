@@ -139,4 +139,27 @@ class FirestoreCloudSaveStore implements CloudSaveStore {
       return false;
     }
   }
+
+  @override
+  Future<bool> deleteAll({required String uid}) async {
+    try {
+      // Все сезоны, а не нынешний: сейв прошлого сезона — тоже данные игрока
+      // (`season.dart`), и «удалить мои данные» без него было бы неправдой.
+      // Правила Firestore пускают владельца и читать список, и удалять.
+      final saves = _db.collection('players').doc(uid).collection('saves');
+      final snap = await saves
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 15));
+      if (snap.docs.isEmpty) return true;
+      final batch = _db.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit().timeout(const Duration(seconds: 15));
+      return true;
+    } on Object catch (e) {
+      if (kDebugMode) debugPrint('[cloud] удаление не удалось: $e');
+      return false;
+    }
+  }
 }

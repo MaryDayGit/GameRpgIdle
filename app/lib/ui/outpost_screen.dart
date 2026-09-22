@@ -163,6 +163,10 @@ class _OutpostScreenState extends State<OutpostScreen> {
                 // Обучение пропускается одной кнопкой, и вернуть его надо
                 // где-то, кроме переустановки игры.
                 TutorialRestartTile(controller: c),
+                // Удаление — последним и за чертой: единственное действие в
+                // настройках, которое нельзя отменить (`account_tile.dart`).
+                const Divider(indent: 16, endIndent: 16),
+                DeleteAccountTile(controller: c),
                 const SizedBox(height: 12),
               ],
             ),
@@ -1404,7 +1408,7 @@ class _BuildingsSection extends StatelessWidget {
         builder: (context, _) {
           final outpost = controller.profile.outpost;
           final level = outpost.levelOf(building);
-          final maxed = level >= Building.maxLevel;
+          final maxed = _maxed(building, level);
           final open = controller.profile.canUpgradeBuilding(building);
           final cost = outpost.upgradeCost(building);
 
@@ -1416,7 +1420,7 @@ class _BuildingsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.buildingLevel(building.title, level, Building.maxLevel),
+                    S.buildingLevel(building.title, level, _cap(building)),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 6),
@@ -1502,7 +1506,7 @@ class _BuildingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxed = level >= Building.maxLevel;
+    final maxed = _maxed(building, level);
 
     return InkWell(
       onTap: onOpen,
@@ -1529,7 +1533,7 @@ class _BuildingRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '$level/${Building.maxLevel}',
+                        '$level/${_cap(building)}',
                         style: const TextStyle(
                           fontSize: 13.5,
                           color: RiftColors.inkMuted,
@@ -1959,3 +1963,13 @@ class _Destination extends StatelessWidget {
     );
   }
 }
+
+/// Постройка на пределе — только если у неё есть предел.
+///
+/// Хранилище бесконечно (`Building.isEndless`): ядро разрешает его улучшать и
+/// после 8-го уровня, а экран считал его упёршимся — писал «Предел» на
+/// активной кнопке и «Дальше некуда» в карточке.
+bool _maxed(Building b, int level) => !b.isEndless && level >= Building.maxLevel;
+
+/// Что стоит после «/»: число уровней или знак бесконечности.
+String _cap(Building b) => b.isEndless ? '∞' : '${Building.maxLevel}';

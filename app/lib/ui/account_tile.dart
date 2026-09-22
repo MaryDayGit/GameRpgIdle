@@ -104,6 +104,89 @@ class _AccountTileState extends State<AccountTile> {
   }
 }
 
+/// Строка «Удалить аккаунт и данные» в настройках.
+///
+/// Требование Google Play: игрок, который может завести аккаунт, должен
+/// суметь удалить его из самой игры (`docs/13-RELEASE.md` §3.3). Стоит
+/// последней в настройках и отдельно от «Сохранения в облаке»: выход из
+/// аккаунта прогресс не трогает, удаление стирает всё, и перепутать их
+/// соседством нельзя.
+class DeleteAccountTile extends StatefulWidget {
+  const DeleteAccountTile({super.key, required this.controller});
+
+  final GameController controller;
+
+  @override
+  State<DeleteAccountTile> createState() => _DeleteAccountTileState();
+}
+
+class _DeleteAccountTileState extends State<DeleteAccountTile> {
+  bool _busy = false;
+
+  Future<void> _delete() async {
+    final google =
+        widget.controller.account.current.kind == AccountKind.google;
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(S.deleteAccountConfirmTitle),
+        content: Text(S.deleteAccountConfirmBody(google: google)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(S.cancel),
+          ),
+          FilledButton(
+            key: const Key('delete-account-confirm'),
+            style: FilledButton.styleFrom(
+              backgroundColor: RiftColors.bad,
+              foregroundColor: RiftColors.emberDeep,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(S.deleteAccountConfirm),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final outcome = await widget.controller.deleteAccountAndData();
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    // Отменённый повторный вход молчит — как и отменённая привязка.
+    final message = switch (outcome) {
+      DeleteOutcome.ok => S.deleteAccountDone,
+      DeleteOutcome.cancelled => null,
+      DeleteOutcome.failed => S.deleteAccountFailed,
+    };
+    final messenger = ScaffoldMessenger.of(context);
+    // После удаления настройки закрываются: за ними уже новая игра.
+    if (outcome == DeleteOutcome.ok) await Navigator.of(context).maybePop();
+    if (message != null) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.delete_forever_outlined, color: RiftColors.bad),
+      title: Text(
+        S.deleteAccountTitle,
+        style: const TextStyle(color: RiftColors.bad),
+      ),
+      subtitle: Text(S.deleteAccountAbout),
+      trailing: _busy
+          ? const SizedBox(
+              width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          : null,
+      onTap: _busy ? null : _delete,
+    );
+  }
+}
+
 /// Диалог расхождения: два сохранения, выбирает игрок.
 ///
 /// ## Почему спрашиваем, а не решаем сами

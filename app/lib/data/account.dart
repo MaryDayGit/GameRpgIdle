@@ -78,6 +78,19 @@ enum LinkOutcome {
 /// игру десятками раз. Плюс тот же второй выигрыш — сменить поставщика
 /// опознания значит написать один класс, не трогая ни одного места, которое
 /// про аккаунт спрашивает.
+/// Чем кончилось удаление аккаунта (`GameController.deleteAccountAndData`).
+enum DeleteOutcome {
+  /// Удалено — или удалять было нечего.
+  ok,
+
+  /// Игрок закрыл окно повторного входа в Google. Ничего не тронуто: это
+  /// его решение, и сообщать о нём как об ошибке незачем.
+  cancelled,
+
+  /// Не получилось: нет сети, отказ сервера, выбран чужой Google-аккаунт.
+  failed,
+}
+
 abstract class AccountService {
   Account get current;
 
@@ -93,6 +106,19 @@ abstract class AccountService {
   /// Выйти. Сейв на устройстве остаётся: выход из аккаунта — это не удаление
   /// прогресса, и превращать одно в другое нельзя ни при каких условиях.
   Future<void> signOut();
+
+  /// Подтвердить, что аккаунт удаляет его хозяин, — ДО того, как удалено
+  /// хоть что-то.
+  ///
+  /// Firebase удаляет только аккаунт со свежим входом. Спрашивать об этом
+  /// после того, как облако уже стёрто, значит оставить игрока с половиной
+  /// удаления, если он закроет окно. Поэтому шаг отдельный и первый:
+  /// Google-аккаунт входит заново, анонимному подтверждать нечем.
+  Future<DeleteOutcome> confirmForDeletion();
+
+  /// Удалить аккаунт. Облачные данные к этому моменту уже стёрты вызывающим:
+  /// после удаления аккаунта правила Firestore не пустят к ним никого.
+  Future<DeleteOutcome> deleteAccount();
 }
 
 /// Аккаунта нет и не будет. Значение по умолчанию везде, где служба не
@@ -114,6 +140,12 @@ class NoAccountService implements AccountService {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<DeleteOutcome> confirmForDeletion() async => DeleteOutcome.ok;
+
+  @override
+  Future<DeleteOutcome> deleteAccount() async => DeleteOutcome.ok;
 }
 
 /// Аккаунт понарошку. Для тестов, которым нужен uid, но не нужен Firebase.
@@ -122,6 +154,13 @@ class FakeAccountService implements AccountService {
 
   final String uid;
   LinkOutcome linkResult;
+
+  /// Чем ответит подтверждение и само удаление. Управляется тестом.
+  DeleteOutcome confirmResult = DeleteOutcome.ok;
+  DeleteOutcome deleteResult = DeleteOutcome.ok;
+
+  /// Сколько раз аккаунт действительно удаляли.
+  int deletions = 0;
 
   Account _current = Account.none;
 
@@ -143,4 +182,16 @@ class FakeAccountService implements AccountService {
 
   @override
   Future<void> signOut() async => _current = Account.none;
+
+  @override
+  Future<DeleteOutcome> confirmForDeletion() async => confirmResult;
+
+  @override
+  Future<DeleteOutcome> deleteAccount() async {
+    if (deleteResult == DeleteOutcome.ok) {
+      deletions++;
+      _current = Account.none;
+    }
+    return deleteResult;
+  }
 }

@@ -20,6 +20,20 @@
     <uses-permission
         android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove" />
+    <!-- Биометрия приезжает с firebase_auth (passkeys и подтверждение входа
+         отпечатком). Игра знает ровно два входа — анонимный и Google, — и ни
+         один из них отпечаток не спрашивает. А на странице Play «отпечаток
+         пальца» у idle-RPG выглядит вопросом (docs/11-ANALYTICS.md §5).
+
+         Снято перед первым релизом (docs/13-RELEASE.md §3.4). Проверять —
+         входом через Google на живом телефоне: сломанный вход хуже лишней
+         строки в списке разрешений. -->
+    <uses-permission
+        android:name="android.permission.USE_BIOMETRIC"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        tools:node="remove" />
     <!-- Имя бренда, а не переводимая строка: игра называется одинаково в
          магазине, в трейлере и на рабочем столе. Ярлык кириллицей был
          нечитаем для всех, кто не читает по-русски, — то есть для

@@ -120,6 +120,49 @@ class S {
         'This Google account already has a save',
       ).text;
 
+  // --- Удаление аккаунта -----------------------------------------------------
+  //
+  // Говорит, ЧТО пропадёт, а не «удалить аккаунт?»: у игрока здесь нет
+  // представления об аккаунте отдельно от прогресса, и пропадает для него
+  // именно прогресс (`account_tile.dart`).
+
+  static String get deleteAccountTitle => const Phrase(
+        'Удалить аккаунт и данные',
+        'Delete account and data',
+      ).text;
+
+  static String get deleteAccountAbout => const Phrase(
+        'Сотрёт прогресс на телефоне и в облаке. Игра начнётся заново',
+        'Erases progress on this phone and in the cloud. The game starts over',
+      ).text;
+
+  static String get deleteAccountConfirmTitle =>
+      const Phrase('Удалить всё?', 'Delete everything?').text;
+
+  static String deleteAccountConfirmBody({required bool google}) =>
+      Lang.current == Lang.ru
+          ? 'Будут удалены прогресс на этом телефоне, сохранения в облаке и '
+              'аккаунт игры. Вернуть их будет нельзя.'
+              '${google ? '\n\nGoogle попросит войти ещё раз — так он '
+                  'убедится, что удаляете именно вы.' : ''}'
+          : 'This deletes your progress on this phone, your cloud saves and '
+              'your game account. They cannot be restored.'
+              '${google ? '\n\nGoogle will ask you to sign in again to make '
+                  'sure it is you.' : ''}';
+
+  static String get deleteAccountConfirm =>
+      const Phrase('Удалить навсегда', 'Delete forever').text;
+
+  static String get deleteAccountDone => const Phrase(
+        'Аккаунт и данные удалены. Игра началась заново',
+        'Account and data deleted. The game has started over',
+      ).text;
+
+  static String get deleteAccountFailed => const Phrase(
+        'Удалить не получилось — проверьте интернет и попробуйте ещё раз',
+        'Could not delete — check your connection and try again',
+      ).text;
+
   // --- Расхождение сохранений ------------------------------------------------
 
   static String get syncConflictTitle =>
@@ -1205,7 +1248,7 @@ class S {
             'building to see what the next level gives.',
       ).text;
 
-  static String buildingLevel(String name, int level, int max) =>
+  static String buildingLevel(String name, int level, Object max) =>
       Lang.current == Lang.ru
           ? '$name · ${outOf(level, max)}'
           : '$name · ${outOf(level, max)}';

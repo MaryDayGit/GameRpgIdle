@@ -23,7 +23,8 @@ import 'analytics.dart';
 /// **Ошибка отправки не всплывает наружу.** Игрок без Play Services, игрок с
 /// выключённой синхронизацией, игрок в самолёте — всё это нормальные игроки,
 /// и сломать им спуск ради счётчика нельзя.
-class FirebaseAnalyticsSink implements AnalyticsSink {
+class FirebaseAnalyticsSink
+    implements AnalyticsSink, ResettableAnalyticsSink {
   FirebaseAnalyticsSink._(this._analytics);
 
   final FirebaseAnalytics _analytics;
@@ -47,6 +48,11 @@ class FirebaseAnalyticsSink implements AnalyticsSink {
       unawaited(_analytics
           .setUserProperty(name: name, value: value)
           .catchError(_swallow));
+
+  /// Новый идентификатор установки: события после удаления аккаунта не
+  /// связываются с прежними.
+  @override
+  Future<void> resetData() => _analytics.resetAnalyticsData();
 
   @override
   void setCollectionEnabled(bool enabled) =>

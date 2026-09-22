@@ -49,6 +49,13 @@ abstract class CloudSaveStore {
   /// этому решает, поднимать ли `mirroredRevision`, а соврать здесь значит
   /// объявить сейв синхронизированным, когда он никуда не уехал.
   Future<bool> push({required String uid, required SaveData data});
+
+  /// Стирает все сейвы игрока — всех сезонов, не только нынешнего.
+  ///
+  /// `false` — не получилось (нет сети, отказ сервера). Вызывающий обязан
+  /// остановиться: удалить аккаунт при целом облаке значит оставить сейв,
+  /// к которому больше нет ключа, — и удалить его потом не сможет никто.
+  Future<bool> deleteAll({required String uid});
 }
 
 /// Облака нет. Значение по умолчанию: тесты, дев-экраны, сборка без ключей.
@@ -62,6 +69,11 @@ class NoCloudSaveStore implements CloudSaveStore {
   @override
   Future<bool> push({required String uid, required SaveData data}) async =>
       false;
+
+  /// Облака нет — и стирать в нём нечего. Это успех, а не отказ: иначе
+  /// игрок без Firebase не смог бы удалить даже то, что лежит на телефоне.
+  @override
+  Future<bool> deleteAll({required String uid}) async => true;
 }
 
 /// Облако в памяти. Для тестов, которым нужно свести два устройства.
@@ -90,6 +102,13 @@ class FakeCloudSaveStore implements CloudSaveStore {
     pushes++;
     docs[_key(uid, data.seasonId)] =
         CloudSave(head: data.head, payload: data.encode());
+    return true;
+  }
+
+  @override
+  Future<bool> deleteAll({required String uid}) async {
+    if (offline) return false;
+    docs.removeWhere((key, _) => key.startsWith('$uid/'));
     return true;
   }
 }

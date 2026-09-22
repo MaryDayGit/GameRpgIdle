@@ -250,4 +250,136 @@ void main() {
           reason: 'ответ, не переживший перезапуск, — не ответ');
     });
   });
+
+  group('удаление аккаунта', () {
+    // Требование Google Play: удалить аккаунт можно из самой игры
+    // (`docs/13-RELEASE.md` §3.3). Проверяется обещание целиком: пропадает
+    // всё, что про игрока, и ничего — при отказе на полпути.
+
+    /// Игрок с Google-аккаунтом, сейвом двух сезонов в облаке и следами
+    /// на телефоне: копия, архив прошлого сезона, сейв в карантине.
+    Future<GameController> linked() async {
+      await account.linkGoogle();
+      store = SaveStore(dir, deviceId: 'phone')..accountId = 'uid_1';
+      final data = await store.save(save(gold: 700, depth: 30, runs: 5));
+      await store.save(save(gold: 800, depth: 31, runs: 6)); // появится .bak
+      await cloud.push(uid: 'uid_1', data: data);
+      await cloud.push(
+        uid: 'uid_1',
+        data: SaveData(
+          lastSeenUtc: DateTime.utc(2026, 1, 1),
+          profile: PlayerProfile(gold: 1, maxDepthEver: 5),
+          seasonId: 'old_season',
+        ),
+      );
+      File('${dir.path}/rift.old_season.save.json').writeAsStringSync('{}');
+      File('${dir.path}/rift.save.json.broken').writeAsStringSync('{}');
+      File('${dir.path}/rift.settings.json').writeAsStringSync('{}');
+
+      mirror = CloudMirror(store: store, cloud: cloud, account: account);
+      return GameController(
+        content: content,
+        store: store,
+        profile: (await store.load())!.profile,
+        account: account,
+        mirror: mirror,
+        initialSettings: AppSettings(tutorialDone: true),
+      );
+    }
+
+    List<String> saveFiles() => [
+          for (final f in dir.listSync().whereType<File>())
+            if (f.uri.pathSegments.last != 'rift.settings.json')
+              f.uri.pathSegments.last,
+        ];
+
+    test('стирает облако всех сезонов, аккаунт и телефон, игра — заново',
+        () async {
+      final c = await linked();
+      addTearDown(c.dispose);
+      expect(cloud.docs, hasLength(2));
+
+      final outcome = await c.deleteAccountAndData();
+
+      expect(outcome, DeleteOutcome.ok);
+      expect(cloud.docs, isEmpty, reason: 'сейвы всех сезонов, не только нынешнего');
+      expect(account.deletions, 1);
+      expect(saveFiles(), isEmpty,
+          reason: 'ни сейва, ни копии, ни архива, ни карантина');
+      expect(File('${dir.path}/rift.settings.json').existsSync(), isTrue,
+          reason: 'язык и звук — не данные игрока');
+      expect(c.profile.maxDepthEver, 0, reason: 'дальше — новая игра');
+      expect(c.settings.tutorialDone, isFalse,
+          reason: 'новая игра начинается с обучения');
+      expect(account.current.kind, AccountKind.anonymous,
+          reason: 'новый анонимный вход, с прежним не связанный');
+    });
+
+    test('без сети не удаляет ничего', () async {
+      final c = await linked();
+      addTearDown(c.dispose);
+      cloud.offline = true;
+
+      final outcome = await c.deleteAccountAndData();
+
+      expect(outcome, DeleteOutcome.failed);
+      expect(account.deletions, 0,
+          reason: 'аккаунт при целом облаке — это сейв без ключа навсегда');
+      expect(saveFiles(), contains('rift.save.json'));
+      expect(c.profile.maxDepthEver, 31, reason: 'игра остаётся играбельной');
+    });
+
+    test('отменённый повторный вход в Google не трогает ничего', () async {
+      final c = await linked();
+      addTearDown(c.dispose);
+      account.confirmResult = DeleteOutcome.cancelled;
+
+      final outcome = await c.deleteAccountAndData();
+
+      expect(outcome, DeleteOutcome.cancelled);
+      expect(cloud.docs, hasLength(2));
+      expect(account.deletions, 0);
+      expect(saveFiles(), contains('rift.save.json'));
+    });
+
+    test('отказ удалить аккаунт оставляет сейв на телефоне', () async {
+      final c = await linked();
+      addTearDown(c.dispose);
+      account.deleteResult = DeleteOutcome.failed;
+
+      final outcome = await c.deleteAccountAndData();
+
+      expect(outcome, DeleteOutcome.failed);
+      expect(saveFiles(), contains('rift.save.json'),
+          reason: 'телефон — последним: его единственного не вернуть');
+      expect(c.profile.maxDepthEver, 31);
+    });
+
+    testWidgets('строка в настройках спрашивает, и «Отмена» не удаляет',
+        (tester) async {
+      final c = GameController(
+        content: content,
+        store: SaveStore(dir),
+        profile: PlayerProfile.newGame(seed: 1),
+        account: account,
+      );
+      addTearDown(c.dispose);
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: DeleteAccountTile(controller: c)),
+      ));
+
+      expect(find.text(S.deleteAccountTitle), findsOneWidget);
+      await tester.tap(find.text(S.deleteAccountTitle));
+      await tester.pumpAndSettle();
+
+      expect(find.text(S.deleteAccountConfirmTitle), findsOneWidget);
+      expect(find.byKey(const Key('delete-account-confirm')), findsOneWidget);
+
+      await tester.tap(find.text(S.cancel));
+      await tester.pumpAndSettle();
+
+      expect(find.text(S.deleteAccountConfirmTitle), findsNothing);
+      expect(account.deletions, 0);
+    });
+  });
 }

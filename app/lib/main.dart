@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:rift/core/model/lang.dart';
 
-import 'dev/core_probe_screen.dart';
 import 'state/game_controller.dart';
 import 'ui/outpost_screen.dart';
 import 'ui/theme.dart';
@@ -52,44 +51,7 @@ class RiftApp extends StatelessWidget {
       supportedLocales: [for (final lang in Lang.values) Locale(lang.code)],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: riftTheme(),
-      home: _Home(controller: controller),
-    );
-  }
-}
-
-/// Застава плюс вход в дев-пробу.
-///
-/// Проба остаётся доступной, пока идёт разработка: на ней проверяется ядро
-/// целиком, и терять её раньше, чем появятся настоящие боевой экран и
-/// инвентарь, незачем. К релизу `lib/dev/` удаляется.
-class _Home extends StatelessWidget {
-  const _Home({required this.controller});
-
-  final GameController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        OutpostScreen(controller: controller),
-        Positioned(
-          right: 8,
-          bottom: 8,
-          child: Opacity(
-            opacity: 0.4,
-            child: IconButton(
-              tooltip: const Phrase('Дев-проба ядра', 'Core probe').text,
-              icon: const Icon(Icons.science_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      CoreProbeScreen(content: controller.content),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      home: OutpostScreen(controller: controller),
     );
   }
 }

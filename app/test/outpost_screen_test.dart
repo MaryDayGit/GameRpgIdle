@@ -738,4 +738,60 @@ void main() {
         reason: 'подсказка считается от состояния, а не листается вручную');
     expect(find.text('Наёмник внизу'), findsOneWidget);
   });
+
+  testWidgets('бесконечное Хранилище после 8-го уровня не пишет «Предел»',
+      (tester) async {
+    // Ядро разрешает улучшать Хранилище без конца, а экран считал его
+    // упёршимся: «8/8 · Предел» на активной кнопке, «Дальше некуда» в
+    // карточке. Игрок, дошедший до 8-го уровня, не знал, что можно дальше.
+    controller.dispose();
+    controller = GameController(
+      content: content,
+      store: SaveStore(dir),
+      profile: PlayerProfile(
+        gold: 1e15,
+        maxDepthEver: 999,
+        outpost: Outpost({Building.vault: 8}),
+      ),
+      clock: () => clock,
+      seed: 20260918,
+      initialSettings: AppSettings(tutorialDone: true),
+    );
+    tester.view.physicalSize = const Size(412, 6000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: riftTheme(),
+      home: OutpostScreen(controller: controller),
+    ));
+    await tester.pump();
+
+    final row = find.ancestor(
+      of: find.text(Building.vault.title),
+      matching: find.byType(InkWell),
+    ).first;
+    Finder inRow(String text) =>
+        find.descendant(of: row, matching: find.text(text));
+
+    expect(controller.profile.canUpgradeBuilding(Building.vault), isTrue);
+    expect(inRow('8/∞'), findsOneWidget);
+    expect(inRow('Предел'), findsNothing,
+        reason: 'у бесконечной постройки предела нет');
+
+    final upgrade = find.descendant(
+      of: row,
+      matching: find.byType(OutlinedButton),
+    );
+    await tester.tap(upgrade);
+    await tester.pump();
+
+    expect(controller.profile.outpost.levelOf(Building.vault), 9);
+    expect(inRow('9/∞'), findsOneWidget);
+
+    // Карточка постройки тоже предлагает следующий уровень, а не «Дальше некуда».
+    await tester.tap(find.text(Building.vault.title));
+    await tester.pumpAndSettle();
+    expect(find.text('Дальше некуда.'), findsNothing);
+    expect(find.textContaining('9 из ∞'), findsOneWidget);
+  });
 }

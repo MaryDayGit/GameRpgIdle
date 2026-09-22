@@ -663,6 +663,76 @@ class GameController extends ChangeNotifier {
     _changed();
   }
 
+  /// Удаляет аккаунт и всё, что игра о нём хранит, и начинает новую игру.
+  ///
+  /// Требование Google Play: игрок, который может завести аккаунт, должен
+  /// суметь его и удалить — из самой игры (`docs/13-RELEASE.md` §3.3).
+  /// Удаляется: облачные сейвы всех сезонов, аккаунт Firebase, сейв на
+  /// телефоне с копией и архивами, отложенные уведомления, идентификатор
+  /// аналитики. Остаются настройки — язык, звук, — это не данные игрока.
+  ///
+  /// ## Порядок — от того, что можно отменить, к тому, что нельзя
+  ///
+  /// 1. **Подтверждение.** Google-аккаунт входит заново; закрытое окно
+  ///    оставляет всё как было.
+  /// 2. **Облако.** Нет сети — останавливаемся, пока своё цело: удалить
+  ///    аккаунт при целом облаке значит оставить сейв без ключа навсегда.
+  /// 3. **Аккаунт.**
+  /// 4. **Телефон.** Последним: это единственное, что нельзя вернуть, — и
+  ///    до этого шага отказ любого из предыдущих оставляет игру играбельной.
+  ///
+  /// Автосейв стоит на всё время удаления: иначе через минуту он записал бы
+  /// старый профиль на диск и выгрузил его в облако заново.
+  Future<DeleteOutcome> deleteAccountAndData() async {
+    final confirmed = await account.confirmForDeletion();
+    if (confirmed != DeleteOutcome.ok) return confirmed;
+
+    final wasRunning = _scheduler != null || _timer != null;
+    stop();
+
+    DeleteOutcome fail() {
+      if (wasRunning) start();
+      return DeleteOutcome.failed;
+    }
+
+    final uid = account.current.uid;
+    final mirror = this.mirror;
+    if (uid != null && uid.isNotEmpty && mirror != null) {
+      if (!await mirror.cloud.deleteAll(uid: uid)) return fail();
+    }
+    if (await account.deleteAccount() != DeleteOutcome.ok) return fail();
+
+    // Уведомления о контрактах, которых больше нет, иначе через час игрок
+    // получил бы «наёмник погиб» про наёмника из стёртой игры.
+    for (final contract in _profile.contracts) {
+      unawaited(_notifier.cancel(notificationIdFor(contract)));
+      unawaited(_notifier.cancel(runEndIdFor(contract)));
+    }
+    unawaited(_notifier.cancel(relayNoticeId));
+
+    await store.deleteEverything();
+    store.accountId = null;
+    mirror?.reset();
+    await analytics.resetData();
+
+    _profile = _newProfile();
+    pendingSync = null;
+    justFinished.clear();
+    // Новая игра — значит и обучение заново: игрок, стёрший всё, начинает с
+    // того же, с чего начинал в первый раз.
+    restartTutorial();
+
+    // Новый анонимный аккаунт, с прежним не связанный ничем: игра и дальше
+    // бережёт прогресс в облаке, но это уже прогресс другого игрока.
+    await account.signInSilently();
+    store.accountId = account.current.uid;
+    _syncAnalyticsProfile();
+
+    if (wasRunning) start();
+    _changed();
+    return DeleteOutcome.ok;
+  }
+
   /// Ответ игрока на расхождение сейвов.
   ///
   /// [takeCloud] — взять облачный. Локальный при этом не пропадает бесследно:

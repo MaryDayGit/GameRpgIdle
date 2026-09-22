@@ -85,6 +85,24 @@ class Analytics {
   }
 
   /// Ошибка внутри аналитики — это ошибка аналитики, а не игры.
+  /// Забывает, кем был игрок: сбрасывает идентификатор установки, так что
+  /// события после этого не связать с прежними. Зовётся при удалении
+  /// аккаунта и данных.
+  ///
+  /// Уже отправленное остаётся в отчётах обезличенным и уходит по сроку
+  /// хранения проекта: связать его с человеком нечем и до сброса — в
+  /// аналитике нет ни имени, ни почты (`docs/11-ANALYTICS.md` §5).
+  Future<void> resetData() async {
+    _properties.clear();
+    final sink = _sink;
+    if (sink is! ResettableAnalyticsSink) return;
+    try {
+      await (sink as ResettableAnalyticsSink).resetData();
+    } on Object catch (e) {
+      if (kDebugMode) debugPrint('[analytics] сброс не удался: $e');
+    }
+  }
+
   void _guard(void Function() action) {
     try {
       action();
@@ -97,6 +115,15 @@ class Analytics {
 /// Печатает события в консоль. Нужен ровно там, где Firebase бесполезен: на
 /// эмуляторе и в дев-прогоне видно СРАЗУ, что событие ушло и с чем, — а в
 /// консоли Firebase то же самое появится через часы.
+/// Сток, умеющий забыть идентификатор установки.
+///
+/// Отдельно от `AnalyticsSink` ядра: сброс нужен одному месту приложения
+/// (удаление аккаунта), и тянуть его в интерфейс ядра — значит заставить
+/// каждый тестовый сток делать вид, что у него есть что сбрасывать.
+abstract class ResettableAnalyticsSink {
+  Future<void> resetData();
+}
+
 class DebugAnalyticsSink implements AnalyticsSink {
   const DebugAnalyticsSink();
 
