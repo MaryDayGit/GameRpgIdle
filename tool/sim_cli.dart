@@ -19,7 +19,10 @@ import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/passive_tree.dart';
 import 'package:rift/core/model/player_profile.dart';
+import 'package:rift/core/model/stat_block.dart';
 import 'package:rift/core/model/stat_key.dart';
+import 'package:rift/core/sim/combat.dart';
+import 'package:rift/core/sim/combat_feed.dart';
 import 'package:rift/core/model/tags.dart';
 import 'package:rift/core/sim/abilities.dart';
 import 'package:rift/core/sim/descent.dart';
@@ -44,7 +47,7 @@ void main(List<String> args) {
   for (final (path, value) in opts.overrides) {
     _applyOverride(raw, path, value);
   }
-  ContentPack.parse(raw).apply();
+  ContentPack.parse(raw, checkCurveInvariants: !opts.freeCurves).apply();
   if (opts.overrides.isNotEmpty) {
     print('Переопределено: '
         '${[for (final (p, v) in opts.overrides) '$p=$v'].join(', ')}');
@@ -77,6 +80,8 @@ void main(List<String> args) {
       _measureTraits(opts);
     case 'daily':
       _runDaily(opts);
+    case 'late':
+      _probeLateCombat(opts);
     case 'runs':
       _runDistribution(opts);
     default:
@@ -109,15 +114,19 @@ void _applyOverride(Map<String, Object?> raw, String path, double value) {
 void _printCurves() {
   _header('КРИВЫЕ ПРОГРЕССИИ');
 
-  print('tau (длина мягкого разгона)   : ${Curves.tau.toStringAsFixed(1)} этажей');
+  print(
+      'tau (длина мягкого разгона)   : ${Curves.tau.toStringAsFixed(1)} этажей');
   print('Рост HP моба                  : ${Curves.mobHpGrowth}');
   print('Рост урона моба               : ${Curves.mobDpsGrowth}');
-  print('Рост силы предмета (g)        : ${Curves.itemGrowth.toStringAsFixed(6)}');
+  print(
+      'Рост силы предмета (g)        : ${Curves.itemGrowth.toStringAsFixed(6)}');
   print('  -> удлинение за удвоение    : '
       '${Curves.runExtensionPerDoubling.toStringAsFixed(2)} этажей '
       '(= ln4 / ln(a*b), задаётся только кривой мобов)');
-  print('Рост времени этажа            : ${Curves.floorTimeGrowth.toStringAsFixed(6)}');
-  print('  -> замедление за 40 этажей  : x${Curves.slowdownOver(40).toStringAsFixed(1)}');
+  print(
+      'Рост времени этажа            : ${Curves.floorTimeGrowth.toStringAsFixed(6)}');
+  print(
+      '  -> замедление за 40 этажей  : x${Curves.slowdownOver(40).toStringAsFixed(1)}');
   print('');
   print('Два неравенства, на которых стоит прогрессия:');
   print('  добыча двигает прогресс (g > sqrt(a*b)) : '
@@ -178,8 +187,10 @@ void _runDistribution(_Options o) {
       'p90 ${_p(depths, 0.90)}  макс ${depths.last}');
   print('Время рана медиана ${_dur(_pd(times, 0.50))}  '
       'p90 ${_dur(_pd(times, 0.90))}');
-  print('Эхо за медианный ран: ${Curves.echo(_p(depths, 0.50), brandRank: o.brand)}');
-  print('Исходы: ${endings.entries.map((e) => "${e.key.name} ${e.value}").join(", ")}');
+  print(
+      'Эхо за медианный ран: ${Curves.echo(_p(depths, 0.50), brandRank: o.brand)}');
+  print(
+      'Исходы: ${endings.entries.map((e) => "${e.key.name} ${e.value}").join(", ")}');
 
   // Где именно обрывается ран. Если почти всё приходится на боссов, значит
   // кривая обычных этажей ни на что не влияет и вся балансировка §2.2 — впустую.
@@ -223,7 +234,8 @@ void _runDistribution(_Options o) {
 
 void _compareForks(_Options o) {
   _header('ПОЛИТИКИ РАЗВИЛКИ · ${o.runs} ранов на политику');
-  print('Политика — это то, что выбирает наёмник вместо отсутствующего игрока.');
+  print(
+      'Политика — это то, что выбирает наёмник вместо отсутствующего игрока.');
   print('Если строки сходятся, выбор пути не значит ничего, и развилку можно');
   print('не показывать вовсе.');
   print('');
@@ -233,8 +245,15 @@ void _compareForks(_Options o) {
   // выигрывать в рюкзаке и золоте, а не в числе поднятых с пола предметов.
   // Рюкзак всегда полон, поэтому «сколько принёс» ничего не различает.
   // Различает КАЧЕСТВО принесённого: уровень предметов и доля редких.
-  _row(['политика', 'медиана', 'Эхо', 'ilvl рюкзака', 'редких+', 'осколки',
-    'золото']);
+  _row([
+    'политика',
+    'медиана',
+    'Эхо',
+    'ilvl рюкзака',
+    'редких+',
+    'осколки',
+    'золото'
+  ]);
   _rule(7);
 
   for (final policy in ForkPolicy.values) {
@@ -419,8 +438,7 @@ void _measurePower(_Options o) {
       powerMultiplier: rank ? merc.rank.statMultiplier : 1.0,
       traitStats: trait ? merc.trait.apply : null,
     );
-    return BuildPower.of(profile.aggregate(), depth,
-        loadout: profile.loadout);
+    return BuildPower.of(profile.aggregate(), depth, loadout: profile.loadout);
   }
 
   final bare = power(
@@ -444,7 +462,11 @@ void _measurePower(_Options o) {
   final steps = <(String, double)>[];
 
   final withGear = power(
-      abilities: false, echo: false, passives: false, rank: false, trait: false);
+      abilities: false,
+      echo: false,
+      passives: false,
+      rank: false,
+      trait: false);
   steps.add(('Снаряжение', withGear - running));
   running = withGear;
 
@@ -838,7 +860,8 @@ void _measureWall(_Options o) {
   // и показывает среднее между разгоном и установившимся значением — то есть
   // не показывает ничего.
   final split = 3; // x1..x3 — разгон, дальше — установившийся режим
-  final early = _linearSlope(xs.sublist(0, split + 1), ys.sublist(0, split + 1));
+  final early =
+      _linearSlope(xs.sublist(0, split + 1), ys.sublist(0, split + 1));
   final steady = _linearSlope(xs.sublist(split), ys.sublist(split));
 
   print('');
@@ -875,7 +898,8 @@ void _measureWall(_Options o) {
   print('ошибка, а следствие того, что снаряжение добывается, а не выдаётся:');
   print('за 35 этажей девять слотов не успевают дорасти до глубины.');
   print('');
-  print('Доля смертей ниже 100 % означает, что ран обрывается таймаутом волны,');
+  print(
+      'Доля смертей ниже 100 % означает, что ран обрывается таймаутом волны,');
   print('а не гибелью героя. Тезис «смерть = прести́ж» при этом не работает.');
 }
 
@@ -1075,8 +1099,7 @@ PlayerProfile _playCampaign(
       // Резерв на следующий задаток: иначе автоматика вкладывает всё в
       // Заставу и на следующем ране идёт вниз Оборванцем.
       while (player.gold -
-                  Roster.hireCost(MercRank.blade,
-                      depth: player.hireDepth) >
+                  Roster.hireCost(MercRank.blade, depth: player.hireDepth) >
               player.outpost.upgradeCost(b) &&
           player.canUpgradeBuilding(b)) {
         if (!player.upgradeBuilding(b)) break;
@@ -1490,8 +1513,20 @@ void _runCampaign(_Options o) {
   // только «насколько глубоко», но и «через сколько наёмник вернётся».
   // «Запас» — золото в задатках Легенды. Без него сотни миллиардов на рубеже
   // читаются как инфляция, хотя это полтора задатка (раунд 40).
-  _row(['№', 'наёмник', 'ранг', 'глубина', 'Клеймо', 'пассивки', 'золото',
-      'запас', 'Застава', 'логова', 'спуск', 'всего']);
+  _row([
+    '№',
+    'наёмник',
+    'ранг',
+    'глубина',
+    'Клеймо',
+    'пассивки',
+    'золото',
+    'запас',
+    'Застава',
+    'логова',
+    'спуск',
+    'всего'
+  ]);
   _rule(12);
 
   var cumulativeSeconds = 0.0;
@@ -1544,11 +1579,15 @@ void _runCampaign(_Options o) {
   print('Отзвук глубины          : уровень ${player.tree.resonance} '
       '(сила ×${player.tree.resonanceMultiplier.toStringAsFixed(2)})');
   print('Запас золота            : ${_stock(player)} задатка Легенды');
-  print('Сундук Заставы          : ${player.stash.length}/${player.outpost.stashSlots}');
+  print(
+      'Сундук Заставы          : ${player.stash.length}/${player.outpost.stashSlots}');
   print('Павших наёмников        : ${player.roster.fallen.length}');
   print('Логова                  : побед $_lairWins, поражений $_lairLosses, '
       'кругов ${player.lairTrophies} '
-      '(${[for (final g in Bestiary.guardians) '${g.id} ${player.lairCircles[g.id] ?? 0}'].join(', ')})');
+      '(${[
+    for (final g in Bestiary.guardians)
+      '${g.id} ${player.lairCircles[g.id] ?? 0}'
+  ].join(', ')})');
 
   // Разбор сундука. Заведён после того, как замер показал обвал глубины
   // вдвое ровно на том контракте, где сундук перестаёт расти: общее число
@@ -1570,14 +1609,16 @@ void _runCampaign(_Options o) {
   for (final b in Building.values) {
     _row([
       b.title,
-      '${player.outpost.levelOf(b)}/${Building.maxLevel}',
+      '${player.outpost.levelOf(b)}/${b.isEndless ? '∞' : Building.maxLevel}',
       b.description,
     ]);
   }
 }
 
-int _buildTotal(Outpost o) =>
-    Building.values.fold(0, (a, b) => a + o.levelOf(b));
+/// Выкупленные уровни из тех, что можно выкупить. Бесконечное Хранилище
+/// считается до предела остальных: иначе «Застава 72/64».
+int _buildTotal(Outpost o) => Building.values
+    .fold(0, (a, b) => a + math.min(o.levelOf(b), Building.maxLevel));
 
 /// Запас золота в задатках Легенды.
 ///
@@ -1612,7 +1653,8 @@ void _measureTraits(_Options o) {
 
   print('Рекорд $record, Клеймо $brand, верёвка с этажа ${rope + 1}. '
       'Медиана глубины на 24 сидах.');
-  print('«Удачливый» глубины не даёт по построению: он про добычу, не про бой.');
+  print(
+      '«Удачливый» глубины не даёт по построению: он про добычу, не про бой.');
 
   const traitBuilds = ['Стартовый', 'Клинок в огне', 'Холод'];
   for (final name in traitBuilds) {
@@ -1659,6 +1701,335 @@ void _measureTraits(_Options o) {
 }
 
 // ---------------------------------------------------------------------------
+// Режим: анатомия позднего боя
+// ---------------------------------------------------------------------------
+
+/// Что происходит в бою у рекорда и что на самом деле обрывает спуск
+/// (раунд 41).
+///
+/// Раунд 40 нашёл, что урон на позднем этапе стоит ноль этажей, и объяснил это
+/// перебором: враг гибнет с одного удара. Объяснение было догадкой, и режим
+/// проверяет её двумя способами.
+///
+/// **Анатомия** — по ленте боя, без правки симуляции: сколько ударов уходит на
+/// врага, какая доля урона падает в уже мёртвых, сколько и какими ударами
+/// получает герой — отдельно для последних этажей перед гибелью и для
+/// середины спуска, — и каким ударом его добивают.
+///
+/// **Чувствительность** — медиана глубины на одних и тех же сидах при
+/// удвоенном уроне, здоровье, броне, скорости атаки и сопротивлениях. Если
+/// урон ×10 не двигает глубину, а здоровье ×2 двигает, объяснение верно.
+void _probeLateCombat(_Options o) {
+  _header('ПОЗДНИЙ БОЙ · после ${o.metaRuns} контрактов');
+
+  final player = _playCampaign(o, runs: o.metaRuns, onStop: print);
+  final record = math.max(10, player.maxDepthEver);
+  final brand = player.brandRank;
+  final rope = player.startDepthBonus + Curves.startDepth(record) - 1;
+  final abilities = _builds['Стартовый']!;
+  final build = _probeBuild(player, abilities, depth: record);
+
+  HeroProfile hero([StatBlock Function(StatBlock)? tweak]) => HeroProfile(
+        gear: build.gear.copy(),
+        abilities: abilities,
+        tree: player.tree,
+        passives: build.passives,
+        startDepthBonus: rope,
+        powerMultiplier: MercRank.legend.statMultiplier,
+        traitStats: tweak,
+      );
+
+  print('Рекорд $record, Клеймо $brand, верёвка с этажа ${rope + 1}. '
+      'Легенда без черты, сборка «Стартовый».');
+
+  // --- Анатомия ---------------------------------------------------------------
+
+  const anatomySeeds = 12;
+  final bands = [
+    _LateBand('последние 5', -1, 4),
+    _LateBand('5–24 до гибели', 5, 24),
+    _LateBand('25+ до гибели', 25, 1 << 30),
+  ];
+  final killingHit = <double>[];
+  final hpBeforeKill = <double>[];
+  final killers = <String, int>{};
+  var bossDeaths = 0;
+
+  for (var s = 1; s <= anatomySeeds; s++) {
+    // Ёмкость с запасом: лента забирается каждый тик, но за тик волна может
+    // смениться, и записи обеих пачек обязаны доехать.
+    final feed = CombatFeed(capacity: 1 << 14);
+    final driver = DescentDriver(
+      profile: hero(),
+      seed: o.seed * 7919 + s,
+      brandRank: brand,
+      feed: feed,
+      floorCap: o.floorCap,
+    );
+    final floors = <int, _LateFloor>{};
+    var heroHpBefore = driver.hero.hp;
+    var lastBiggest = 0.0;
+
+    // Боссы — отдельно: у них проверка урона (раунд 41), и её надо видеть
+    // своим столбцом, а не средним по волнам.
+    WaveRunner? tracked;
+    var trackedDepth = 0;
+    var lastWasBoss = false;
+    void closeTracked() {
+      final w = tracked;
+      if (w == null || w.enemies.length != 1) return;
+      final boss = w.enemies.first;
+      if (!boss.archetype.isBoss) return;
+      final stat = floors.putIfAbsent(trackedDepth, _LateFloor.new);
+      stat
+        ..bossFights += 1
+        ..bossSeconds += w.seconds;
+      if (boss.enraged) stat.bossEnraged++;
+    }
+
+    while (!driver.finished) {
+      final current = driver.wave;
+      if (!identical(current, tracked)) {
+        closeTracked();
+        tracked = current;
+        trackedDepth = driver.depth;
+        lastWasBoss = current != null &&
+            current.enemies.length == 1 &&
+            current.enemies.first.archetype.isBoss;
+      }
+      final enemies = driver.wave?.enemies;
+      final before = [for (final e in enemies ?? const []) e.hp];
+      final maxHp = driver.hero.stats.maxHp;
+      final stat = floors.putIfAbsent(driver.depth, _LateFloor.new);
+      heroHpBefore = driver.hero.hp;
+
+      driver.tick();
+
+      // Удары по мобу за этот тик, по индексу в пачке. Перебор — всё, что
+      // легло в моба сверх здоровья, с которым он вошёл в этот тик.
+      final hits = <int, double>{};
+      var samePack = true;
+      var biggest = 0.0;
+      for (final beat in feed.drain()) {
+        switch (beat.kind) {
+          case BeatKind.waveStarted:
+            // Дальше индексы — про новую пачку, её здоровья до тика нет.
+            samePack = false;
+          case BeatKind.enemyHit:
+            stat
+              ..dealt += beat.amount
+              ..hits += 1;
+            if (samePack && beat.index >= 0) {
+              hits[beat.index] = (hits[beat.index] ?? 0.0) + beat.amount;
+            }
+          case BeatKind.enemyDied:
+            stat.kills++;
+            if (samePack && beat.index >= 0 && beat.index < before.length) {
+              final over = (hits[beat.index] ?? 0.0) - before[beat.index];
+              if (over > 0.0) stat.overkill += over;
+            }
+          case BeatKind.heroHurt:
+            if (maxHp <= 0.0) break;
+            final share = beat.amount / maxHp;
+            stat
+              ..taken += share
+              ..hitsTaken += 1;
+            if (share > stat.biggest) stat.biggest = share;
+            if (share > biggest) biggest = share;
+          default:
+            break;
+        }
+      }
+      lastBiggest = biggest;
+    }
+
+    closeTracked();
+    final result = driver.result;
+    for (final floor in result.floors) {
+      floors[floor.depth]?.seconds = floor.seconds;
+    }
+    if (result.ending == RunEnding.death && lastWasBoss) bossDeaths++;
+    if (result.ending == RunEnding.death) {
+      final maxHp = driver.hero.stats.maxHp;
+      killingHit.add(lastBiggest);
+      hpBeforeKill.add(maxHp > 0.0 ? heroHpBefore / maxHp : 0.0);
+      final who = result.killedBy ?? '?';
+      killers[who] = (killers[who] ?? 0) + 1;
+    }
+    for (final entry in floors.entries) {
+      final toDeath = result.maxDepth - entry.key;
+      for (final band in bands) {
+        if (toDeath >= band.from && toDeath <= band.to) band.add(entry.value);
+      }
+    }
+  }
+
+  print('');
+  print('Анатомия: $anatomySeeds спусков. Доли — от максимума здоровья героя.');
+  _row([
+    'этажи',
+    'ударов/враг',
+    'перебор',
+    'сек/этаж',
+    'урон/этаж',
+    'ударов/этаж',
+    'крупнейший',
+    'бой с боссом',
+    'до ярости',
+  ]);
+  _rule(9);
+  String share(double v) => '${(v * 100).toStringAsFixed(0)} %';
+  for (final b in bands) {
+    if (b.floors == 0) continue;
+    _row([
+      b.title,
+      b.kills == 0 ? '—' : (b.hits / b.kills).toStringAsFixed(1),
+      b.dealt <= 0.0 ? '—' : share(b.overkill / b.dealt),
+      (b.seconds / b.floors).toStringAsFixed(1),
+      share(b.taken / b.floors),
+      (b.hitsTaken / b.floors).toStringAsFixed(1),
+      share(b.biggest / b.floors),
+      b.bossFights == 0
+          ? '—'
+          : '${(b.bossSeconds / b.bossFights).toStringAsFixed(1)} с',
+      b.bossFights == 0 ? '—' : _pct(b.bossEnraged, b.bossFights),
+    ]);
+  }
+
+  killingHit.sort();
+  hpBeforeKill.sort();
+  final topKillers = killers.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  print('');
+  print('Гибель: ${killingHit.length} из $anatomySeeds. Крупнейший удар в '
+      'смертельный тик — медиана ${share(_pd(killingHit, 0.5))}, здоровье '
+      'перед ним — ${share(_pd(hpBeforeKill, 0.5))}.');
+  print('На боссе: $bossDeaths из ${killingHit.length} гибелей.');
+  print('Кто добивает: ${[
+    for (final e in topKillers.take(4)) '${e.key} ${e.value}',
+  ].join(', ')}.');
+
+  // --- Чувствительность ---------------------------------------------------------
+
+  final variants = <(String, StatBlock Function(StatBlock)?)>[
+    ('как есть', null),
+    (
+      'урон ×2',
+      (s) =>
+          s + StatBlock(attackDamage: s.attackDamage, spellPower: s.spellPower)
+    ),
+    (
+      'урон ×10',
+      (s) =>
+          s +
+          StatBlock(
+              attackDamage: s.attackDamage * 9, spellPower: s.spellPower * 9)
+    ),
+    (
+      'скорость атаки +50 %',
+      (s) => s + const StatBlock(increasedAttackSpeed: 0.5)
+    ),
+    ('здоровье ×2', (s) => s + StatBlock(maxHp: s.maxHp)),
+    ('броня ×2', (s) => s + StatBlock(armor: s.armor)),
+    (
+      'сопротивления +25',
+      (s) =>
+          s +
+          const StatBlock(
+              resistFire: 25,
+              resistCold: 25,
+              resistLightning: 25,
+              resistVoid: 25)
+    ),
+  ];
+
+  print('');
+  print('Чувствительность: глубина на 24 сидах, одних и тех же: медиана · среднее.');
+  _row(['вариант', 'глубина', 'разница']);
+  _rule(3);
+  // Медиана и среднее: боссы стоят через пять этажей, и медиана прилипает к
+  // их этажам — «ноль или плюс пять». Среднее видит и частичный выигрыш.
+  int? base;
+  double? baseMean;
+  for (final (name, tweak) in variants) {
+    final depths = <int>[];
+    for (var s = 1; s <= 24; s++) {
+      depths.add(DescentSimulator(
+        profile: hero(tweak),
+        seed: o.seed * 104729 + s,
+        brandRank: brand,
+      ).run(floorCap: o.floorCap, recordFloors: false).maxDepth);
+    }
+    depths.sort();
+    final median = _p(depths, 0.50);
+    final mean = depths.reduce((a, b) => a + b) / depths.length;
+    base ??= median;
+    baseMean ??= mean;
+    final meanDiff = mean - baseMean;
+    _row([
+      name,
+      '$median · ${mean.toStringAsFixed(1)}',
+      name == variants.first.$1
+          ? '—'
+          : '${_signed(median - base)} · '
+              '${meanDiff >= 0 ? '+' : ''}${meanDiff.toStringAsFixed(1)}',
+    ]);
+  }
+}
+
+/// Счётчики одного этажа для анатомии позднего боя.
+class _LateFloor {
+  double dealt = 0.0;
+  double overkill = 0.0;
+  double taken = 0.0;
+  double biggest = 0.0;
+  double seconds = 0.0;
+  int hits = 0;
+  int kills = 0;
+  int hitsTaken = 0;
+  int bossFights = 0;
+  int bossEnraged = 0;
+  double bossSeconds = 0.0;
+}
+
+/// Этажи, сложенные по расстоянию до гибели.
+class _LateBand {
+  _LateBand(this.title, this.from, this.to);
+
+  final String title;
+  final int from;
+  final int to;
+
+  int floors = 0;
+  double dealt = 0.0;
+  double overkill = 0.0;
+  double taken = 0.0;
+  double biggest = 0.0;
+  double seconds = 0.0;
+  int hits = 0;
+  int kills = 0;
+  int hitsTaken = 0;
+  int bossFights = 0;
+  int bossEnraged = 0;
+  double bossSeconds = 0.0;
+
+  void add(_LateFloor f) {
+    bossFights += f.bossFights;
+    bossEnraged += f.bossEnraged;
+    bossSeconds += f.bossSeconds;
+    floors++;
+    dealt += f.dealt;
+    overkill += f.overkill;
+    taken += f.taken;
+    biggest += f.biggest;
+    seconds += f.seconds;
+    hits += f.hits;
+    kills += f.kills;
+    hitsTaken += f.hitsTaken;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Режим: сутки игрока со сменой
 // ---------------------------------------------------------------------------
 
@@ -1693,8 +2064,16 @@ void _runDaily(_Options o) {
     ]);
   }
 
-  _row(['смена/слот', 'контр./сут', 'занятость', 'рекорд', 'кругов',
-      'день логов', 'день 40 к.', 'день 100 к.']);
+  _row([
+    'смена/слот',
+    'контр./сут',
+    'занятость',
+    'рекорд',
+    'кругов',
+    'день логов',
+    'день 40 к.',
+    'день 100 к.'
+  ]);
   _rule(8);
   rows.forEach(_row);
   print('');
@@ -1780,10 +2159,10 @@ void _dailyChores(PlayerProfile player, _Options o, int index, DateTime now) {
   _spendPassivePoints(player, _usefulTags(starterAbilityIds()));
 
   for (final b in _buildOrder) {
-    while (player.gold -
-                Roster.hireCost(MercRank.blade, depth: player.hireDepth) >
-            player.outpost.upgradeCost(b) &&
-        player.canUpgradeBuilding(b)) {
+    while (
+        player.gold - Roster.hireCost(MercRank.blade, depth: player.hireDepth) >
+                player.outpost.upgradeCost(b) &&
+            player.canUpgradeBuilding(b)) {
       if (!player.upgradeBuilding(b)) break;
     }
   }
@@ -1847,7 +2226,12 @@ class _Options {
     this.relay = -1,
     this.sessions = const [8, 13, 19, 23],
     this.overrides = const [],
+    this.freeCurves = false,
   });
+
+  /// `--free-curves`: не проверять неравенства кривых — для прототипа кривых,
+  /// которые нынешний валидатор запрещает. В игре такого флага нет.
+  final bool freeCurves;
 
   /// `--set`: числа баланса, подменённые на этот прогон.
   final List<(String, double)> overrides;
@@ -1883,6 +2267,7 @@ class _Options {
     var relay = -1;
     var sessions = const [8, 13, 19, 23];
     final overrides = <(String, double)>[];
+    var freeCurves = false;
 
     for (var i = 0; i < args.length; i++) {
       final a = args[i];
@@ -1936,6 +2321,10 @@ class _Options {
           mode = 'traits';
           final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
           if (v != null) metaRuns = int.parse(next());
+        case '--late':
+          mode = 'late';
+          final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
+          if (v != null) metaRuns = int.parse(next());
         case '--daily':
           mode = 'daily';
           final v = int.tryParse(i + 1 < args.length ? args[i + 1] : '');
@@ -1951,6 +2340,8 @@ class _Options {
           final pair = next().split('=');
           final value = pair.length == 2 ? double.tryParse(pair[1]) : null;
           if (value != null) overrides.add((pair[0], value));
+        case '--free-curves':
+          freeCurves = true;
         case '--trace':
           _traceCampaign = true;
         case '--forkplay':
@@ -1977,6 +2368,7 @@ class _Options {
       relay: relay,
       sessions: sessions,
       overrides: overrides,
+      freeCurves: freeCurves,
     );
   }
 }
@@ -2006,11 +2398,14 @@ void _printUsage() {
   --lair-probe N  кампания N контрактов, потом бои на следующем невзятом круге
                   каждого стража: четыре сборки, мощь x2/x3/x4
   --traits N      кампания N контрактов, потом глубина каждой черты и ранга
+  --late N        кампания N контрактов, потом анатомия боя у рекорда: перебор,
+                  удары по герою, смертельный удар, чувствительность к статам
   --daily D       D дней игрока по настенным часам со сменой 0..3 на слот
   --relay N       только одна длина смены для --daily
   --sessions H,H  часы заходов для --daily (8,13,19,23)
   --set K=V       число из balance.json на один прогон, например
                   --set curves.echoResonanceCostGrowth=2
+  --free-curves   не проверять неравенства кривых (прототип кривых мобов)
 ''');
 }
 

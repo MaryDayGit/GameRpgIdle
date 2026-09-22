@@ -20,6 +20,8 @@ class TuningConfig {
     ),
     this.spellReferenceRate = 1.2,
     this.chillSeconds = 2.0,
+    this.bossEnrageSeconds = 20.0,
+    this.bossEnragePerSecond = 0.25,
     this.tickSeconds = 0.1,
     this.wavesPerFloor = 3,
     this.wavesPerBossFloor = 1,
@@ -125,6 +127,16 @@ class TuningConfig {
   /// Короче типичной перезарядки способности намеренно: правило должно
   /// вознаграждать частые удары, а не превращаться в постоянный дебаф.
   final double chillSeconds;
+
+  /// Ярость босса бездны (раунд 41): через сколько секунд боя босс начинает
+  /// бить сильнее и на сколько за каждую следующую секунду.
+  ///
+  /// Проверка урона. Замер `sim_cli --late`: с шестидесятого контракта враг
+  /// гибнет с одного удара, и урон не стоит ни этажа — спуск решает одна
+  /// живучесть. Босс, которого не убил за отведённое время, разгоняется до
+  /// гибели героя: на волнах решает живучесть, у босса — урон.
+  final double bossEnrageSeconds;
+  final double bossEnragePerSecond;
 
   final double tickSeconds;
   final int wavesPerFloor;
@@ -404,6 +416,10 @@ class TuningConfig {
       spellReferenceRate:
           _d(combat, 'spellReferenceRate', d.spellReferenceRate),
       chillSeconds: _d(combat, 'chillSeconds', d.chillSeconds),
+      bossEnrageSeconds:
+          _d(combat, 'bossEnrageSeconds', d.bossEnrageSeconds),
+      bossEnragePerSecond:
+          _d(combat, 'bossEnragePerSecond', d.bossEnragePerSecond),
       tickSeconds: _d(combat, 'tickSeconds', d.tickSeconds),
       wavesPerFloor: _i(combat, 'wavesPerFloor', d.wavesPerFloor),
       wavesPerBossFloor: _i(combat, 'wavesPerBossFloor', d.wavesPerBossFloor),
@@ -579,6 +595,8 @@ class Tuning {
   static double get stallProgressThreshold => _config.stallProgressThreshold;
   static double get spellReferenceRate => _config.spellReferenceRate;
   static double get chillSeconds => _config.chillSeconds;
+  static double get bossEnrageSeconds => _config.bossEnrageSeconds;
+  static double get bossEnragePerSecond => _config.bossEnragePerSecond;
   static int get abilitySlots => _config.abilitySlots;
   static int get forkEveryFloors => _config.forkEveryFloors;
   static double get forkWaitSeconds => _config.forkWaitSeconds;

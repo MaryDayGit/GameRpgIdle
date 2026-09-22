@@ -102,7 +102,11 @@ void main() {
           Curves.dEff(earlyFloors.first.depth);
       final predicted = math.pow(Curves.floorTimeGrowth, deltaDepth);
 
-      expect(late / early, greaterThan(predicted * 0.9),
+      // Допуск 20 %, а не 10 %: анатомия боя (раунд 41, `sim_cli --late`)
+      // показала, что время этажа упирается в число взмахов по пачке, а не в
+      // здоровье врага, — враг гибнет с одного-двух ударов уже к концу первого
+      // спуска. Кривая HP здесь оценка сверху, а не закон.
+      expect(late / early, greaterThan(predicted * 0.8),
           reason: 'этажи замедляются медленнее, чем обещает кривая');
       expect(late / early, greaterThan(1.3),
           reason: 'замедление должно быть заметно игроку, а не только графику');

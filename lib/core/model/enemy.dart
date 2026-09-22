@@ -359,7 +359,14 @@ class EnemyInstance {
     double dpsMultiplier = 1.0,
   }) {
     final brand = Curves.brandMobMultiplier(brandRank);
-    final hp = Curves.mobHp(depth) * a.hpMult * brand * hpMultiplier;
+    // Здоровье — своей ручкой (раунд 41). Пока враг гибнул с одного удара,
+    // множитель Клейма к здоровью ничего не значил; как только здоровье
+    // начинает решать (боссы — проверка урона), он бьёт вдвое: бой длиннее
+    // И удар сильнее.
+    final hp = Curves.mobHp(depth) *
+        a.hpMult *
+        Curves.brandMobHpMultiplier(brandRank) *
+        hpMultiplier;
     final dps = Curves.mobDps(depth) * a.dpsMult * brand * dpsMultiplier;
     return EnemyInstance(
       archetype: a,

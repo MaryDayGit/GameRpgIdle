@@ -167,7 +167,14 @@ class ContentPack {
   /// списком проблем — чинить контент по одной опечатке за прогон невозможно.
   ///
   /// `files` — карта «имя файла без расширения -> результат `jsonDecode`».
-  static ContentPack parse(Map<String, Object?> files) {
+  ///
+  /// [checkCurveInvariants] = `false` — только для балансировщика: прототип
+  /// кривых, который нынешние неравенства запрещают, нужно сначала замерить,
+  /// а уже потом решать, какие неравенства верны (`sim_cli --free-curves`).
+  static ContentPack parse(
+    Map<String, Object?> files, {
+    bool checkCurveInvariants = true,
+  }) {
     final issues = ContentIssues();
 
     for (final name in fileNames) {
@@ -338,7 +345,7 @@ class ContentPack {
     final g = curves.itemGrowth;
     final geometric = math.sqrt(a * b);
 
-    if (g <= geometric) {
+    if (checkCurveInvariants && g <= geometric) {
       issues.add(
           'balance.curves.itemGrowth',
           'добыча не двигает прогресс: itemGrowth ${g.toStringAsFixed(4)} '
@@ -347,7 +354,7 @@ class ContentPack {
               'глубине D, хватает лишь на ${(2 * math.log(g) / math.log(a * b)).toStringAsFixed(2)}·D, '
               'и цикл «нашёл вещь — прошёл дальше» перестаёт быть двигателем');
     }
-    if (g >= b) {
+    if (checkCurveInvariants && g >= b) {
       issues.add(
           'balance.curves.itemGrowth',
           'спуск будет обрываться таймаутом, а не смертью: itemGrowth '
@@ -355,7 +362,7 @@ class ContentPack {
               '${b.toStringAsFixed(4)}. Снаряжение обгоняет урон мобов, герой '
               'не гибнет, а упирается в бесконечно медленные этажи');
     }
-    if (a >= b) {
+    if (checkCurveInvariants && a >= b) {
       issues.add(
           'balance.curves.mobHpGrowth',
           'HP мобов растут не медленнее их урона ($a против $b), и тогда оба '
@@ -683,7 +690,7 @@ class ContentPack {
     'echoResonancePower', 'echoResonanceCostGrowth',
     'lairUnlockDepth', 'lairFirstDepth', 'lairDepthPerCircle',
     'lairOfferingFloors', 'lairRelicChance', 'lairReferenceDepth',
-    'lairFirstKillPoints', 'lairGuardianMight',
+    'lairFirstKillPoints', 'lairGuardianMight', 'bossMight', 'bossMightDepth', 'brandMobHpPerRank',
   };
 
   static const _heroKeys = {
@@ -701,6 +708,7 @@ class ContentPack {
     'boldForkRarityBonus', 'boldForkEchoBonus', 'sellBonus',
     'spellReferenceRate',
     'chillSeconds',
+    'bossEnrageSeconds', 'bossEnragePerSecond',
   };
 
   static const _lootKeys = {

@@ -39,6 +39,9 @@ class CurveConfig {
     this.lairReferenceDepth = 40,
     this.lairFirstKillPoints = 2,
     this.lairGuardianMight = 3.0,
+    this.bossMight = 8.0,
+    this.bossMightDepth = 150,
+    this.brandMobHpPerRank = 0.25,
   });
 
   final double tau;
@@ -157,6 +160,32 @@ class CurveConfig {
   /// поднимает здоровье и урон вместе, и форма боя от него не меняется.
   final double lairGuardianMight;
 
+  /// Мощь босса бездны поверх кривой вещей и глубина, к которой она набрана
+  /// целиком (раунд 41).
+  ///
+  /// Здоровье босса ведёт та же кривая вещей, что у стража
+  /// (`Curves.lairHpScale`): без неё к шестидесятому контракту босс падал с
+  /// одного удара вместе с волной, и проверять урон было нечем.
+  ///
+  /// Две неудачные формы до этой. Мощь целиком с первого этажа ставила стену
+  /// на тридцатом этаже первого спуска. Поправка в степени росла быстрее урона
+  /// вещей, а урон сборки ограничен вещами не глубже рекорда — и кампания
+  /// вставала навсегда: рекорд 269 с восьмидесятого контракта по сто
+  /// пятидесятый. Мощь, набираемая с глубиной, держит отношение урона героя к
+  /// здоровью босса постоянным дальше [bossMightDepth]: босс — контрольная
+  /// точка, а не тупик.
+  final double bossMight;
+  final int bossMightDepth;
+
+  /// Прибавка здоровья мобов за ранг Клейма (раунд 41). Урон — прежней
+  /// `brandMobStatsPerRank`.
+  ///
+  /// Отдельно, потому что здоровье и урон перестали быть одним и тем же: пока
+  /// враг гибнул с одного удара, здоровье не значило ничего, и множитель к нему
+  /// был бесплатным. Как только здоровье решает — у боссов, — тот же множитель
+  /// удлиняет бой и усиливает удар разом и бьёт по рангу вдвое.
+  final double brandMobHpPerRank;
+
   factory CurveConfig.fromJson(Map<String, dynamic> j) => CurveConfig(
         tau: _d(j, 'tau', 30.0),
         mobHpGrowth: _d(j, 'mobHpGrowth', 1.06),
@@ -193,6 +222,9 @@ class CurveConfig {
         lairReferenceDepth: _i(j, 'lairReferenceDepth', 40),
         lairFirstKillPoints: _i(j, 'lairFirstKillPoints', 2),
         lairGuardianMight: _d(j, 'lairGuardianMight', 3.0),
+        bossMight: _d(j, 'bossMight', 8.0),
+        bossMightDepth: _i(j, 'bossMightDepth', 150),
+        brandMobHpPerRank: _d(j, 'brandMobHpPerRank', 0.25),
       );
 
   static List<int> _ints(

@@ -274,6 +274,32 @@ class Curves {
     return (itemScale(depth) / itemScale(ref)) / (mobHp(depth) / mobHp(ref));
   }
 
+  static double get bossMight => _config.bossMight;
+  static int get bossMightDepth => _config.bossMightDepth;
+
+  /// Во сколько раз здоровье босса бездны выше кривой мобов (раунд 41).
+  ///
+  /// Поправка стража — по той же причине, что у стража: HP мобов растёт
+  /// медленнее урона вещей, и босс, посчитанный по кривой мобов, к рубежу
+  /// гибнет с одного удара. Сверху — мощь [bossMight], набираемая до глубины
+  /// [bossMightDepth]: ранние боссы остаются прежними, а дальше отношение
+  /// урона сборки к здоровью босса не ухудшается с каждым этажом.
+  ///
+  /// Набор — по квадрату глубины, а не линейно: босс тридцатого этажа — стена
+  /// первого спуска уже при прибавке в семь десятых (замер `--dist`: медиана
+  /// 29 при потолке 29), а квадрат оставляет ему единицу.
+  static double bossHpScale(int depth) =>
+      lairHpScale(depth) * (1.0 + (bossMight - 1.0) * bossMightShare(depth));
+
+  /// Доля набранной мощи босса на глубине [depth] — квадрат доли пути до
+  /// [bossMightDepth]. Общая для здоровья босса и силы его ярости: проверка
+  /// урона набирается целиком, а не по частям.
+  static double bossMightShare(int depth) {
+    if (bossMightDepth <= 0) return 1.0;
+    final share = (depth / bossMightDepth).clamp(0.0, 1.0);
+    return share * share;
+  }
+
   /// Подношение за вызов стража на круге [circle].
   static double lairOffering(int circle) =>
       goldPerFloor(lairDepth(circle)) * _config.lairOfferingFloors;
@@ -341,9 +367,14 @@ class Curves {
     return raw > armorDrCap ? armorDrCap : raw;
   }
 
-  /// Множитель статов мобов от ранга Клейма Бездны.
+  /// Множитель урона мобов от ранга Клейма Бездны.
   static double brandMobMultiplier(int rank) =>
       1.0 + brandMobStatsPerRank * rank.clamp(0, brandMaxRank);
+
+  /// Множитель здоровья мобов от ранга Клейма — отдельной ручкой (раунд 41).
+  static double get brandMobHpPerRank => _config.brandMobHpPerRank;
+  static double brandMobHpMultiplier(int rank) =>
+      1.0 + brandMobHpPerRank * rank.clamp(0, brandMaxRank);
 
   /// эхо = floor(5 × 1.055^maxDepth) × (1 + 0.12 × ранг) × (1 + бонусы древа)
   static int echo(int maxDepth, {int brandRank = 0, double treeBonus = 0.0}) {

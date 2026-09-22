@@ -41,6 +41,8 @@ void main() {
   test('рубеж логов', () => runsCleanly(['--lair-probe', '2']),
       timeout: _slow);
   test('черты и ранги', () => runsCleanly(['--traits', '2']), timeout: _slow);
+  test('анатомия позднего боя', () => runsCleanly(['--late', '2']),
+      timeout: _slow);
   test('сутки со сменой', () => runsCleanly(['--daily', '1', '--relay', '1']),
       timeout: _slow);
 }

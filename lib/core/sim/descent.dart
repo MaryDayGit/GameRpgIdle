@@ -697,7 +697,12 @@ class DescentDriver {
         bus: bus,
         depth: _depth,
         hero: hero,
-        enemies: [EnemyInstance.spawn(_boss!, _depth, brandRank: brandRank)],
+        // Здоровье босса — по кривой вещей (раунд 41): иначе к рубежу он
+        // падает с одного удара, и проверки урона нет.
+        enemies: [
+          EnemyInstance.spawn(_boss!, _depth,
+              brandRank: brandRank, hpMultiplier: Curves.bossHpScale(_depth)),
+        ],
         rng: _floorRng,
         abilities: _abilities,
         triggers: _triggers,

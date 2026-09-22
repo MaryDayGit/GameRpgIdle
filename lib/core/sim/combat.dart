@@ -1,7 +1,9 @@
+import '../balance/curves.dart';
 import '../balance/tuning.dart';
 import '../model/damage.dart';
 import '../model/enemy.dart';
 import '../model/hero.dart';
+import '../model/lang.dart';
 import '../model/tags.dart';
 import 'abilities.dart';
 import 'combat_feed.dart';
@@ -329,6 +331,34 @@ class WaveRunner implements CombatContext {
               (Tuning.rampPerSecond * e.waveSeconds).clamp(0.0, Tuning.rampCap)
           : 1.0;
 
+      // Ярость босса бездны (раунд 41): не убит за отведённое время — удар
+      // растёт с каждой секундой. На волнах решает живучесть, у босса — урон.
+      // У стражей своя ярость, умением, и таймер их не трогает.
+      var rage = 1.0;
+      final enrageAt = Tuning.bossEnrageSeconds;
+      if (enrageAt > 0.0 &&
+          e.archetype.isBoss &&
+          e.archetype.skills.isEmpty &&
+          e.waveSeconds > enrageAt) {
+        // Сила ярости набирается с глубиной, как мощь босса: у первых этажей
+        // свежий наёмник убивает босса дольше трёх секунд, и ярость в полную
+        // силу срезала первый спуск с 34 этажей до 29 (замер `--dist`).
+        rage = 1.0 +
+            Tuning.bossEnragePerSecond *
+                Curves.bossMightShare(depth) *
+                (e.waveSeconds - enrageAt);
+        // Объявляется, когда разъярённый бьёт заметно сильнее: надпись над
+        // боссом, который бьёт как прежде, была бы неправдой.
+        if (!e.enraged && rage >= 1.1) {
+          e.enraged = true;
+          feed?.add(CombatBeat(BeatKind.bossSkill,
+              index: enemies.indexOf(e),
+              id: 'boss_enrage',
+              name: const Phrase('Ярость', 'Enrage').text,
+              type: e.archetype.damageType));
+        }
+      }
+
       // Страж на замахе обычными атаками не бьёт: замах — это его ход, и
       // удары поверх него превратили бы подготовку в обычный шум урона.
       if (e.windupSkill >= 0) continue;
@@ -349,7 +379,7 @@ class WaveRunner implements CombatContext {
 
         _hitHero(
           e,
-          e.damagePerHit * ramp * (1.0 + e.enrageDamage),
+          e.damagePerHit * ramp * rage * (1.0 + e.enrageDamage),
           e.archetype.damageType,
           lifesteal: e.archetype.has(EnemyTrait.lifesteal),
         );
@@ -538,6 +568,7 @@ class WaveRunner implements CombatContext {
     DamageType type, {
     bool lifesteal = false,
     bool isHit = true,
+    bool? armored,
   }) {
     final result = DamageCalc.compute(
       base: base,
@@ -553,7 +584,9 @@ class WaveRunner implements CombatContext {
               (_exposeRemaining > 0.0 ? _exposeAmount : 0.0)) *
           _shredMult,
       // «Шкура призм» отменяет броню целиком: не срезает, а выключает.
-      targetArmor: !isHit || rules.armorDisabled
+      // [armored] отделяет броню от удара: взрыв и отражение броня держит, но
+      // шипов и событий они не порождают (раунд 41).
+      targetArmor: !(armored ?? isHit) || rules.armorDisabled
           ? 0.0
           : hero.stats.armor * (1.0 - mods.lessArmor),
       depth: depth,
@@ -708,9 +741,13 @@ class WaveRunner implements CombatContext {
   /// самым каскадом, от которого стоят предохранители шины.
   void _explodeIfNeeded(EnemyInstance target) {
     if (!target.archetype.has(EnemyTrait.explodesOnDeath)) return;
-    final blast = target.damagePerHit * Tuning.explosionFraction;
-    hero.hp -= blast;
-    _damageTaken += blast;
+    if (!hero.alive) return;
+    // Через броню и сопротивления, «Порог» и «Последний рубеж» — единой точкой
+    // урона по герою (раунд 41). Мимо неё взрыв убивал героя с полным
+    // здоровьем, и у гибели не было даже убийцы.
+    _hitHero(target, target.damagePerHit * Tuning.explosionFraction,
+        target.archetype.damageType,
+        isHit: false, armored: true);
   }
 
   /// «Жатва»: убийство возвращает долю максимума здоровья.
@@ -855,8 +892,13 @@ class WaveRunner implements CombatContext {
       // задумано.
       final back = (amount * Tuning.reflectFraction)
           .clamp(0.0, target.damagePerHit);
-      hero.hp -= back;
-      _damageTaken += back;
+      // Через броню и сопротивления (раунд 41). Мимо защиты отражение вместе
+      // со взрывами было поздней стеной, от которой спасало одно здоровье:
+      // броня и сопротивления там стоили ноль этажей.
+      if (hero.alive && back > 0.0) {
+        _hitHero(target, back, target.archetype.damageType,
+            isHit: false, armored: true);
+      }
     }
 
     // «Жатва»: цель ниже порога здоровья гибнет мгновенно. Правило, а не
