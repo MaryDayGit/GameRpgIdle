@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://marydaygit.github.io/GameRpgIdle/sitemap.xml
