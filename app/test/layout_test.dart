@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rift/core/content/content_pack.dart';
 import 'package:rift/core/content/text_overlay.dart';
+import 'package:rift/core/balance/curves.dart' as balance;
 import 'package:rift/core/model/gear.dart';
-import 'package:rift/core/model/lang.dart';
 import 'package:rift/core/model/mercenary.dart';
 import 'package:rift/core/model/outpost.dart';
 import 'package:rift/core/model/player_profile.dart';
@@ -25,12 +25,15 @@ import 'package:rift_app/ui/echo_tree_screen.dart';
 import 'package:rift_app/ui/forge_screen.dart';
 import 'package:rift_app/ui/help_screen.dart';
 import 'package:rift_app/ui/journal_screen.dart';
+import 'package:rift_app/ui/lair_screen.dart';
+import 'package:rift_app/ui/loot_sort_screen.dart';
 import 'package:rift_app/ui/mercenary_screen.dart';
 import 'package:rift_app/ui/mercenary_stats.dart';
 import 'package:rift_app/ui/outpost_screen.dart';
 import 'package:rift_app/ui/passive_tree_screen.dart';
 import 'package:rift_app/ui/quests_screen.dart';
 import 'package:rift_app/ui/stash_screen.dart';
+import 'package:rift_app/ui/strings.dart';
 import 'package:rift_app/ui/theme.dart';
 
 /// Вёрстка: текст не вылезает за экран и не превращается в «…».
@@ -596,4 +599,87 @@ void main() {
         'Карточка спуска на этаже ${contract.currentFloorAt(now)} '
         'через ${contract.elapsedAt(now).inMinutes} мин');
   });
+
+  // Логово в матрицу выше не попало: экран пришёл позже (раунд 39), а вёрстка
+  // у него самая плотная в игре — круг, подношение, запас здоровья и трофеи в
+  // одной карточке. Рекорд профиля ставится здесь, потому что закрытое логово
+  // это другой экран, короче втрое, и проверять в нём нечего.
+  for (final lang in Lang.values) {
+    testWidgets('логово держит узкий экран ×1.3 · ${lang.code}', (tester) async {
+      profile = PlayerProfile(
+        gold: 1e6,
+        echo: 5000,
+        maxDepthEver: balance.Curves.lairUnlockDepth + 50,
+        outpost: Outpost({for (final b in Building.values) b: 4}),
+      );
+      for (var i = 0; i < 3; i++) {
+        profile.roster.reserve
+            .add(MercFactory.roll(Rng(i + 1), idPrefix: 'g$i'));
+      }
+      useLang(lang);
+
+      await show(tester, LairScreen(controller: controller), textScale: 1.3);
+      await sweep(tester, 'Логова (${lang.code})');
+    });
+  }
+
+  // Разбор добычи игрок видит после КАЖДОГО спуска, и ни один тест вёрстки
+  // его не открывал. Вещи всех видов сразу: длина строки свойства зависит от
+  // вида, и «Наручи глубинного зова» шире любой колонки под «Bracers».
+  for (final lang in Lang.values) {
+    testWidgets('разбор добычи держит узкий экран ×1.3 · ${lang.code}',
+        (tester) async {
+      useLang(lang);
+      final rng = Rng(11);
+      for (final kind in GearKind.values) {
+        profile.pendingLoot.add(ItemFactory.roll(
+            rng: rng, ilvl: 120, kind: kind, lootQuality: 2.0));
+      }
+
+      await show(tester, LootSortScreen(controller: controller),
+          textScale: 1.3);
+      await sweep(tester, 'Разбор добычи (${lang.code})');
+    });
+  }
+
+  // Лист настроек: язык, звук, вибрация, статистика, аккаунт, обучение и
+  // удаление данных. Последняя строка появилась перед релизом и длиннее всех
+  // соседних — «Удалить аккаунт и данные» с пояснением в две строки.
+  for (final lang in Lang.values) {
+    testWidgets('лист настроек держит узкий экран ×1.3 · ${lang.code}',
+        (tester) async {
+      useLang(lang);
+      await show(tester, OutpostScreen(controller: controller),
+          textScale: 1.3);
+
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expectNoOverflow(tester, 'Настройки (${lang.code})');
+
+      // Лист прокручивается сам, отдельно от Заставы: семь строк при крупном
+      // шрифте в отведённую половину экрана не помещаются, и нижняя —
+      // удаление данных — лежит как раз за краем.
+      final inside = find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(Scrollable),
+      );
+      expect(inside, findsWidgets,
+          reason: 'лист настроек не открылся — проверять нечего');
+
+      final position = tester.state<ScrollableState>(inside.first).position;
+      var previous = double.nan;
+      for (var step = 0; step < 20 && position.pixels != previous; step++) {
+        previous = position.pixels;
+        position
+            .jumpTo((position.pixels + 200).clamp(0.0, position.maxScrollExtent));
+        await tester.pump();
+        expectNoOverflow(
+            tester, 'Настройки, прокрутка ${step + 1} (${lang.code})');
+      }
+
+      expect(find.text(S.deleteAccountTitle), findsOneWidget,
+          reason: 'строки удаления данных нет в настройках');
+    });
+  }
 }

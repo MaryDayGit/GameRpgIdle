@@ -108,7 +108,12 @@ class _OutpostScreenState extends State<OutpostScreen> {
                       const Icon(Icons.settings_outlined,
                           size: 22, color: RiftColors.ember),
                       const SizedBox(width: 10),
-                      Text(S.settingsTitle, style: RiftText.title),
+                      // Заголовок переносится, а не уезжает за край: «Язык,
+                      // звук и отдача» при крупном системном шрифте просит
+                      // 346 точек, а на узком экране их всего 288.
+                      Expanded(
+                        child: Text(S.settingsTitle, style: RiftText.title),
+                      ),
                     ],
                   ),
                 ),
@@ -119,15 +124,30 @@ class _OutpostScreenState extends State<OutpostScreen> {
                 ListTile(
                   title: Text(S.settingsLanguage),
                   subtitle: Text(S.settingsLanguageAbout),
-                  trailing: SegmentedButton<Lang>(
-                    segments: [
-                      for (final lang in Lang.values)
-                        ButtonSegment(value: lang, label: Text(lang.title)),
+                ),
+                // Переключатель — строкой ниже, а не справа от подписи.
+                // Справа он помещался ровно до узкого экрана с крупным
+                // системным шрифтом: «Русский» и «English» рядом просят 296
+                // точек при ×1.3, и строка уезжала за край на 91 точку.
+                // Растянутый на всю ширину, он укладывается в 288 и при ×1.5.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SegmentedButton<Lang>(
+                          segments: [
+                            for (final lang in Lang.values)
+                              ButtonSegment(
+                                  value: lang, label: Text(lang.title)),
+                          ],
+                          selected: {c.settings.lang},
+                          showSelectedIcon: false,
+                          onSelectionChanged: (picked) =>
+                              c.setLanguage(picked.first),
+                        ),
+                      ),
                     ],
-                    selected: {c.settings.lang},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (picked) =>
-                        c.setLanguage(picked.first),
                   ),
                 ),
                 const Divider(indent: 16, endIndent: 16),
