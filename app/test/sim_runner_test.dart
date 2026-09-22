@@ -59,13 +59,26 @@ void main() {
   });
 
   test('ассеты приложения совпадают с источником в корне репозитория', () {
-    for (final name in ContentPack.fileNames) {
-      final copy = File('assets/content/$name.json').readAsStringSync();
-      final source = File('../assets/content/$name.json').readAsStringSync();
+    // Всё дерево, а не только файлы верхнего уровня: переводы лежат в
+    // подкаталогах (`en/`), и именно там зеркало однажды отстало — английская
+    // игра показала умения стражей по-русски, хотя в корне перевод был.
+    const root = '../assets/content';
+    final files = Directory(root)
+        .listSync(recursive: true)
+        .whereType<File>()
+        .map((f) => f.path.substring(root.length + 1).replaceAll('\\', '/'))
+        .toList();
+    expect(files, isNotEmpty);
+
+    for (final name in files) {
+      final copy = File('assets/content/$name');
+      expect(copy.existsSync(), isTrue,
+          reason: 'assets/content/$name нет в приложении — '
+              'запусти `dart run tool/sync_content.dart`');
       expect(
-        copy,
-        source,
-        reason: 'assets/content/$name.json разошёлся с источником — '
+        copy.readAsStringSync(),
+        File('$root/$name').readAsStringSync(),
+        reason: 'assets/content/$name разошёлся с источником — '
             'запусти `dart run tool/sync_content.dart`',
       );
     }

@@ -107,6 +107,38 @@ void main() {
       });
     }
 
+    for (final lang in Lang.values) {
+      test('${lang.code}: у каждого существа своё имя', () {
+        // Валидатор проверяет, что строка есть, но не что она своя. Так в
+        // английской версии Ледяной и Громовой стражи из бездны получили имена
+        // стражей логов — два разных существа с одним именем на одном экране.
+        final pack = loadContentFromDisk(lang: lang);
+        final creatures = [...pack.enemies, ...pack.bosses, ...pack.guardians];
+        final byName = <String, List<String>>{};
+        for (final c in creatures) {
+          (byName[c.name] ??= []).add(c.id);
+        }
+        final clashes = {
+          for (final e in byName.entries)
+            if (e.value.length > 1) e.key: e.value,
+        };
+        expect(clashes, isEmpty,
+            reason: 'одно имя у разных существ (${lang.code})');
+
+        final skills = <String, List<String>>{};
+        for (final g in pack.guardians) {
+          for (final s in g.skills) {
+            (skills[s.name] ??= []).add(s.id);
+          }
+        }
+        expect(
+          {for (final e in skills.entries) if (e.value.length > 1) e.key: e.value},
+          isEmpty,
+          reason: 'одно имя у разных умений стражей (${lang.code})',
+        );
+      });
+    }
+
     test('перевод сохраняет плейсхолдеры шаблонов', () {
       final ru = loadContentFromDisk();
       final en = loadContentFromDisk(lang: Lang.en);

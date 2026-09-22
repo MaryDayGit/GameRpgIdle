@@ -55,8 +55,8 @@
       "name": "Ice Shell"
     },
     "frost_warden": {
-      "name": "Patriarch of the Frozen Vault",
-      "role": "Slows you, then hardens"
+      "name": "Frost Warden",
+      "role": "Armor"
     },
     "grave_swarm": {
       "name": "Grave Swarm",
@@ -103,8 +103,8 @@
       "name": "The Storm Sovereign"
     },
     "storm_warden": {
-      "name": "Warden of the Storm Reach",
-      "role": "Answers every blow"
+      "name": "Storm Warden",
+      "role": "Reflector"
     },
     "void_devourer": {
       "name": "The Void Devourer"

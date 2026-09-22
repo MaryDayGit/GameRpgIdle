@@ -13,6 +13,15 @@
     "ash_lord": {
       "name": "Lord of Ash"
     },
+    "ash_pyre": {
+      "name": "Funeral Heat"
+    },
+    "ash_rebirth": {
+      "name": "Second Flame"
+    },
+    "ash_wall": {
+      "name": "Ash Rampart"
+    },
     "blood_leech": {
       "name": "Blood Leech",
       "role": "Scaler"
@@ -29,6 +38,9 @@
       "name": "Ashen Smith",
       "role": "Armor"
     },
+    "frost_avalanche": {
+      "name": "Avalanche"
+    },
     "frost_maw": {
       "name": "Frost Maw",
       "role": "Scaler"
@@ -36,9 +48,15 @@
     "frost_patriarch": {
       "name": "The Frost Patriarch"
     },
+    "frost_prison": {
+      "name": "Ice Prison"
+    },
+    "frost_shell": {
+      "name": "Ice Shell"
+    },
     "frost_warden": {
-      "name": "Patriarch of the Frozen Vault",
-      "role": "Slows you, then hardens"
+      "name": "Frost Warden",
+      "role": "Armor"
     },
     "grave_swarm": {
       "name": "Grave Swarm",
@@ -72,19 +90,37 @@
       "name": "Stone Fist",
       "role": "Armor"
     },
+    "storm_aegis": {
+      "name": "Thunder Aegis"
+    },
+    "storm_chain": {
+      "name": "Chain Lightning"
+    },
+    "storm_fall": {
+      "name": "The Sky Falls"
+    },
     "storm_sovereign": {
       "name": "The Storm Sovereign"
     },
     "storm_warden": {
-      "name": "Warden of the Storm Reach",
-      "role": "Answers every blow"
+      "name": "Storm Warden",
+      "role": "Reflector"
     },
     "void_devourer": {
       "name": "The Void Devourer"
     },
+    "void_hush": {
+      "name": "Hush"
+    },
+    "void_maw": {
+      "name": "Maw of the Void"
+    },
     "void_reaper": {
       "name": "Void Reaper",
       "role": "Debuffer"
+    },
+    "void_rend": {
+      "name": "Rend"
     },
     "void_whisperer": {
       "name": "Void Whisperer",
