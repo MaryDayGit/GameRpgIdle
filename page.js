@@ -8,7 +8,7 @@
   //
   //   const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.riftgame.rift_app';
   // ==========================================================================
-  const PLAY_URL = '';
+  const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.riftgame.rift_app';
 
   for (const [linkId, soonId] of [['playTop', 'playTopSoon'], ['playEnd', 'playEndSoon']]) {
     const link = document.getElementById(linkId), soon = document.getElementById(soonId);
