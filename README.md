@@ -8,6 +8,7 @@
 | `legal/privacy.html` | политика конфиденциальности (RU + EN) |
 | `legal/delete-account.html` | удаление аккаунта и данных (RU + EN) |
 | `icon-512.png`, `og-image.png` | значок вкладки и картинка для превью в мессенджерах |
+| `google4b0e0734753fc8bc.html` | подтверждение владения в Google Search Console. **Не удалять и не править**: Google перепроверяет файл, без него доступ к ресурсу пропадёт |
 
 Силуэты существ на сайте рисует тот же код, что и в игре (`sil.js` — порт
 `app/lib/game/silhouettes.dart`), а числа взяты из `assets/content`. Правится
